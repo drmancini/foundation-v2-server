@@ -43,7 +43,7 @@ const Stratum = function (logger, client, config, configMain, template) {
           const shareData = {
             job: share.job,
             id: share.id,
-            ip: share.share_id,
+            ip: share.ip,
             port: share.port,
             addrPrimary: share.addr_primary,
             addrAuxiliary: share.addr_auxiliary,
