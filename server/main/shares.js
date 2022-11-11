@@ -354,7 +354,8 @@ const Shares = function (logger, client, config, configMain) {
     shareData.blockValid = blockValid;
 
     // Calculate Share Features
-    // let shareType = 'valid';
+    let shareType = 'valid';
+    console.log(shareData)
     // if (shareData.error && shareData.error === 'job not found') shareType = 'stale';
     // else if (!shareValid || shareData.error) shareType = 'invalid';
 
