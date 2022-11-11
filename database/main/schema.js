@@ -275,7 +275,6 @@ const Schema = function (logger, executor, configMain) {
         hash VARCHAR NOT NULL DEFAULT 'unknown',
         height INT NOT NULL DEFAULT 0,
         identifier VARCHAR NOT NULL DEFAULT 'unknown',
-        reward int NOT NULL DEFAULT 0,
         share_diff VARCHAR NOT NULL DEFAULT '0',
         share_valid BOOLEAN NOT NULL DEFAULT false,
         block_valid BOOLEAN DEFAULT null,
