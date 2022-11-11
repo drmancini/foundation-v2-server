@@ -263,6 +263,7 @@ const Schema = function (logger, executor, configMain) {
     const command = `
       CREATE TABLE "${ pool }".current_shares(
         id BIGSERIAL PRIMARY KEY,
+        job VARCHAR NOT NULL DEFAULT 'unknown',
         share_id VARCHAR NOT NULL DEFAULT 'unknown',
         ip VARCHAR NOT NULL DEFAULT 'unknown',
         port INT NOT NULL DEFAULT 0,
@@ -274,8 +275,8 @@ const Schema = function (logger, executor, configMain) {
         hash VARCHAR NOT NULL DEFAULT 'unknown',
         height INT NOT NULL DEFAULT 0,
         identifier VARCHAR NOT NULL DEFAULT 'unknown',
-        reward BIGINT NOT NULL DEFAULT 0,
-        share_diff FLOAT NOT NULL DEFAULT 0,
+        reward int NOT NULL DEFAULT 0,
+        share_diff VARCHAR NOT NULL DEFAULT '0',
         share_valid BOOLEAN NOT NULL DEFAULT false,
         block_valid BOOLEAN DEFAULT null,
         CONSTRAINT current_shares_unique UNIQUE (hash));`;

@@ -68,6 +68,7 @@ const CurrentShares = function (logger, configMain) {
     let values = '';
     updates.forEach((share, idx) => {
       values += `(
+        '${ share.job }',
         '${ share.id }',
         '${ share.ip }',
         ${ share.port },
@@ -92,7 +93,7 @@ const CurrentShares = function (logger, configMain) {
   this.insertCurrentShares = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_shares (
-        share_id, ip, port, addr_primary,
+        job, share_id, ip, port, addr_primary,
         addr_auxiliary, block_diff_primary,
         block_type, difficulty, hash, height,
         identifier, reward, share_diff,
