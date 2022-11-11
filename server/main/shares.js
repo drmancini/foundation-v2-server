@@ -348,9 +348,22 @@ const Shares = function (logger, client, config, configMain) {
     _this.executor(transaction, () => callback());
   };
 
+  // Handle Meta Share Submissions
+  this.handleMetaShare = function(shareData, shareValid, blockValid, callback) {
+    shareData.shareValid = shareValid;
+    shareData.blockValid = blockValid;
+
+    // Build Transaction
+    const transaction = [
+      'BEGIN;',
+      _this.current.shares.insertCurrentShares(_this.pool, [ shareData ]),
+      'COMMIT;'];
+
+    _this.executor(transaction, () => callback());
+  };
+
   // Handle Share/Block Submissions
   this.handleSubmissions = function(shareData, shareValid, blockValid, callback) {
-
     // Calculate Share Features
     let shareType = 'valid';
     const minerType = utils.checkSoloMining(_this.config, shareData);

@@ -12,12 +12,47 @@ const Stratum = function (logger, client, config, configMain, template) {
   this.client = client;
   this.config = config;
   this.configMain = configMain;
+  this.pool = config.name;
   this.template = template;
   this.text = Text[configMain.language];
 
   // Stratum Variables
   process.setMaxListeners(0);
   this.forkId = process.env.forkId;
+
+  // Database Variables
+  this.executor = _this.client.commands.executor;
+  this.current = _this.client.commands.current;
+
+  // Handle New Saved Shares
+  this.handleShares = function(blockType, callback) {
+
+    // Build Transaction
+    const transaction = [
+      'BEGIN;',
+      _this.current.shares.selectCurrentSharesMain(_this.pool, { block_type: blockType }),
+      'COMMIT;'];
+
+    // Emit New Shares
+    _this.executor(transaction, (lookups) => {
+      // Build Transaction
+      transaction.length = 0;
+      transaction.push('BEGIN;');
+      if (lookups[1].rowCount > 0) {
+        lookups[1].rows.forEach(share => {
+          const shareValid = share.share_valid;
+          const blockValid = share.block_valid;
+          delete share.block_valid;
+          delete share.share_valid;
+          const shareData = share;
+          _this.stratum.emit('pool.share', shareData, shareValid, blockValid);
+          transaction.push(_this.current.shares.deleteCurrentShare(_this.pool, shareData.hash),);
+        });
+      }
+      transaction.push('COMMIT;');
+      _this.executor(transaction, () => callback());
+    });
+  };
 
   // Build Stratum from Configuration
   /* istanbul ignore next */
@@ -35,6 +70,11 @@ const Stratum = function (logger, client, config, configMain, template) {
     // Handle Stratum Network Events
     _this.stratum.on('pool.network', (networkData) => {
       _this.network.handleSubmissions(networkData, () => {});
+    });
+
+    // Handle Stratum Submission Events
+    _this.stratum.on('pool.meta_share', (shareData, shareValid, blockValid) => {
+      _this.shares.handleMetaShare(shareData, shareValid, blockValid, () => {});
     });
 
     // Handle Stratum Submission Events
@@ -71,6 +111,21 @@ const Stratum = function (logger, client, config, configMain, template) {
     }
   };
 
+  // Start Shares Interval Management
+  /* istanbul ignore next */
+  this.handleInterval = function() {
+    const minInterval = _this.config.settings.interval.shares * 0.75;
+    const maxInterval = _this.config.settings.interval.shares * 1.25;
+    const random = Math.floor(Math.random() * (maxInterval - minInterval) + minInterval);
+    setTimeout(() => {
+      _this.handleInterval();
+      if (_this.config.primary.checks.enabled) _this.handleShares('primary', () => {});
+      if (_this.config.auxiliary && _this.config.auxiliary.enabled && _this.config.auxiliary.checks.enabled) {
+        _this.handleShares('auxiliary', () => {});
+      }
+    }, random);
+  };
+
   // Setup Pool Stratum Capabilities
   /* eslint-disable */
   /* istanbul ignore next */
@@ -81,6 +136,9 @@ const Stratum = function (logger, client, config, configMain, template) {
     _this.shares = new Shares(logger, _this.client, _this.config, _this.configMain);
 
     // Build Daemon/Stratum Functionality
+    if (_this.configMain.stratum.lean && _this.configMain.stratum.instance == 'master') {
+      _this.handleInterval();
+    }
     _this.handleStratum();
     _this.stratum.setupPrimaryDaemons(() => {
     _this.stratum.setupAuxiliaryDaemons(() => {
