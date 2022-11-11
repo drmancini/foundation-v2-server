@@ -263,7 +263,6 @@ const Schema = function (logger, executor, configMain) {
     const command = `
       CREATE TABLE "${ pool }".current_shares(
         id BIGSERIAL PRIMARY KEY,
-        job INT NOT NULL DEFAULT 0,
         share_id VARCHAR NOT NULL DEFAULT 'unknown',
         ip VARCHAR NOT NULL DEFAULT 'unknown',
         port INT NOT NULL DEFAULT 0,

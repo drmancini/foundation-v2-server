@@ -11,10 +11,8 @@ const CurrentShares = function (logger, configMain) {
   this.text = Text[configMain.language];
 
   // Handle Current Parameters
-  this.numbers = ['timestamp', 'work'];
-  this.strings = ['miner', 'worker', 'identifier', 'share', 'type'];
-  this.parameters = ['timestamp', 'miner', 'worker', 'identifier', 'share', 'solo',
-    'type', 'work'];
+  this.strings = ['type'];
+  this.parameters = ['type'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -70,7 +68,6 @@ const CurrentShares = function (logger, configMain) {
     let values = '';
     updates.forEach((share, idx) => {
       values += `(
-        ${ share.job },
         '${ share.id }',
         '${ share.ip }',
         ${ share.port },
@@ -95,7 +92,7 @@ const CurrentShares = function (logger, configMain) {
   this.insertCurrentShares = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_shares (
-        job, share_id, ip, port, addr_primary,
+        share_id, ip, port, addr_primary,
         addr_auxiliary, block_diff_primary,
         block_type, difficulty, hash, height,
         identifier, reward, share_diff,
