@@ -40,11 +40,24 @@ const Stratum = function (logger, client, config, configMain, template) {
       transaction.push('BEGIN;');
       if (lookups[1].rowCount > 0) {
         lookups[1].rows.forEach(share => {
+          const shareData = {
+            job: share.job,
+            id: share.id,
+            ip: share.share_id,
+            port: share.port,
+            addrPrimary: share.addr_primary,
+            addrAuxiliary: share.addr_auxiliary,
+            blockDiffPrimary: share.block_diff_primary,
+            blockType: share.block_type,
+            difficulty: share.difficulty,
+            hash: share.hash,
+            height: share.height,
+            identifier: share.identifier,
+            shareDiff: share.share_diff
+          };
           const shareValid = share.share_valid;
           const blockValid = share.block_valid;
-          delete share.block_valid;
-          delete share.share_valid;
-          const shareData = share;
+          
           _this.stratum.emit('pool.share', shareData, shareValid, blockValid);
           transaction.push(_this.current.shares.deleteCurrentShare(_this.pool, shareData.hash),);
         });
