@@ -74,7 +74,6 @@ const Stratum = function (logger, client, config, configMain, template) {
 
     // Handle Stratum Submission Events
     _this.stratum.on('pool.meta_share', (shareData, shareValid, blockValid) => {
-      console.log('meta caught');
       _this.shares.handleMetaShare(shareData, shareValid, blockValid, () => {});
     });
 
