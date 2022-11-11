@@ -40,6 +40,7 @@ const Stratum = function (logger, client, config, configMain, template) {
       transaction.push('BEGIN;');
       if (lookups[1].rowCount > 0) {
         lookups[1].rows.forEach(share => {
+          const blockValid = share.block_valid;
           const shareData = {
             job: share.job,
             id: share.id,
@@ -47,16 +48,21 @@ const Stratum = function (logger, client, config, configMain, template) {
             port: share.port,
             addrPrimary: share.addr_primary,
             addrAuxiliary: share.addr_auxiliary,
-            blockDiffPrimary: share.block_diff_primary,
             blockType: share.block_type,
             difficulty: share.difficulty,
-            hash: share.hash,
-            height: share.height,
-            identifier: share.identifier,
-            shareDiff: share.share_diff
+            identifier: share.identifier
           };
           const shareValid = share.share_valid;
-          const blockValid = share.block_valid;
+
+          if (share.error == null) {    
+            shareData.blockDiffPrimary = share.block_diff_primary;
+            shareData.hash = share.hash;
+            shareData.height = share.height;
+            shareData.shareDiff = share.share_diff;
+            shareData.transaction = share.transaction || '';
+          } else {
+            shareData.shareDiff = share.error;
+          }
           
           _this.stratum.emit('pool.share', shareData, shareValid, blockValid);
           transaction.push(_this.current.shares.deleteCurrentShare(_this.pool, shareData.hash),);

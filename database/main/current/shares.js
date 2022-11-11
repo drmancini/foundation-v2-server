@@ -77,6 +77,7 @@ const CurrentShares = function (logger, configMain) {
         ${ share.blockDiffPrimary },
         '${ share.blockType }',
         ${ share.difficulty },
+        '${ share.error }',
         '${ share.hash }',
         ${ share.height },
         '${ share.identifier }',
@@ -95,9 +96,9 @@ const CurrentShares = function (logger, configMain) {
       INSERT INTO "${ pool }".current_shares (
         job, share_id, ip, port, addr_primary,
         addr_auxiliary, block_diff_primary,
-        block_type, difficulty, hash, height,
-        identifier, share_diff, transaction,
-        share_valid, block_valid)
+        block_type, difficulty, error, hash,
+        height, identifier, share_diff,
+        transaction, share_valid, block_valid)
       VALUES ${ _this.buildCurrentSharesMain(updates) }
       ON CONFLICT ON CONSTRAINT current_shares_unique
       DO NOTHING;`;
