@@ -54,14 +54,14 @@ const Stratum = function (logger, client, config, configMain, template) {
           };
           const shareValid = share.share_valid;
 
-          if (share.error == null) {    
+          if (share.error == 'undefined') {    
             shareData.blockDiffPrimary = share.block_diff_primary;
             shareData.hash = share.hash;
             shareData.height = share.height;
             shareData.shareDiff = share.share_diff;
             shareData.transaction = share.transaction || '';
           } else {
-            shareData.shareDiff = share.error;
+            shareData.error = share.error;
           }
           
           _this.stratum.emit('pool.share', shareData, shareValid, blockValid);

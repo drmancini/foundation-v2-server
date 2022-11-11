@@ -272,7 +272,7 @@ const Schema = function (logger, executor, configMain) {
         block_diff_primary FLOAT NOT NULL DEFAULT 0,
         block_type VARCHAR NOT NULL DEFAULT 'unknown',
         difficulty FLOAT NOT NULL DEFAULT 0,
-        error VARCHAR DEFAULT null,
+        error VARCHAR NOT NULL DEFAULT '',
         hash VARCHAR NOT NULL DEFAULT 'unknown',
         height INT NOT NULL DEFAULT 0,
         identifier VARCHAR NOT NULL DEFAULT 'unknown',
