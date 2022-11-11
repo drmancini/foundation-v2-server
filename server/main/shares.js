@@ -353,12 +353,11 @@ const Shares = function (logger, client, config, configMain) {
     shareData.shareValid = shareValid;
     shareData.blockValid = blockValid;
 
-    // Calculate Share Features
+    // Log New Share
     let shareType = 'valid';
-    console.log(shareData)
     if (shareData.error && shareData.error === 'job not found') shareType = 'stale';
     else if (!shareValid || shareData.error) shareType = 'invalid';
-
+    const type = (shareType === 'valid') ? 'log' : 'error';
     const lines = [(shareType === 'valid') ?
       _this.text.sharesSubmissionsText1(
         shareData.difficulty, shareData.shareDiff, shareData.addrPrimary, shareData.ip) :
