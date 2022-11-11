@@ -275,7 +275,8 @@ const Schema = function (logger, executor, configMain) {
         hash VARCHAR NOT NULL DEFAULT 'unknown',
         height INT NOT NULL DEFAULT 0,
         identifier VARCHAR NOT NULL DEFAULT 'unknown',
-        share_diff VARCHAR NOT NULL DEFAULT '0',
+        share_diff FLOAT NOT NULL DEFAULT 0,
+        transaction VARCHAR NOT NULL DEFAULT '0',
         share_valid BOOLEAN NOT NULL DEFAULT false,
         block_valid BOOLEAN DEFAULT null,
         CONSTRAINT current_shares_unique UNIQUE (hash));`;

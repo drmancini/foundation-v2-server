@@ -81,6 +81,7 @@ const CurrentShares = function (logger, configMain) {
         ${ share.height },
         '${ share.identifier }',
         ${ share.shareDiff },
+        '${ share.transaction }',
         ${ share.shareValid },
         ${ share.blockValid })`;
       if (idx < updates.length - 1) values += ', ';
@@ -95,8 +96,8 @@ const CurrentShares = function (logger, configMain) {
         job, share_id, ip, port, addr_primary,
         addr_auxiliary, block_diff_primary,
         block_type, difficulty, hash, height,
-        identifier, share_diff, share_valid,
-        block_valid)
+        identifier, share_diff, transaction,
+        share_valid, block_valid)
       VALUES ${ _this.buildCurrentSharesMain(updates) }
       ON CONFLICT ON CONSTRAINT current_shares_unique
       DO NOTHING;`;
