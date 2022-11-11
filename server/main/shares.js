@@ -364,7 +364,7 @@ const Shares = function (logger, client, config, configMain) {
         shareData.difficulty, shareData.shareDiff, shareData.addrPrimary, shareData.ip) :
       _this.text.sharesSubmissionsText2(shareData.error, shareData.addrPrimary, shareData.ip)];
       console.log(lines)
-    // _this.logger[type]('Shares', _this.config.name, lines);
+    _this.logger[type]('Shares', _this.config.name, lines);
 
     // Build Transaction
     const transaction = [
