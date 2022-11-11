@@ -356,13 +356,14 @@ const Shares = function (logger, client, config, configMain) {
     // Calculate Share Features
     let shareType = 'valid';
     console.log(shareData)
-    // if (shareData.error && shareData.error === 'job not found') shareType = 'stale';
-    // else if (!shareValid || shareData.error) shareType = 'invalid';
+    if (shareData.error && shareData.error === 'job not found') shareType = 'stale';
+    else if (!shareValid || shareData.error) shareType = 'invalid';
 
-    // const lines = [(shareType === 'valid') ?
-      // _this.text.sharesSubmissionsText1(
-        // shareData.difficulty, shareData.shareDiff, shareData.addrPrimary, shareData.ip) :
-      // _this.text.sharesSubmissionsText2(shareData.error, shareData.addrPrimary, shareData.ip)];
+    const lines = [(shareType === 'valid') ?
+      _this.text.sharesSubmissionsText1(
+        shareData.difficulty, shareData.shareDiff, shareData.addrPrimary, shareData.ip) :
+      _this.text.sharesSubmissionsText2(shareData.error, shareData.addrPrimary, shareData.ip)];
+      console.log(lines)
     // _this.logger[type]('Shares', _this.config.name, lines);
 
     // Build Transaction
