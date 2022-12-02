@@ -12,6 +12,7 @@ const config = {};
 config.enabled = false;
 config.name = 'Pool-Bitcoin';
 config.template = 'bitcoin';
+config.difficultyCache = false;
 
 // Primary Configuration
 ////////////////////////////////////////////////////////////////////////////////

@@ -69,7 +69,7 @@ const Stratum = function (logger, client, config, configMain, template) {
   
   // Create Primary and Auxiliary Worker Difficulty Cache
   this.handleDifficultyCache = function(callback) {
-    if (_this.config.primary && _this.config.primary.difficultyCache) {
+    if (_this.configMain.difficultyCache) {
       _this.parseDifficultyCache('primary', (primaryDiff) => {
         // if (_this.config.auxiliary && _this.config.auxiliary.difficultyCache) {
         //   _this.parseDifficultyCache('auxiliary', (auxiliaryDiff) => {
