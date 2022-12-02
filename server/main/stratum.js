@@ -12,19 +12,84 @@ const Stratum = function (logger, client, config, configMain, template) {
   this.client = client;
   this.config = config;
   this.configMain = configMain;
+  this.pool = config.name;
   this.template = template;
   this.text = Text[configMain.language];
+
+  // Database Variables
+  this.executor = _this.client.commands.executor;
+  this.current = _this.client.commands.current;
 
   // Stratum Variables
   process.setMaxListeners(0);
   this.forkId = process.env.forkId;
+  
+  // Geenerate Difficulty Cache From Rounds Data
+  this.parseDifficultyCache = function(blockType, callback) {
+    const timestamp = Date.now();
+    const difficulties = {};
+    const cutoff = timestamp - 6 * 60 * 60 * 1000;
+    const parameters = {
+      identifier: _this.configMain.identifier,
+      type: blockType,
+      timestamp: 'gt' + cutoff,
+    };
 
+    const transaction = [
+      'BEGIN;',
+      _this.current.rounds.selectCurrentRoundsMain(_this.pool, parameters),
+      'COMMIT;'];
+    
+    _this.executor(transaction, (lookups) => {
+      const workers = {};
+      if (lookups[1].rowCount > 0) {
+        lookups[1].rows.forEach(round => {
+          if (round.worker in workers) {
+            workers[round.worker].times += round.times;
+            workers[round.worker].valid += round.valid;
+            workers[round.worker].work += round.work;
+          } else {
+            workers[round.worker] = {
+              times: round.times,
+              valid: round.valid,
+              work: round.work,
+            };
+          };
+        });
+      }
+
+      Object.keys(workers).forEach(worker => {
+        const diffPerSecond = workers[worker].work / workers[worker].times;
+        delete workers[worker];
+        workers[worker] = diffPerSecond;
+      });
+      callback(workers);
+    });    
+  };
+  
+  // Create Primary and Auxiliary Worker Difficulty Cache
+  this.handleDifficultyCache = function(callback) {
+    if (_this.config.primary && _this.config.primary.difficultyCache) {
+      _this.parseDifficultyCache('primary', (primaryDiff) => {
+        // if (_this.config.auxiliary && _this.config.auxiliary.difficultyCache) {
+        //   _this.parseDifficultyCache('auxiliary', (auxiliaryDiff) => {
+        //     callback({
+        //       primary: primaryDiff,
+        //       auxiliary: auxiliaryDiff,
+        //     })
+        //   });
+        // } else {
+        callback(primaryDiff);
+        // }
+      })
+    };
+  };
+  
   // Build Stratum from Configuration
   /* istanbul ignore next */
-  this.handleStratum = function() {
-
+  this.handleStratum = function(difficulties) {
     // Build Stratum Server
-    _this.stratum = _this.template.builder(_this.config, _this.configMain, () => {});
+    _this.stratum = _this.template.builder(_this.config, _this.configMain, difficulties, () => {});
 
     // Handle Stratum Main Events
     _this.stratum.on('pool.started', () => {});
@@ -75,27 +140,28 @@ const Stratum = function (logger, client, config, configMain, template) {
   /* eslint-disable */
   /* istanbul ignore next */
   this.setupStratum = function(callback) {
-
     // Build out Initial Functionality
     _this.network = new Network(logger, _this.client, _this.config, _this.configMain);
     _this.shares = new Shares(logger, _this.client, _this.config, _this.configMain);
 
     // Build Daemon/Stratum Functionality
-    _this.handleStratum();
-    _this.stratum.setupPrimaryDaemons(() => {
-    _this.stratum.setupAuxiliaryDaemons(() => {
-    _this.stratum.setupPorts();
-    _this.stratum.setupSettings(() => {
-    _this.stratum.setupRecipients();
-    _this.stratum.setupManager();
-    _this.stratum.setupPrimaryBlockchain(() => {
-    _this.stratum.setupAuxiliaryBlockchain(() => {
-    _this.stratum.setupFirstJob(() => {
-    _this.stratum.setupBlockPolling(() => {
-    _this.stratum.setupNetwork(() => {
-      _this.outputStratum()
-      callback()
-    })
+    _this.handleDifficultyCache((difficulties) => {
+      _this.handleStratum(difficulties);
+      _this.stratum.setupPrimaryDaemons(() => {
+      _this.stratum.setupAuxiliaryDaemons(() => {
+      _this.stratum.setupPorts();
+      _this.stratum.setupSettings(() => {
+      _this.stratum.setupRecipients();
+      _this.stratum.setupManager();
+      _this.stratum.setupPrimaryBlockchain(() => {
+      _this.stratum.setupAuxiliaryBlockchain(() => {
+      _this.stratum.setupFirstJob(() => {
+      _this.stratum.setupBlockPolling(() => {
+      _this.stratum.setupNetwork(() => {
+        _this.outputStratum()
+        callback()
+      })
+    });
 
     // Too Much Indentation
     })})})})})})});
