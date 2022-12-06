@@ -67,20 +67,11 @@ const Stratum = function (logger, client, config, configMain, template) {
     });    
   };
   
-  // Create Primary and Auxiliary Worker Difficulty Cache
+  // Create Worker Difficulty Cache
   this.handleDifficultyCache = function(callback) {
     if (_this.configMain.difficultyCache) {
       _this.parseDifficultyCache('primary', (primaryDiff) => {
-        // if (_this.config.auxiliary && _this.config.auxiliary.difficultyCache) {
-        //   _this.parseDifficultyCache('auxiliary', (auxiliaryDiff) => {
-        //     callback({
-        //       primary: primaryDiff,
-        //       auxiliary: auxiliaryDiff,
-        //     })
-        //   });
-        // } else {
         callback(primaryDiff);
-        // }
       })
     };
   };
