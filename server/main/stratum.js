@@ -16,6 +16,8 @@ const Stratum = function (logger, client, config, configMain, template) {
   this.template = template;
   this.text = Text[configMain.language];
 
+  this.difficulties = {};
+
   // Database Variables
   this.executor = _this.client.commands.executor;
   this.current = _this.client.commands.current;
@@ -27,7 +29,6 @@ const Stratum = function (logger, client, config, configMain, template) {
   // Geenerate Difficulty Cache From Rounds Data
   this.parseDifficultyCache = function(blockType, callback) {
     const timestamp = Date.now();
-    const difficulties = {};
     const cutoff = timestamp - 6 * 60 * 60 * 1000;
     const parameters = {
       identifier: _this.configMain.identifier,
@@ -45,11 +46,24 @@ const Stratum = function (logger, client, config, configMain, template) {
       if (lookups[1].rowCount > 0) {
         lookups[1].rows.forEach(round => {
           if (round.worker in workers) {
-            workers[round.worker].times += round.times;
-            workers[round.worker].valid += round.valid;
-            workers[round.worker].work += round.work;
+            if (round.round in workers[round.worker]) {
+              workers[round.worker][round.round].times = Math.max(workers[round.worker][round.round].times, round.times);
+              workers[round.worker][round.round].valid += round.valid;
+              workers[round.worker][round.round].work += round.work;
+            } else {
+              workers[round.worker][round.round] = {
+                times: round.times,
+                valid: round.valid,
+                work: round.work,
+              }
+            }
           } else {
             workers[round.worker] = {
+              times: 0,
+              valid: 0,
+              work: 0,
+            };
+            workers[round.worker][round.round] = {
               times: round.times,
               valid: round.valid,
               work: round.work,
@@ -58,11 +72,23 @@ const Stratum = function (logger, client, config, configMain, template) {
         });
       }
 
+      for (const [worker, rounds] of Object.entries(workers)) {
+        for (const [round, data] of Object.entries(rounds)) {
+          if(round != 'valid' && round != 'times' && round != 'work') {
+            workers[worker].times += data.times;
+            workers[worker].valid += data.valid;
+            workers[worker].work += data.work;
+            delete workers[worker][round];
+          }
+        } 
+      };
+
       Object.keys(workers).forEach(worker => {
         const diffPerSecond = workers[worker].work / workers[worker].times;
         delete workers[worker];
         workers[worker] = diffPerSecond;
       });
+
       callback(workers);
     });    
   };
@@ -73,14 +99,19 @@ const Stratum = function (logger, client, config, configMain, template) {
       _this.parseDifficultyCache('primary', (primaryDiff) => {
         callback(primaryDiff);
       })
-    };
+    } else {
+      console.log('cache disabled')
+        callback({});
+    }
   };
   
   // Build Stratum from Configuration
   /* istanbul ignore next */
+  // this.handleStratum = function() {
   this.handleStratum = function(difficulties) {
     // Build Stratum Server
     _this.stratum = _this.template.builder(_this.config, _this.configMain, difficulties, () => {});
+    // _this.stratum = _this.template.builder(_this.config, _this.configMain, () => {});
 
     // Handle Stratum Main Events
     _this.stratum.on('pool.started', () => {});
@@ -138,6 +169,7 @@ const Stratum = function (logger, client, config, configMain, template) {
     // Build Daemon/Stratum Functionality
     _this.handleDifficultyCache((difficulties) => {
       _this.handleStratum(difficulties);
+      // _this.handleStratum();
       _this.stratum.setupPrimaryDaemons(() => {
       _this.stratum.setupAuxiliaryDaemons(() => {
       _this.stratum.setupPorts();
