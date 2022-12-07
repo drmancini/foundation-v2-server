@@ -102,7 +102,7 @@ const CurrentRounds = function (logger, configMain) {
         timestamp = EXCLUDED.timestamp,
         invalid = "${ pool }".current_rounds.invalid + EXCLUDED.invalid,
         stale = "${ pool }".current_rounds.stale + EXCLUDED.stale,
-        times = GREATEST("${ pool }".current_rounds.times, EXCLUDED.times),
+        times = "${ pool }".current_rounds.times + EXCLUDED.times,
         valid = "${ pool }".current_rounds.valid + EXCLUDED.valid,
         work = "${ pool }".current_rounds.work + EXCLUDED.work;`;
   };

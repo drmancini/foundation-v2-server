@@ -66,11 +66,11 @@ describe('Test shares functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const shares = new Shares(logger, client, configCopy, configMainCopy);
-    expect(shares.handleTimes({ timestamp: 1634742080000, times: 0 })).toBe(0.841);
-    expect(shares.handleTimes({ timestamp: 1634742070000, times: 145 })).toBe(155.841);
-    expect(shares.handleTimes({ timestamp: 1634742050000, times: 145 })).toBe(175.841);
-    expect(shares.handleTimes({ timestamp: 1634740000000, times: 145 })).toBe(145);
-    expect(shares.handleTimes({ times: 145 })).toBe(145);
+    expect(shares.handleTimes({ timestamp: 1634742080000, times: 0 }, 1634742080841)).toBe(0.841);
+    expect(shares.handleTimes({ timestamp: 1634742070000, times: 145 }, 1634742170100)).toBe(100.1);
+    expect(shares.handleTimes({ timestamp: 1634742050000 })).toBe(0);
+    expect(shares.handleTimes({ times: 0 }, 1634742050000)).toBe(0);
+    expect(shares.handleTimes({ times: 0 })).toBe(0);
   });
 
   test('Test shares database updates [4]', () => {
@@ -1263,7 +1263,7 @@ describe('Test shares functionality', () => {
         timestamp = EXCLUDED.timestamp,
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
-        times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
+        times = "Pool-Bitcoin".current_rounds.times + EXCLUDED.times,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedWorkers = `
@@ -1401,7 +1401,7 @@ describe('Test shares functionality', () => {
         timestamp = EXCLUDED.timestamp,
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
-        times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
+        times = "Pool-Bitcoin".current_rounds.times + EXCLUDED.times,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedWorkers = `
@@ -1545,7 +1545,7 @@ describe('Test shares functionality', () => {
         timestamp = EXCLUDED.timestamp,
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
-        times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
+        times = "Pool-Bitcoin".current_rounds.times + EXCLUDED.times,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedWorkers = `
@@ -1683,7 +1683,7 @@ describe('Test shares functionality', () => {
         timestamp = EXCLUDED.timestamp,
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
-        times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
+        times = "Pool-Bitcoin".current_rounds.times + EXCLUDED.times,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedWorkers = `
@@ -1828,7 +1828,7 @@ describe('Test shares functionality', () => {
         timestamp = EXCLUDED.timestamp,
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
-        times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
+        times = "Pool-Bitcoin".current_rounds.times + EXCLUDED.times,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedWorkers = `
@@ -1940,7 +1940,7 @@ describe('Test shares functionality', () => {
         timestamp = EXCLUDED.timestamp,
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
-        times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
+        times = "Pool-Bitcoin".current_rounds.times + EXCLUDED.times,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedAuxWorkers = `

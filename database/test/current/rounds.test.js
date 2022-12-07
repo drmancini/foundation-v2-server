@@ -145,7 +145,7 @@ describe('Test database rounds functionality', () => {
         timestamp = EXCLUDED.timestamp,
         invalid = "Pool-Main".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Main".current_rounds.stale + EXCLUDED.stale,
-        times = GREATEST("Pool-Main".current_rounds.times, EXCLUDED.times),
+        times = "Pool-Main".current_rounds.times + EXCLUDED.times,
         valid = "Pool-Main".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Main".current_rounds.work + EXCLUDED.work;`;
     expect(response).toBe(expected);
@@ -207,7 +207,7 @@ describe('Test database rounds functionality', () => {
         timestamp = EXCLUDED.timestamp,
         invalid = "Pool-Main".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Main".current_rounds.stale + EXCLUDED.stale,
-        times = GREATEST("Pool-Main".current_rounds.times, EXCLUDED.times),
+        times = "Pool-Main".current_rounds.times + EXCLUDED.times,
         valid = "Pool-Main".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Main".current_rounds.work + EXCLUDED.work;`;
     expect(response).toBe(expected);
