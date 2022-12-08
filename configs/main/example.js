@@ -11,6 +11,7 @@
 const config = {};
 config.identifier = '';
 config.language = 'english';
+config.difficultyCache = true;
 
 // Logger Configuration
 config.logger = {};
