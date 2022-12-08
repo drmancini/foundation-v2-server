@@ -112,6 +112,7 @@ config.settings.interval.statistics = 90000; // ms
 config.settings.window = {};
 config.settings.window.hashrate = 300000; // ms
 config.settings.window.inactive = 604800000; // ms
+config.settings.window.pplnt = 21600000; //ms
 config.settings.window.rounds = 21600000; // ms
 config.settings.window.updates = 300000; // ms
 

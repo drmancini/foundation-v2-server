@@ -48,20 +48,6 @@ const Network = function (logger, client, config, configMain) {
     _this.executor(transaction, () => callback());
   };
 
-  // Handle Primary Updates
-  this.handleAuxiliary = function(network, callback) {
-
-    // Build Combined Transaction
-    const networkUpdates = _this.handleCurrentNetwork(network, 'auxiliary');
-    const transaction = [
-      'BEGIN;',
-      _this.current.network.insertCurrentNetworkMain(_this.pool, [networkUpdates]),
-      'COMMIT'];
-
-    // Insert Work into Database
-    _this.executor(transaction, () => callback());
-  };
-
   // Handle Network Data Submissions
   this.handleSubmissions = function(networkData, callback) {
 
@@ -71,11 +57,6 @@ const Network = function (logger, client, config, configMain) {
     // Primary Behavior
     case 'primary':
       _this.handlePrimary(networkData, () => callback());
-      break;
-
-    // Auxiliary Behavior
-    case 'auxiliary':
-      _this.handleAuxiliary(networkData, () => callback());
       break;
 
     // Default Behavior

@@ -35,13 +35,6 @@ const Loader = function(logger, configMain) {
       _this.logger.error('Loader', config.name, lines);
       return false;
     }
-    if (config.auxiliary && config.auxiliary.enabled) {
-      if (!Array.isArray(config.auxiliary.daemons) || config.auxiliary.daemons.length < 1) {
-        const lines = [_this.text.loaderDaemonsText2()];
-        _this.logger.error('Loader', config.name, lines);
-        return false;
-      }
-    }
     return true;
   };
 

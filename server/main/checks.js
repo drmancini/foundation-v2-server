@@ -45,7 +45,7 @@ const Checks = function (logger, client, config, configMain) {
   };
 
   // Handle Miners Updates
-  this.handleCurrentMiners = function(miners, blockType) {
+  this.handleCurrentMiners = function(miners) {
 
     // Return Miners Updates
     return Object.keys(miners).map((address) => {
@@ -54,55 +54,7 @@ const Checks = function (logger, client, config, configMain) {
         miner: address,
         generate: miners[address].generate,
         immature: miners[address].immature,
-        type: blockType,
-      };
-    });
-  };
-
-  // Handle Round Updates
-  this.handleCurrentOrphans = function(rounds) {
-
-    // Calculate Features of Rounds
-    const timestamp = Date.now();
-    const interval = _this.config.settings.interval.rounds;
-    const recent = Math.round(timestamp / interval) * interval;
-
-    // Flatten Nested Round Array
-    const combined = {};
-    if (rounds.length >= 1) {
-      rounds = rounds.reduce((a, b) => a.concat(b));
-    }
-
-    // Collect All Round Data
-    rounds.forEach((round) => {
-      const identifier = `${ round.worker }_${ round.solo }_${ round.round }_${ round.type }`;
-      if (identifier in combined) {
-        const current = combined[identifier];
-        current.invalid += round.invalid || 0;
-        current.stale += round.stale || 0;
-        current.times = Math.max(current.times, round.times);
-        current.valid += round.valid || 0;
-        current.work += round.work || 0;
-      } else combined[identifier] = round;
-    });
-
-    // Return Round Updates
-    return Object.keys(combined).map((identifier) => {
-      const current = combined[identifier];
-      return {
-        timestamp: timestamp,
-        recent: recent,
-        miner: current.miner,
-        worker: current.worker,
-        identifier: current.identifier,
-        invalid: current.invalid,
-        round: 'current',
-        solo: current.solo,
-        stale: current.stale,
-        times: current.times,
-        type: current.type,
-        valid: current.valid,
-        work: current.work,
+        type: 'primary',
       };
     });
   };
@@ -124,12 +76,12 @@ const Checks = function (logger, client, config, configMain) {
   };
 
   // Handle Round Reset Updates
-  this.handleReset = function(blockType, callback) {
+  this.handleReset = function(callback) {
 
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
-      _this.current.miners.insertCurrentMinersReset(_this.pool, blockType),
+      _this.current.miners.insertCurrentMinersReset(_this.pool, 'primary'),
       'COMMIT;'];
 
     // Insert Work into Database
@@ -137,15 +89,13 @@ const Checks = function (logger, client, config, configMain) {
   };
 
   // Handle Round Success Updates
-  this.handleUpdates = function(blocks, rounds, payments, blockType, callback) {
+  this.handleUpdates = function(blocks, payments, callback) {
 
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
 
     // Handle Block Categories Individually
-    const flattened = blocks.flatMap((block) => block.round);
     const orphanBlocks = blocks.filter((block) => block.category === 'orphan');
-    const orphanRounds = orphanBlocks.map((orphan) => rounds[flattened.indexOf(orphan.round)] || []);
     const immatureBlocks = blocks.filter((block) => block.category === 'immature');
     const generateBlocks = blocks.filter((block) => block.category === 'generate');
 
@@ -171,24 +121,10 @@ const Checks = function (logger, client, config, configMain) {
     }
 
     // Handle Miner Payment Updates
-    const minersUpdates = _this.handleCurrentMiners(payments, blockType);
+    const minersUpdates = _this.handleCurrentMiners(payments);
     if (minersUpdates.length >= 1) {
       transaction.push(_this.current.miners.insertCurrentMinersUpdates(
         _this.pool, minersUpdates));
-    }
-
-    // Handle Orphan Round Delete Updates
-    const orphanRoundsDelete = orphanBlocks.map((block) => `'${ block.round }'`);
-    if (orphanRoundsDelete.length >= 1) {
-      transaction.push(_this.current.rounds.deleteCurrentRoundsMain(
-        _this.pool, orphanRoundsDelete));
-    }
-
-    // Handle Orphan Round Updates
-    const orphanRoundsUpdates = _this.handleCurrentOrphans(orphanRounds);
-    if (orphanRoundsUpdates.length >= 1) {
-      transaction.push(_this.current.rounds.insertCurrentRoundsMain(
-        _this.pool, orphanRoundsUpdates));
     }
 
     // Handle Historical Orphan Block Updates
@@ -211,65 +147,47 @@ const Checks = function (logger, client, config, configMain) {
 
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
-      const parameters = { solo: block.solo, round: block.round, type: 'primary' };
+      const parameters = { solo: block.solo, type: 'primary' };
+      if (parameters.solo) {
+        parameters.round = block.round;
+      } else {
+        const roundCutoff = block.submitted - _this.config.settings.window.pplnt;
+        parameters.recent = 'bwgt' + roundCutoff + '|le' + block.submitted;
+      }
       transaction.push(_this.current.rounds.selectCurrentRoundsMain(
         _this.pool, parameters));
     });
 
     // Determine Workers for Rounds
     transaction.push('COMMIT;');
+
     _this.executor(transaction, (results) => {
       const rounds = results.slice(1, -1).map((round) => round.rows);
-
       // Collect Round/Worker Data and Amounts
       _this.stratum.stratum.handlePrimaryRounds(blocks, (error, updates) => {
         if (error) _this.handleFailures(blocks, () => callback(error));
         else _this.stratum.stratum.handlePrimaryWorkers(blocks, rounds, (results) => {
-          _this.handleUpdates(updates, rounds, results, 'primary', () => callback(null));
-        });
-      });
-    });
-  };
-
-  // Handle Auxiliary Updates
-  this.handleAuxiliary = function(blocks, callback) {
-
-    // Build Combined Transaction
-    const transaction = ['BEGIN;'];
-
-    // Add Round Lookups to Transaction
-    blocks.forEach((block) => {
-      const parameters = { solo: block.solo, round: block.round, type: 'auxiliary' };
-      transaction.push(_this.current.rounds.selectCurrentRoundsMain(
-        _this.pool, parameters));
-    });
-
-    // Determine Workers for Rounds
-    transaction.push('COMMIT;');
-    _this.executor(transaction, (results) => {
-      const rounds = results.slice(1, -1).map((round) => round.rows);
-
-      // Collect Round/Worker Data and Amounts
-      _this.stratum.stratum.handleAuxiliaryRounds(blocks, (error, updates) => {
-        if (error) _this.handleFailures(blocks, () => callback(error));
-        else _this.stratum.stratum.handleAuxiliaryWorkers(blocks, rounds, (results) => {
-          _this.handleUpdates(updates, rounds, results, 'auxiliary', () => callback(null));
+          _this.handleUpdates(updates, results, () => callback(null));
         });
       });
     });
   };
 
   // Handle Payment Updates
-  this.handleRounds = function(lookups, blockType, callback) {
+  this.handleRounds = function(lookups, callback) {
 
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
 
     // Build Checks for Each Block
     const checks = [];
+    let firstBlock = Date.now();
     if (lookups[1].rows[0]) {
       lookups[1].rows.forEach((block) => {
-        checks.push({ timestamp: Date.now(), round: block.round, type: blockType });
+        if (block.submitted < firstBlock) {
+          firstBlock = block.submitted;
+        }
+        checks.push({ timestamp: Date.now(), round: block.round, type: 'primary' });
       });
     }
 
@@ -278,91 +196,54 @@ const Checks = function (logger, client, config, configMain) {
       transaction.push(_this.current.transactions.insertCurrentTransactionsMain(_this.pool, checks));
     }
 
+    // Delete Old Rounds
+    const roundsWindow = firstBlock - _this.config.settings.window.pplnt; 
+    transaction.push(_this.current.rounds.deleteCurrentRounds(_this.pool, roundsWindow)); 
+
     // Establish Separate Behavior
     transaction.push('COMMIT;');
-    switch (blockType) {
+    
+    _this.executor(transaction, (results) => {
+      results = results[1].rows.map((block) => block.round);
+      const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
 
-    // Primary Behavior
-    case 'primary':
-      _this.executor(transaction, (results) => {
-        results = results[1].rows.map((block) => block.round);
-        const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
+      // Blocks Exist to Validate
+      if (blocks.length >= 1) {
+        _this.handlePrimary(blocks, (error) => {
+          const updates = [(error) ?
+            _this.text.databaseCommandsText2(JSON.stringify(error)) :
+            _this.text.databaseUpdatesText2(blocks.length)];
+          _this.logger.debug('Checks', _this.config.name, updates);
+          callback();
+        });
 
-        // Blocks Exist to Validate
-        if (blocks.length >= 1) {
-          _this.handlePrimary(blocks, (error) => {
-            const updates = [(error) ?
-              _this.text.databaseCommandsText2(JSON.stringify(error)) :
-              _this.text.databaseUpdatesText2(blockType, blocks.length)];
-            _this.logger.debug('Checks', _this.config.name, updates);
-            callback();
-          });
-
-        // No Blocks Exist to Validate
-        } else {
-          _this.handleReset(blockType, () => {
-            const updates = [_this.text.databaseUpdatesText3(blockType)];
-            _this.logger.debug('Checks', _this.config.name, updates);
-            callback();
-          });
-        }
-      });
-      break;
-
-    // Auxiliary Behavior
-    case 'auxiliary':
-      _this.executor(transaction, (results) => {
-        results = results[1].rows.map((block) => block.round);
-        const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
-
-        // Blocks Exist to Validate
-        if (blocks.length >= 1) {
-          _this.handleAuxiliary(blocks, (error) => {
-            const updates = [(error) ?
-              _this.text.databaseCommandsText2(JSON.stringify(error)) :
-              _this.text.databaseUpdatesText2(blockType, blocks.length)];
-            _this.logger.debug('Checks', _this.config.name, updates);
-            callback();
-          });
-
-        // No Blocks Exist to Validate
-        } else {
-          _this.handleReset(blockType, () => {
-            const updates = [_this.text.databaseUpdatesText3(blockType)];
-            _this.logger.debug('Checks', _this.config.name, updates);
-            callback();
-          });
-        }
-      });
-      break;
-
-    // Default Behavior
-    default:
-      callback();
-      break;
-    }
+      // No Blocks Exist to Validate
+      } else {
+        _this.handleReset(() => {
+          const updates = [_this.text.databaseUpdatesText3()];
+          _this.logger.debug('Checks', _this.config.name, updates);
+          callback();
+        });
+      }
+    });
   };
 
   // Handle Checks Updates
-  this.handleChecks = function(blockType, callback) {
+  this.handleChecks = function(callback) {
 
     // Handle Initial Logging
-    const starting = [_this.text.databaseStartingText2(blockType)];
+    const starting = [_this.text.databaseStartingText2()];
     _this.logger.debug('Checks', _this.config.name, starting);
-
-    // Calculate Checks Features
-    const roundsWindow = Date.now() - _this.config.settings.window.rounds;
 
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
-      _this.current.blocks.selectCurrentBlocksMain(_this.pool, { type: blockType }),
-      _this.current.rounds.deleteCurrentRoundsInactive(_this.pool, roundsWindow),
+      _this.current.blocks.selectCurrentBlocksMain(_this.pool, { type: 'primary' }),
       'COMMIT;'];
 
     // Establish Separate Behavior
     _this.executor(transaction, (lookups) => {
-      _this.handleRounds(lookups, blockType, callback);
+      _this.handleRounds(lookups, callback);
     });
   };
 
@@ -374,10 +255,7 @@ const Checks = function (logger, client, config, configMain) {
     const random = Math.floor(Math.random() * (maxInterval - minInterval) + minInterval);
     setTimeout(() => {
       _this.handleInterval();
-      if (_this.config.primary.checks.enabled) _this.handleChecks('primary', () => {});
-      if (_this.config.auxiliary && _this.config.auxiliary.enabled && _this.config.auxiliary.checks.enabled) {
-        _this.handleChecks('auxiliary', () => {});
-      }
+      if (_this.config.primary.checks.enabled) _this.handleChecks(() => {});
     }, random);
   };
 

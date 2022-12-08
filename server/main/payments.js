@@ -33,7 +33,7 @@ const Payments = function (logger, client, config, configMain) {
   };
 
   // Handle Miners Updates
-  this.handleCurrentMiners = function(amounts, balances, blockType) {
+  this.handleCurrentMiners = function(amounts, balances) { 
 
     // Iterate Through Amounts
     const combined = {};
@@ -54,7 +54,7 @@ const Payments = function (logger, client, config, configMain) {
         miner: miner,
         balance: combined[miner].balance,
         paid: combined[miner].paid,
-        type: blockType,
+        type: 'primary',
       };
     });
   };
@@ -86,7 +86,7 @@ const Payments = function (logger, client, config, configMain) {
   };
 
   // Handle Historical Payments Updates
-  this.handleHistoricalPayments = function(amounts, record, blockType) {
+  this.handleHistoricalPayments = function(amounts, record) {
 
     // Return Payments Updates
     return Object.keys(amounts).map((miner) => {
@@ -95,7 +95,7 @@ const Payments = function (logger, client, config, configMain) {
         miner: miner,
         amount: amounts[miner],
         transaction: record,
-        type: blockType,
+        type: 'primary',
       };
     });
   };
@@ -143,7 +143,7 @@ const Payments = function (logger, client, config, configMain) {
   };
 
   // Handle Historical Transactions Updates
-  this.handleHistoricalTransactions = function(amounts, record, blockType) {
+  this.handleHistoricalTransactions = function(amounts, record) {
 
     // Calculate Total Amount
     let total = 0;
@@ -156,7 +156,7 @@ const Payments = function (logger, client, config, configMain) {
       timestamp: Date.now(),
       amount: total,
       transaction: record,
-      type: blockType,
+      type: 'primary',
     };
   };
 
@@ -177,12 +177,12 @@ const Payments = function (logger, client, config, configMain) {
   };
 
   // Handle Round Reset Updates
-  this.handleReset = function(blockType, callback) {
+  this.handleReset = function(callback) {
 
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
-      _this.current.miners.insertCurrentMinersReset(_this.pool, blockType),
+      _this.current.miners.insertCurrentMinersReset(_this.pool, 'primary'),
       'COMMIT;'];
 
     // Insert Work into Database
@@ -190,7 +190,7 @@ const Payments = function (logger, client, config, configMain) {
   };
 
   // Handle Round Success Updates
-  this.handleUpdates = function(blocks, rounds, amounts, balances, record, blockType, callback) {
+  this.handleUpdates = function(blocks, rounds, amounts, balances, record, callback) {
 
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
@@ -203,17 +203,10 @@ const Payments = function (logger, client, config, configMain) {
     }
 
     // Handle Miners Updates
-    const minersUpdates = _this.handleCurrentMiners(amounts, balances, blockType);
+    const minersUpdates = _this.handleCurrentMiners(amounts, balances);
     if (minersUpdates.length >= 1) {
       transaction.push(_this.current.miners.insertCurrentMinersPayments(
         _this.pool, minersUpdates));
-    }
-
-    // Handle Generate Round Delete Updates
-    const generateRoundsDelete = blocks.map((block) => `'${ block.round }'`);
-    if (generateRoundsDelete.length >= 1) {
-      transaction.push(_this.current.rounds.deleteCurrentRoundsMain(
-        _this.pool, generateRoundsDelete));
     }
 
     // Handle Historical Generate Block Updates
@@ -224,7 +217,7 @@ const Payments = function (logger, client, config, configMain) {
     }
 
     // Handle Historical Payments Updates
-    const paymentsUpdates = _this.handleHistoricalPayments(amounts, record, blockType);
+    const paymentsUpdates = _this.handleHistoricalPayments(amounts, record);
     if (paymentsUpdates.length >= 1) {
       transaction.push(_this.historical.payments.insertHistoricalPaymentsMain(
         _this.pool, paymentsUpdates));
@@ -238,7 +231,7 @@ const Payments = function (logger, client, config, configMain) {
     }
 
     // Handle Historical Transactions Updates
-    const transactionsUpdates = _this.handleHistoricalTransactions(amounts, record, blockType);
+    const transactionsUpdates = _this.handleHistoricalTransactions(amounts, record);
     if (record !== null) {
       transaction.push(_this.historical.transactions.insertHistoricalTransactionsMain(
         _this.pool, [transactionsUpdates]));
@@ -278,44 +271,7 @@ const Payments = function (logger, client, config, configMain) {
             if (error) _this.handleFailures(updates, () => callback(error));
             else _this.stratum.stratum.handlePrimaryPayments(payments, (error, amounts, balances, transaction) => {
               if (error) _this.handleFailures(updates, () => callback(error));
-              else _this.handleUpdates(updates, rounds, amounts, balances, transaction, 'primary', () => callback(null));
-            });
-          });
-        });
-      });
-    });
-  };
-
-  // Handle Auxiliary Updates
-  this.handleAuxiliary = function(blocks, balances, callback) {
-
-    // Build Combined Transaction
-    const transaction = ['BEGIN;'];
-
-    // Add Round Lookups to Transaction
-    blocks.forEach((block) => {
-      const parameters = { solo: block.solo, round: block.round, type: 'auxiliary' };
-      transaction.push(_this.current.rounds.selectCurrentRoundsMain(
-        _this.pool, parameters));
-    });
-
-    // Determine Workers for Rounds
-    transaction.push('COMMIT;');
-    _this.executor(transaction, (results) => {
-      const rounds = results.slice(1, -1).map((round) => round.rows);
-
-      // Collect Round/Worker Data and Amounts
-      _this.stratum.stratum.handleAuxiliaryRounds(blocks, (error, updates) => {
-        if (error) _this.handleFailures(updates, () => callback(error));
-        else _this.stratum.stratum.handleAuxiliaryWorkers(blocks, rounds, (results) => {
-          const payments = _this.handleCurrentCombined(balances, results);
-
-          // Validate and Send Out Auxiliary Payments
-          _this.stratum.stratum.handleAuxiliaryBalances(payments, (error) => {
-            if (error) _this.handleFailures(updates, () => callback(error));
-            else _this.stratum.stratum.handleAuxiliaryPayments(payments, (error, amounts, balances, transaction) => {
-              if (error) _this.handleFailures(updates, () => callback(error));
-              else _this.handleUpdates(updates, rounds, amounts, balances, transaction, 'auxiliary', () => callback(null));
+              else _this.handleUpdates(updates, rounds, amounts, balances, transaction, () => callback(null));
             });
           });
         });
@@ -324,7 +280,7 @@ const Payments = function (logger, client, config, configMain) {
   };
 
   // Handle Payment Updates
-  this.handleRounds = function(lookups, blockType, callback) {
+  this.handleRounds = function(lookups, callback) {
 
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
@@ -333,7 +289,7 @@ const Payments = function (logger, client, config, configMain) {
     const checks = [];
     if (lookups[1].rows[0]) {
       lookups[1].rows.forEach((block) => {
-        checks.push({ timestamp: Date.now(), round: block.round, type: blockType });
+        checks.push({ timestamp: Date.now(), round: block.round, type: 'primary' });
       });
     }
 
@@ -353,74 +309,36 @@ const Payments = function (logger, client, config, configMain) {
 
     // Establish Separate Behavior
     transaction.push('COMMIT;');
-    switch (blockType) {
+    _this.executor(transaction, (results) => {
+      results = results[1].rows.map((block) => block.round);
+      const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
 
-    // Primary Behavior
-    case 'primary':
-      _this.executor(transaction, (results) => {
-        results = results[1].rows.map((block) => block.round);
-        const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
+      // Blocks Exist to Send Payments
+      if (blocks.length >= 1) {
+        _this.handlePrimary(blocks, balances, (error) => {
+          const updates = [(error) ?
+            _this.text.databaseCommandsText2(JSON.stringify(error)) :
+            _this.text.databaseUpdatesText4(blocks.length)];
+          _this.logger.debug('Payments', _this.config.name, updates);
+          callback();
+        });
 
-        // Blocks Exist to Send Payments
-        if (blocks.length >= 1) {
-          _this.handlePrimary(blocks, balances, (error) => {
-            const updates = [(error) ?
-              _this.text.databaseCommandsText2(JSON.stringify(error)) :
-              _this.text.databaseUpdatesText4(blockType, blocks.length)];
-            _this.logger.debug('Payments', _this.config.name, updates);
-            callback();
-          });
-
-        // No Blocks Exist to Send Payments
-        } else {
-          _this.handleReset(blockType, () => {
-            const updates = [_this.text.databaseUpdatesText5(blockType)];
-            _this.logger.debug('Payments', _this.config.name, updates);
-            callback();
-          });
-        }
-      });
-      break;
-
-    // Auxiliary Behavior
-    case 'auxiliary':
-      _this.executor(transaction, (results) => {
-        results = results[1].rows.map((block) => block.round);
-        const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
-
-        // Blocks Exist to Send Payments
-        if (blocks.length >= 1) {
-          _this.handleAuxiliary(blocks, balances, (error) => {
-            const updates = [(error) ?
-              _this.text.databaseCommandsText2(JSON.stringify(error)) :
-              _this.text.databaseUpdatesText4(blockType, blocks.length)];
-            _this.logger.debug('Payments', _this.config.name, updates);
-            callback();
-          });
-
-        // No Blocks Exist to Send Payments
-        } else {
-          _this.handleReset(blockType, () => {
-            const updates = [_this.text.databaseUpdatesText5(blockType)];
-            _this.logger.debug('Payments', _this.config.name, updates);
-            callback();
-          });
-        }
-      });
-      break;
-
-    // Default Behavior
-    default:
-      callback();
-      break;
-    }
+      // No Blocks Exist to Send Payments
+      } else {
+        _this.handleReset(() => {
+          const updates = [_this.text.databaseUpdatesText5()];
+          _this.logger.debug('Payments', _this.config.name, updates);
+          callback();
+        });
+      }
+    });
   };
 
   // Handle Payments Updates
-  this.handlePayments = function(blockType, callback) {
+  this.handlePayments = function(callback) {
 
     // Handle Initial Logging
-    const starting = [_this.text.databaseStartingText3(blockType)];
+    const starting = [_this.text.databaseStartingText3()];
     _this.logger.debug('Payments', _this.config.name, starting);
 
     // Calculate Checks Features
@@ -429,14 +347,14 @@ const Payments = function (logger, client, config, configMain) {
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
-      _this.current.blocks.selectCurrentBlocksMain(_this.pool, { category: 'generate', type: blockType }),
-      _this.current.miners.selectCurrentMinersMain(_this.pool, { balance: 'gt0', type: blockType }),
+      _this.current.blocks.selectCurrentBlocksMain(_this.pool, { category: 'generate', type: 'primary' }),
+      _this.current.miners.selectCurrentMinersMain(_this.pool, { balance: 'gt0', type: 'primary' }),
       _this.current.rounds.deleteCurrentRoundsInactive(_this.pool, roundsWindow),
       'COMMIT;'];
 
     // Establish Separate Behavior
     _this.executor(transaction, (lookups) => {
-      _this.handleRounds(lookups, blockType, callback);
+      _this.handleRounds(lookups, callback);
     });
   };
 
@@ -448,10 +366,7 @@ const Payments = function (logger, client, config, configMain) {
     const random = Math.floor(Math.random() * (maxInterval - minInterval) + minInterval);
     setTimeout(() => {
       _this.handleInterval();
-      if (_this.config.primary.payments.enabled) _this.handlePayments('primary', () => {});
-      if (_this.config.auxiliary && _this.config.auxiliary.enabled && _this.config.auxiliary.payments.enabled) {
-        _this.handlePayments('auxiliary', () => {});
-      }
+      if (_this.config.primary.payments.enabled) _this.handlePayments(() => {}); 
     }, random);
   };
 

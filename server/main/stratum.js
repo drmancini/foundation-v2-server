@@ -49,9 +49,6 @@ const Stratum = function (logger, client, config, configMain, template) {
 
     // Build Connected Coins
     const coins = [_this.config.primary.coin.name];
-    if (_this.config.auxiliary && _this.config.auxiliary.enabled) {
-      coins.push(_this.config.auxiliary.coin.name);
-    }
 
     // Build Pool Starting Message
     const output = [
@@ -83,13 +80,11 @@ const Stratum = function (logger, client, config, configMain, template) {
     // Build Daemon/Stratum Functionality
     _this.handleStratum();
     _this.stratum.setupPrimaryDaemons(() => {
-    _this.stratum.setupAuxiliaryDaemons(() => {
     _this.stratum.setupPorts();
     _this.stratum.setupSettings(() => {
     _this.stratum.setupRecipients();
     _this.stratum.setupManager();
     _this.stratum.setupPrimaryBlockchain(() => {
-    _this.stratum.setupAuxiliaryBlockchain(() => {
     _this.stratum.setupFirstJob(() => {
     _this.stratum.setupBlockPolling(() => {
     _this.stratum.setupNetwork(() => {
@@ -98,7 +93,7 @@ const Stratum = function (logger, client, config, configMain, template) {
     })
 
     // Too Much Indentation
-    })})})})})})});
+    })})})})});
   }
 };
 

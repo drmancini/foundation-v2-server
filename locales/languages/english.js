@@ -10,14 +10,14 @@ exports.databaseCommandsText3 = (retries) => `An error was thrown by the databas
 exports.databaseCommandsText4 = () => 'Successfully reconnected to the database, continuing execution ...';
 exports.databaseCommandsText5 = () => 'Unable to reconnect to database, exceeded retry limits ...';
 exports.databaseSchemaText1 = (pool) => `Validated the ${ pool } schema, initializing stratum ...`;
-exports.databaseStartingText1 = (type) => `Started updating statistics and data for ${ type } rounds`;
-exports.databaseStartingText2 = (type) => `Started handling checks and validation for ${ type } rounds`;
-exports.databaseStartingText3 = (type) => `Started handling balances and payments for ${ type } rounds`;
-exports.databaseUpdatesText1 = (type) => `Finished updating statistics and data for ${ type } rounds`;
-exports.databaseUpdatesText2 = (type, rounds) => `Finished handling checks and validation for ${ type } rounds: (${ rounds })`;
-exports.databaseUpdatesText3 = (type) => `Finished handling checks and validation for ${ type } rounds: (0)`;
-exports.databaseUpdatesText4 = (type, rounds) => `Finished handling balances and payments for ${ type } rounds: (${ rounds })`;
-exports.databaseUpdatesText5 = (type) => `Finished handling balances and payments for ${ type } rounds: (0)`;
+exports.databaseStartingText1 = () => `Started updating statistics and data`;
+exports.databaseStartingText2 = () => `Started handling checks and validation`;
+exports.databaseStartingText3 = () => `Started handling balances and payments`;
+exports.databaseUpdatesText1 = () => `Finished updating statistics and data`;
+exports.databaseUpdatesText2 = (rounds) => `Finished handling checks and validation: (${ rounds })`;
+exports.databaseUpdatesText3 = () => `Finished handling checks and validation: (0)`;
+exports.databaseUpdatesText4 = (rounds) => `Finished handling balances and payments: (${ rounds })`;
+exports.databaseUpdatesText5 = () => `Finished handling balances and payments: (0)`;
 
 // Shares Text
 exports.sharesSubmissionsText1 = (difficulty, actual, address, ip) => `A share was accepted at difficulty ${ difficulty }/${ actual || 0 } by ${ address } [${ ip }]`;
@@ -37,7 +37,6 @@ exports.startingMessageText9 = () => 'Server initialized successfully ...';
 // Loader Text
 exports.loaderCertificateText1 = () => 'There is an invalid key, certificate, or authority file specified for TLS. Check your configuration files';
 exports.loaderDaemonsText1 = () => 'There are no primary daemons configured, so the pool cannot be started. Check your configuration files';
-exports.loaderDaemonsText2 = () => 'There are no auxiliary daemons configured, so the pool cannot be started. Check your configuration files';
 exports.loaderNamesText1 = () => 'Pool names are only allowed to be a single word. Check your configuration files';
 exports.loaderNamesText2 = () => 'Two or more pool names are overlapping. Check your configuration files';
 exports.loaderPortsText1 = (currentPort) => `Two or more ports are overlapping on ${ currentPort }. Check your configuration files`;
