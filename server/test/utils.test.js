@@ -43,6 +43,10 @@ describe('Test utility functionality', () => {
     expect(utils.countProcessForks(config)).toBe(1);
   });
 
+  test('Test implemented createHash', () => {
+    expect(utils.createHash('text')).toBe('372ea08cab33e71c02c651dbc83a474d32c676ea');
+  });
+  
   test('Test implemented handleValidation', () => {
     expect(utils.handleValidation('test', 'boolean')).toBe(false);
     expect(utils.handleValidation('test', 'number')).toBe(false);

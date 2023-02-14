@@ -370,14 +370,16 @@ const Statistics = function (logger, client, config, configMain, template) {
     _this.logger.debug('Statistics', _this.config.name, starting);
 
     // Calculate Statistics Features
-    const hashrateWindow = Date.now() - _this.config.settings.window.hashrate;
-    const inactiveWindow = Date.now() - _this.config.settings.window.inactive;
-    const updateWindow = Date.now() - _this.config.settings.window.updates;
+    const timestamp = Date.now();
+    const hashrateWindow = timestamp - _this.config.settings.window.hashrate;
+    const inactiveWindow = timestamp - _this.config.settings.window.inactive;
+    const snapshotWindow = timestamp - _this.config.settings.window.snapshots;
+    const updateWindow = timestamp - _this.config.settings.window.updates;
 
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
-      _this.current.hashrate.deleteCurrentHashrateInactive(_this.pool, hashrateWindow),
+      _this.current.hashrate.deleteCurrentHashrateInactive(_this.pool, snapshotWindow),
       _this.current.hashrate.countCurrentHashrateMiner(_this.pool, hashrateWindow, blockType),
       _this.current.hashrate.countCurrentHashrateWorker(_this.pool, hashrateWindow, true, blockType),
       _this.current.hashrate.countCurrentHashrateWorker(_this.pool, hashrateWindow, false, blockType),

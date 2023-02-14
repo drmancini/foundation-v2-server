@@ -16,6 +16,35 @@ config.template = 'bitcoin';
 // Primary Configuration
 ////////////////////////////////////////////////////////////////////////////////
 
+// CryptoNight Rotations
+config.rotations = {};
+config.rotations.enabled = false;
+config.rotations.DarkDarkliteFast = 1; // Rotation 1
+config.rotations.DarkDarkliteLite = 1; // Rotation 2
+config.rotations.DarkDarkliteTurtle = 1; // Rotation 3
+config.rotations.DarkDarkliteTurtlelite = 1; // Rotation 4
+config.rotations.DarkFastLite = 1; // Rotation 5
+config.rotations.DarkFastTurtle = 1; // Rotation 6
+config.rotations.DarkFastTurtlelite = 1; // Rotation 7
+config.rotations.DarkLiteTurtle = 1; // Rotation 8
+config.rotations.DarkLiteTurtlelite = 1; // Rotation 9
+config.rotations.DarkTurtleTurtlelite = 1; // Rotation 10
+config.rotations.DarkliteFastLite = 1; // Rotation 11
+config.rotations.DarkliteFastTurtle = 1; // Rotation 12
+config.rotations.DarkliteFastTurtlelite = 1; // Rotation 13
+config.rotations.DarkliteLiteTurtle = 1; // Rotation 14
+config.rotations.DarkliteLiteTurtlelite = 1; // Rotation 15
+config.rotations.DarkliteTurtleTurtlelite = 1; // Rotation 16
+config.rotations.FastLiteTurtle = 1; // Rotation 17
+config.rotations.FastLiteTurtlelite = 1; // Rotation 18
+config.rotations.FastTurtleTurtlelite = 1; // Rotation 19
+config.rotations.LiteTurtleTurtlelite = 1; // Rotation 20
+
+// Alternative GR Hashing Library
+config.hashLib = {};
+config.hashLib.enabled = false;
+config.hashLib.name = '';
+
 // Miscellaneous Configuration
 config.primary = {};
 config.primary.address = '[address]';
@@ -118,6 +147,7 @@ config.settings.interval.statistics = 90000; // ms
 config.settings.window = {};
 config.settings.window.hashrate = 300000; // ms
 config.settings.window.inactive = 604800000; // ms
+config.settings.window.snapshots =  720000; // ms
 config.settings.window.rounds = 21600000; // ms
 config.settings.window.updates = 300000; // ms
 
