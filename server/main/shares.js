@@ -1,5 +1,6 @@
 const Text = require('../../locales/index');
 const utils = require('./utils');
+const crypto = require('crypto');
 const uuid = require('uuid');
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -51,11 +52,12 @@ const Shares = function (logger, client, config, configMain) {
     // Calculate Features of Blocks
     const identifier = shareData.identifier || 'master';
     const luck = _this.handleEffort(work, shareData, shareType, difficulty);
+    const timestamp = Date.now();
 
     // Return Blocks Updates
     return {
-      timestamp: Date.now(),
-      submitted: Date.now(),
+      timestamp: timestamp,
+      submitted: shareData.submitTime || timestamp,
       miner: (worker || '').split('.')[0],
       worker: worker,
       category: 'pending',
@@ -79,12 +81,24 @@ const Shares = function (logger, client, config, configMain) {
     // Calculate Features of Hashrate
     const current = shareType === 'valid' ? difficulty : 0;
     const identifier = shareData.identifier || 'master';
+    let ip = 'unknown';
+    let ipHash = 'unknown';
+    let ipOctet = -1;
+
+    if (shareData.ip) {
+      const ipIndex = shareData.ip.split(':').length - 1;
+      ip = shareData.ip.split(':')[ipIndex];
+      ipHash = utils.createHash(ip);
+      ipOctet = Number(ip.split('.')[3]);
+    };
 
     // Return Hashrate Updates
     return {
       timestamp: Date.now(),
       miner: (worker || '').split('.')[0],
       worker: worker,
+      ip_hash: ipHash,
+      last_octet: ipOctet,
       identifier: identifier,
       share: shareType,
       solo: minerType,
@@ -150,7 +164,7 @@ const Shares = function (logger, client, config, configMain) {
     // Calculate Features of Rounds
     const timestamp = Date.now();
     const interval = _this.config.settings.interval.rounds;
-    const recent = Math.round(timestamp / interval) * interval;
+    const recent = Math.ceil(timestamp / interval) * interval;
 
     // Calculate Features of Round Share [1]
     const invalid = shareType === 'invalid' ? 1 : 0;

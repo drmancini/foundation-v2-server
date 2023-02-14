@@ -12,19 +12,68 @@ const Stratum = function (logger, client, config, configMain, template) {
   this.client = client;
   this.config = config;
   this.configMain = configMain;
+  this.pool = config.name;
   this.template = template;
   this.text = Text[configMain.language];
+
+  // Database Variables
+  this.executor = _this.client.commands.executor;
+  this.current = _this.client.commands.current;
 
   // Stratum Variables
   process.setMaxListeners(0);
   this.forkId = process.env.forkId;
 
+  // Geenerate Difficulty Cache From Rounds Data
+  this.parseDifficultyCache = function(callback) {
+    const timestamp = Date.now();
+    const cutoff = timestamp - 6 * 3600 * 1000;
+    const parameters = {
+      identifier: _this.configMain.identifier,
+      timestamp: 'gt' + cutoff,
+    };
+
+    const transaction = [
+      'BEGIN;',
+      _this.current.rounds.selectCurrentRoundsMain(_this.pool, parameters),
+      'COMMIT;'];
+
+      _this.executor(transaction, (lookups) => {
+        const workers = {};
+        if (lookups[1].rowCount > 0) {
+          lookups[1].rows.forEach(entry => {
+            if (entry.worker in workers) {
+              workers[entry.worker].push(entry.work);
+            } else {
+              workers[entry.worker] = [];
+            };
+          });
+        }
+
+        for (const [worker, data] of Object.entries(workers)) {
+          const difficulty = data.reduce((a, b) => a + b, 0) / data.length;
+          workers[worker] = Math.round(difficulty * 1000) / 1000;
+        };
+
+        callback(workers);
+      });
+  };
+  
+  // Create Worker Difficulty Cache
+  this.handleDifficultyCache = function(callback) {
+    if (_this.configMain.difficultyCache) {
+      _this.parseDifficultyCache((primaryDiff) => {
+        callback(primaryDiff);
+      })
+    } else callback({});
+  };
+
   // Build Stratum from Configuration
   /* istanbul ignore next */
-  this.handleStratum = function() {
+  this.handleStratum = function(difficulties) {
 
     // Build Stratum Server
-    _this.stratum = _this.template.builder(_this.config, _this.configMain, () => {});
+    _this.stratum = _this.template.builder(_this.config, _this.configMain, difficulties, () => {});
 
     // Handle Stratum Main Events
     _this.stratum.on('pool.started', () => {});
@@ -81,7 +130,8 @@ const Stratum = function (logger, client, config, configMain, template) {
     _this.shares = new Shares(logger, _this.client, _this.config, _this.configMain);
 
     // Build Daemon/Stratum Functionality
-    _this.handleStratum();
+    _this.handleDifficultyCache((difficulties) => {
+    _this.handleStratum(difficulties);
     _this.stratum.setupPrimaryDaemons(() => {
     _this.stratum.setupAuxiliaryDaemons(() => {
     _this.stratum.setupPorts();
@@ -98,7 +148,7 @@ const Stratum = function (logger, client, config, configMain, template) {
     })
 
     // Too Much Indentation
-    })})})})})})});
+    })})})})})})})});
   }
 };
 
