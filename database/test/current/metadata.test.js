@@ -75,15 +75,17 @@ describe('Test database metadata functionality', () => {
     const updates = {
       timestamp: 1,
       blocks: 1,
+      solo: true,
       type: 'primary',
     };
     const response = metadata.insertCurrentMetadataBlocks('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
-        timestamp, blocks, type)
+        timestamp, blocks, solo, type)
       VALUES (
         1,
         1,
+        true,
         'primary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
@@ -97,18 +99,21 @@ describe('Test database metadata functionality', () => {
     const updates = {
       timestamp: 1,
       blocks: 1,
+      solo: true,
       type: 'primary',
     };
     const response = metadata.insertCurrentMetadataBlocks('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
-        timestamp, blocks, type)
+        timestamp, blocks, solo, type)
       VALUES (
         1,
         1,
+        true,
         'primary'), (
         1,
         1,
+        true,
         'primary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
@@ -123,6 +128,7 @@ describe('Test database metadata functionality', () => {
       timestamp: 1,
       hashrate: 1,
       miners: 1,
+      solo: true,
       type: 'primary',
       workers: 1,
     };
@@ -130,11 +136,12 @@ describe('Test database metadata functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
         timestamp, hashrate, miners,
-        type, workers)
+        solo, type, workers)
       VALUES (
         1,
         1,
         1,
+        true,
         'primary',
         1)
       ON CONFLICT ON CONSTRAINT current_metadata_unique
@@ -152,6 +159,7 @@ describe('Test database metadata functionality', () => {
       timestamp: 1,
       hashrate: 1,
       miners: 1,
+      solo: true,
       type: 'primary',
       workers: 1,
     };
@@ -159,16 +167,18 @@ describe('Test database metadata functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
         timestamp, hashrate, miners,
-        type, workers)
+        solo, type, workers)
       VALUES (
         1,
         1,
         1,
+        true,
         'primary',
         1), (
         1,
         1,
         1,
+        true,
         'primary',
         1)
       ON CONFLICT ON CONSTRAINT current_metadata_unique
@@ -182,16 +192,16 @@ describe('Test database metadata functionality', () => {
 
   test('Test metadata command handling [8]', () => {
     const metadata = new CurrentMetadata(logger, configMainCopy);
-    const updates = { timestamp: 1, type: 'primary' };
+    const updates = { timestamp: 1, solo: true, type: 'primary' };
     const response = metadata.insertCurrentMetadataRoundsReset('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
         timestamp, efficiency, effort,
-        invalid, stale, type, valid,
-        work)
+        invalid, solo, stale, type,
+        valid, work)
       VALUES (
-        1,
-        0, 0, 0, 0, 'primary', 0, 0)
+        1, 0, 0, 0,
+        true, 0, 'primary', 0, 0)
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
@@ -202,18 +212,18 @@ describe('Test database metadata functionality', () => {
 
   test('Test metadata command handling [9]', () => {
     const metadata = new CurrentMetadata(logger, configMainCopy);
-    const updates = { timestamp: 1, type: 'primary' };
+    const updates = { timestamp: 1, solo: true, type: 'primary' };
     const response = metadata.insertCurrentMetadataRoundsReset('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
         timestamp, efficiency, effort,
-        invalid, stale, type, valid,
-        work)
+        invalid, solo, stale, type,
+        valid, work)
       VALUES (
-        1,
-        0, 0, 0, 0, 'primary', 0, 0), (
-        1,
-        0, 0, 0, 0, 'primary', 0, 0)
+        1, 0, 0, 0,
+        true, 0, 'primary', 0, 0), (
+        1, 0, 0, 0,
+        true, 0, 'primary', 0, 0)
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
@@ -229,6 +239,7 @@ describe('Test database metadata functionality', () => {
       efficiency: 100,
       effort: 100,
       invalid: 0,
+      solo: true,
       stale: 0,
       type: 'primary',
       valid: 1,
@@ -238,13 +249,14 @@ describe('Test database metadata functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
         timestamp, efficiency, effort,
-        invalid, stale, type, valid,
-        work)
+        invalid, solo, stale, type,
+        valid, work)
       VALUES (
         1,
         100,
         100,
         0,
+        true,
         0,
         'primary',
         1,
@@ -268,6 +280,7 @@ describe('Test database metadata functionality', () => {
       efficiency: 100,
       effort: 100,
       invalid: 0,
+      solo: true,
       stale: 0,
       type: 'primary',
       valid: 1,
@@ -277,13 +290,14 @@ describe('Test database metadata functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
         timestamp, efficiency, effort,
-        invalid, stale, type, valid,
-        work)
+        invalid, solo, stale, type,
+        valid, work)
       VALUES (
         1,
         100,
         100,
         0,
+        true,
         0,
         'primary',
         1,
@@ -292,6 +306,7 @@ describe('Test database metadata functionality', () => {
         100,
         100,
         0,
+        true,
         0,
         'primary',
         1,

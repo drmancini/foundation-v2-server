@@ -11,10 +11,10 @@ const CurrentMiners = function (logger, configMain) {
   this.text = Text[configMain.language];
 
   // Handle Current Parameters
-  this.numbers = ['timestamp', 'balance', 'efficiency', 'effort', 'generate', 'hashrate', 'immature',
+  this.numbers = ['timestamp', 'balance', 'efficiency', 'solo_effort', 'generate', 'hashrate', 'immature',
     'invalid', 'paid', 'stale', 'valid'];
   this.strings = ['miner', 'type'];
-  this.parameters = ['timestamp', 'miner', 'balance', 'efficiency', 'effort', 'generate', 'hashrate',
+  this.parameters = ['timestamp', 'miner', 'balance', 'efficiency', 'solo_effort', 'generate', 'hashrate',
     'immature', 'invalid', 'paid', 'stale', 'type', 'valid'];
 
   // Handle String Parameters
@@ -73,6 +73,7 @@ const CurrentMiners = function (logger, configMain) {
       values += `(
         ${ miner.timestamp },
         '${ miner.miner }',
+        ${ miner.efficiency },
         ${ miner.hashrate },
         '${ miner.type }')`;
       if (idx < updates.length - 1) values += ', ';
@@ -84,12 +85,13 @@ const CurrentMiners = function (logger, configMain) {
   this.insertCurrentMinersHashrate = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_miners (
-        timestamp, miner, hashrate,
-        type)
+        timestamp, miner, efficiency,
+        hashrate, type)
       VALUES ${ _this.buildCurrentMinersHashrate(updates) }
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
+        efficiency = EXCLUDED.efficiency,
         hashrate = EXCLUDED.hashrate;`;
   };
 
@@ -100,12 +102,8 @@ const CurrentMiners = function (logger, configMain) {
       values += `(
         ${ miner.timestamp },
         '${ miner.miner }',
-        ${ miner.efficiency },
-        ${ miner.effort },
-        ${ miner.invalid },
-        ${ miner.stale },
-        '${ miner.type }',
-        ${ miner.valid })`;
+        ${ miner.solo_effort },
+        '${ miner.type }')`;
       if (idx < updates.length - 1) values += ', ';
     });
     return values;
@@ -115,18 +113,13 @@ const CurrentMiners = function (logger, configMain) {
   this.insertCurrentMinersRounds = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_miners (
-        timestamp, miner, efficiency,
-        effort, invalid, stale, type,
-        valid)
+        timestamp, miner, solo_effort,
+        type)
       VALUES ${ _this.buildCurrentMinersRounds(updates) }
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
-        invalid = "${ pool }".current_miners.invalid + EXCLUDED.invalid,
-        stale = "${ pool }".current_miners.stale + EXCLUDED.stale,
-        valid = "${ pool }".current_miners.valid + EXCLUDED.valid;`;
+        solo_effort = "${ pool }".current_miners.solo_effort + EXCLUDED.solo_effort;`;
   };
 
   // Build Miners Values String
@@ -192,6 +185,16 @@ const CurrentMiners = function (logger, configMain) {
     return `
       UPDATE "${ pool }".current_miners
       SET generate = 0 WHERE type = '${ type }';`;
+  };
+
+  // Reset Miner Effort
+  this.insertCurrentMinersRoundsReset = function(pool, timestamp, miner, type) {
+    return `
+      UPDATE "${ pool }".current_miners
+      SET timestamp = ${ timestamp },
+        solo_effort = 0
+      WHERE miner = '${ miner }'
+      AND type = '${ type }';`;
   };
 
   // Delete Rows From Current Round

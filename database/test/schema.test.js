@@ -114,8 +114,6 @@ describe('Test schema functionality', () => {
         timestamp BIGINT NOT NULL DEFAULT -1,
         miner VARCHAR NOT NULL DEFAULT 'unknown',
         worker VARCHAR NOT NULL DEFAULT 'unknown',
-        ip_hash VARCHAR NOT NULL DEFAULT 'unknown',
-        last_octet INT NOT NULL DEFAULT -1,
         identifier VARCHAR NOT NULL DEFAULT 'master',
         share VARCHAR NOT NULL DEFAULT 'unknown',
         solo BOOLEAN NOT NULL DEFAULT false,
@@ -152,14 +150,17 @@ describe('Test schema functionality', () => {
         efficiency FLOAT NOT NULL DEFAULT 0,
         effort FLOAT NOT NULL DEFAULT 0,
         hashrate FLOAT NOT NULL DEFAULT 0,
+        hashrate_12h FLOAT NOT NULL DEFAULT 0,
+        hashrate_24h FLOAT NOT NULL DEFAULT 0,
         invalid INT NOT NULL DEFAULT 0,
         miners INT NOT NULL DEFAULT 0,
+        solo BOOLEAN NOT NULL DEFAULT false,
         stale INT NOT NULL DEFAULT 0,
         type VARCHAR NOT NULL DEFAULT 'primary',
         valid INT NOT NULL DEFAULT 0,
         work FLOAT NOT NULL DEFAULT 0,
         workers INT NOT NULL DEFAULT 0,
-        CONSTRAINT current_metadata_unique UNIQUE (type));
+        CONSTRAINT current_metadata_unique UNIQUE (solo, type));
       CREATE INDEX current_metadata_type ON "Pool-Main".current_metadata(type);`;
     const executor = mockExecutor(null, expected);
     const schema = new Schema(logger, executor, configMainCopy);
@@ -188,12 +189,13 @@ describe('Test schema functionality', () => {
         miner VARCHAR NOT NULL DEFAULT 'unknown',
         balance FLOAT NOT NULL DEFAULT 0,
         efficiency FLOAT NOT NULL DEFAULT 0,
-        effort FLOAT NOT NULL DEFAULT 0,
+        solo_effort FLOAT NOT NULL DEFAULT 0,
         generate FLOAT NOT NULL DEFAULT 0,
         hashrate FLOAT NOT NULL DEFAULT 0,
         immature FLOAT NOT NULL DEFAULT 0,
         invalid INT NOT NULL DEFAULT 0,
         paid FLOAT NOT NULL DEFAULT 0,
+        solo BOOLEAN DEFAULT null,
         stale INT NOT NULL DEFAULT 0,
         type VARCHAR NOT NULL DEFAULT 'primary',
         valid INT NOT NULL DEFAULT 0,
@@ -359,7 +361,14 @@ describe('Test schema functionality', () => {
         efficiency FLOAT NOT NULL DEFAULT 0,
         effort FLOAT NOT NULL DEFAULT 0,
         hashrate FLOAT NOT NULL DEFAULT 0,
+        hashrate_12h FLOAT NOT NULL DEFAULT 0,
+        hashrate_24h FLOAT NOT NULL DEFAULT 0,
+        identifier VARCHAR NOT NULL DEFAULT 'master',
         invalid INT NOT NULL DEFAULT 0,
+        ip_hash VARCHAR NOT NULL DEFAULT 'unknown',
+        last_octet INT NOT NULL DEFAULT -1,
+        last_share BIGINT NOT NULL DEFAULT -1,
+        offline_tag BOOLEAN NOT NULL DEFAULT false,
         solo BOOLEAN NOT NULL DEFAULT false,
         stale INT NOT NULL DEFAULT 0,
         type VARCHAR NOT NULL DEFAULT 'primary',
@@ -425,111 +434,6 @@ describe('Test schema functionality', () => {
       SELECT EXISTS (
         SELECT FROM information_schema.tables
         WHERE table_schema = 'Pool-Main'
-        AND table_name = 'historical_metadata');`;
-    const executor = mockExecutor(results, expected);
-    const schema = new Schema(logger, executor, configMainCopy);
-    schema.selectHistoricalMetadata('Pool-Main', (results) => {
-      expect(results).toBe(true);
-    });
-  });
-
-  test('Test schema functionality [24]', () => {
-    const expected = `
-      CREATE TABLE "Pool-Main".historical_metadata(
-        id BIGSERIAL PRIMARY KEY,
-        timestamp BIGINT NOT NULL DEFAULT -1,
-        recent BIGINT NOT NULL DEFAULT -1,
-        blocks INT NOT NULL DEFAULT 0,
-        efficiency FLOAT NOT NULL DEFAULT 0,
-        effort FLOAT NOT NULL DEFAULT 0,
-        hashrate FLOAT NOT NULL DEFAULT 0,
-        invalid INT NOT NULL DEFAULT 0,
-        miners INT NOT NULL DEFAULT 0,
-        stale INT NOT NULL DEFAULT 0,
-        type VARCHAR NOT NULL DEFAULT 'primary',
-        valid INT NOT NULL DEFAULT 0,
-        work FLOAT NOT NULL DEFAULT 0,
-        workers INT NOT NULL DEFAULT 0,
-        CONSTRAINT historical_metadata_recent UNIQUE (recent, type));
-      CREATE INDEX historical_metadata_type ON "Pool-Main".historical_metadata(type);`;
-    const executor = mockExecutor(null, expected);
-    const schema = new Schema(logger, executor, configMainCopy);
-    schema.createHistoricalMetadata('Pool-Main', () => {});
-  });
-
-  test('Test schema functionality [25]', () => {
-    const results = { rows: [{ exists: true }]};
-    const expected = `
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_schema = 'Pool-Main'
-        AND table_name = 'historical_miners');`;
-    const executor = mockExecutor(results, expected);
-    const schema = new Schema(logger, executor, configMainCopy);
-    schema.selectHistoricalMiners('Pool-Main', (results) => {
-      expect(results).toBe(true);
-    });
-  });
-
-  test('Test schema functionality [26]', () => {
-    const expected = `
-      CREATE TABLE "Pool-Main".historical_miners(
-        id BIGSERIAL PRIMARY KEY,
-        timestamp BIGINT NOT NULL DEFAULT -1,
-        recent BIGINT NOT NULL DEFAULT -1,
-        miner VARCHAR NOT NULL DEFAULT 'unknown',
-        efficiency FLOAT NOT NULL DEFAULT 0,
-        effort FLOAT NOT NULL DEFAULT 0,
-        hashrate FLOAT NOT NULL DEFAULT 0,
-        invalid INT NOT NULL DEFAULT 0,
-        stale INT NOT NULL DEFAULT 0,
-        type VARCHAR NOT NULL DEFAULT 'primary',
-        valid INT NOT NULL DEFAULT 0,
-        CONSTRAINT historical_miners_recent UNIQUE (recent, miner, type));
-      CREATE INDEX historical_miners_miner ON "Pool-Main".historical_miners(miner, type);
-      CREATE INDEX historical_miners_type ON "Pool-Main".historical_miners(type);`;
-    const executor = mockExecutor(null, expected);
-    const schema = new Schema(logger, executor, configMainCopy);
-    schema.createHistoricalMiners('Pool-Main', () => {});
-  });
-
-  test('Test schema functionality [27]', () => {
-    const results = { rows: [{ exists: true }]};
-    const expected = `
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_schema = 'Pool-Main'
-        AND table_name = 'historical_network');`;
-    const executor = mockExecutor(results, expected);
-    const schema = new Schema(logger, executor, configMainCopy);
-    schema.selectHistoricalNetwork('Pool-Main', (results) => {
-      expect(results).toBe(true);
-    });
-  });
-
-  test('Test schema functionality [28]', () => {
-    const expected = `
-      CREATE TABLE "Pool-Main".historical_network(
-        id BIGSERIAL PRIMARY KEY,
-        timestamp BIGINT NOT NULL DEFAULT -1,
-        recent BIGINT NOT NULL DEFAULT -1,
-        difficulty FLOAT NOT NULL DEFAULT 0,
-        hashrate FLOAT NOT NULL DEFAULT 0,
-        height INT NOT NULL DEFAULT -1,
-        type VARCHAR NOT NULL DEFAULT 'primary',
-        CONSTRAINT historical_network_recent UNIQUE (recent, type));
-      CREATE INDEX historical_network_type ON "Pool-Main".historical_network(type);`;
-    const executor = mockExecutor(null, expected);
-    const schema = new Schema(logger, executor, configMainCopy);
-    schema.createHistoricalNetwork('Pool-Main', () => {});
-  });
-
-  test('Test schema functionality [29]', () => {
-    const results = { rows: [{ exists: true }]};
-    const expected = `
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_schema = 'Pool-Main'
         AND table_name = 'historical_payments');`;
     const executor = mockExecutor(results, expected);
     const schema = new Schema(logger, executor, configMainCopy);
@@ -538,7 +442,7 @@ describe('Test schema functionality', () => {
     });
   });
 
-  test('Test schema functionality [30]', () => {
+  test('Test schema functionality [24]', () => {
     const expected = `
       CREATE TABLE "Pool-Main".historical_payments(
         id BIGSERIAL PRIMARY KEY,
@@ -555,7 +459,7 @@ describe('Test schema functionality', () => {
     schema.createHistoricalPayments('Pool-Main', () => {});
   });
 
-  test('Test schema functionality [31]', () => {
+  test('Test schema functionality [25]', () => {
     const results = { rows: [{ exists: true }]};
     const expected = `
       SELECT EXISTS (
@@ -569,7 +473,7 @@ describe('Test schema functionality', () => {
     });
   });
 
-  test('Test schema functionality [32]', () => {
+  test('Test schema functionality [26]', () => {
     const expected = `
       CREATE TABLE "Pool-Main".historical_rounds(
         id BIGSERIAL PRIMARY KEY,
@@ -597,7 +501,7 @@ describe('Test schema functionality', () => {
     schema.createHistoricalRounds('Pool-Main', () => {});
   });
 
-  test('Test schema functionality [33]', () => {
+  test('Test schema functionality [27]', () => {
     const results = { rows: [{ exists: true }]};
     const expected = `
       SELECT EXISTS (
@@ -611,7 +515,7 @@ describe('Test schema functionality', () => {
     });
   });
 
-  test('Test schema functionality [34]', () => {
+  test('Test schema functionality [28]', () => {
     const expected = `
       CREATE TABLE "Pool-Main".historical_transactions(
         id BIGSERIAL PRIMARY KEY,
@@ -624,44 +528,5 @@ describe('Test schema functionality', () => {
     const executor = mockExecutor(null, expected);
     const schema = new Schema(logger, executor, configMainCopy);
     schema.createHistoricalTransactions('Pool-Main', () => {});
-  });
-
-  test('Test schema functionality [35]', () => {
-    const results = { rows: [{ exists: true }]};
-    const expected = `
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_schema = 'Pool-Main'
-        AND table_name = 'historical_workers');`;
-    const executor = mockExecutor(results, expected);
-    const schema = new Schema(logger, executor, configMainCopy);
-    schema.selectHistoricalWorkers('Pool-Main', (results) => {
-      expect(results).toBe(true);
-    });
-  });
-
-  test('Test schema functionality [36]', () => {
-    const expected = `
-      CREATE TABLE "Pool-Main".historical_workers(
-        id BIGSERIAL PRIMARY KEY,
-        timestamp BIGINT NOT NULL DEFAULT -1,
-        recent BIGINT NOT NULL DEFAULT -1,
-        miner VARCHAR NOT NULL DEFAULT 'unknown',
-        worker VARCHAR NOT NULL DEFAULT 'unknown',
-        efficiency FLOAT NOT NULL DEFAULT 0,
-        effort FLOAT NOT NULL DEFAULT 0,
-        hashrate FLOAT NOT NULL DEFAULT 0,
-        invalid INT NOT NULL DEFAULT 0,
-        solo BOOLEAN NOT NULL DEFAULT false,
-        stale INT NOT NULL DEFAULT 0,
-        type VARCHAR NOT NULL DEFAULT 'primary',
-        valid INT NOT NULL DEFAULT 0,
-        CONSTRAINT historical_workers_recent UNIQUE (recent, worker, type));
-      CREATE INDEX historical_workers_miner ON "Pool-Main".historical_workers(miner, type);
-      CREATE INDEX historical_workers_worker ON "Pool-Main".historical_workers(worker, type);
-      CREATE INDEX historical_workers_type ON "Pool-Main".historical_workers(type);`;
-    const executor = mockExecutor(null, expected);
-    const schema = new Schema(logger, executor, configMainCopy);
-    schema.createHistoricalWorkers('Pool-Main', () => {});
   });
 });

@@ -42,7 +42,7 @@ config.tls.cert = '';
 config.server = {};
 config.server.enabled = true;
 config.server.host = '127.0.0.1';
-config.server.port = 3001;
+config.server.port = 3456;
 config.server.tls = false;
 
 // Cache Configuration
