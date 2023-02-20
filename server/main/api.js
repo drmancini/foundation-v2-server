@@ -90,15 +90,6 @@ const Api = function (logger, client, configs, configMain) {
     case (category === 'historical' && endpoint === 'blocks'):
       _this.endpoints.handleHistoricalBlocks(pool, queries, output);
       break;
-    case (category === 'historical' && endpoint === 'metadata'):
-      _this.endpoints.handleHistoricalMetadata(pool, queries, output);
-      break;
-    case (category === 'historical' && endpoint === 'miners'):
-      _this.endpoints.handleHistoricalMiners(pool, queries, output);
-      break;
-    case (category === 'historical' && endpoint === 'network'):
-      _this.endpoints.handleHistoricalNetwork(pool, queries, output);
-      break;
     case (category === 'historical' && endpoint === 'payments'):
       _this.endpoints.handleHistoricalPayments(pool, queries, output);
       break;
@@ -107,9 +98,6 @@ const Api = function (logger, client, configs, configMain) {
       break;
     case (category === 'historical' && endpoint === 'transactions'):
       _this.endpoints.handleHistoricalTransactions(pool, queries, output);
-      break;
-    case (category === 'historical' && endpoint === 'workers'):
-      _this.endpoints.handleHistoricalWorkers(pool, queries, output);
       break;
 
     // Combined Endpoints

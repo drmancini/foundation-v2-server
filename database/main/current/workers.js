@@ -73,6 +73,7 @@ const CurrentWorkers = function (logger, configMain) {
         ${ worker.timestamp },
         '${ worker.miner }',
         '${ worker.worker }',
+        ${ worker.efficiency },
         ${ worker.hashrate },
         ${ worker.solo },
         '${ worker.type }')`;
@@ -86,12 +87,46 @@ const CurrentWorkers = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_workers (
         timestamp, miner, worker,
-        hashrate, solo, type)
+        efficiency, hashrate, solo,
+        type)
       VALUES ${ _this.buildCurrentWorkersHashrate(updates) }
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
+        efficiency = EXCLUDED.efficiency,
         hashrate = EXCLUDED.hashrate;`;
+  };
+
+  // Build Workers Reset Values String
+  this.buildCurrentWorkersResetHashrate = function(updates) {
+    let values = '';
+    updates.forEach((worker, idx) => {
+      values += `(
+        ${ worker.timestamp },
+        '${ worker.miner }',
+        '${ worker.worker }',
+        ${ worker.hashrate_12h },
+        ${ worker.hashrate_24h },
+        ${ worker.solo },
+        '${ worker.type }')`;
+      if (idx < updates.length - 1) values += ', ';
+    });
+    return values;
+  };
+
+  // Insert Hashrate Reset for Workers
+  this.insertCurrentWorkersResetHashrate = function(pool, updates) {
+    return `
+      INSERT INTO "${ pool }".current_workers (
+        timestamp, miner, worker,
+        hashrate_12h, hashrate_24h,
+        solo, type)
+      VALUES ${ _this.buildCurrentWorkersResetHashrate(updates) }
+      ON CONFLICT ON CONSTRAINT current_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate_12h = EXCLUDED.hashrate_12h,
+        hashrate_24h = EXCLUDED.hashrate_24h;`;
   };
 
   // Build Workers Values String
@@ -102,13 +137,14 @@ const CurrentWorkers = function (logger, configMain) {
         ${ worker.timestamp },
         '${ worker.miner }',
         '${ worker.worker }',
-        ${ worker.efficiency },
         ${ worker.effort },
-        ${ worker.invalid },
+        '${ worker.identifier }',
+        '${ worker.ip_hash }',
+        ${ worker.last_octet },
+        ${ worker.last_share },
+        ${ worker.offline_tag },
         ${ worker.solo },
-        ${ worker.stale },
-        '${ worker.type }',
-        ${ worker.valid })`;
+        '${ worker.type }')`;
       if (idx < updates.length - 1) values += ', ';
     });
     return values;
@@ -119,18 +155,41 @@ const CurrentWorkers = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_workers (
         timestamp, miner, worker,
-        efficiency, effort, invalid,
-        solo, stale, type, valid)
+        effort, identifier,
+        ip_hash, last_octet, last_share,
+        offline_tag, solo, type)
       VALUES ${ _this.buildCurrentWorkersRounds(updates) }
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
-        invalid = "${ pool }".current_workers.invalid + EXCLUDED.invalid,
-        solo = EXCLUDED.solo,
-        stale = "${ pool }".current_workers.stale + EXCLUDED.stale,
-        valid = "${ pool }".current_workers.valid + EXCLUDED.valid;`;
+        effort = "${ pool }".current_workers.effort + EXCLUDED.effort,
+        identifier = EXCLUDED.identifier,
+        ip_hash = EXCLUDED.ip_hash,
+        last_octet = EXCLUDED.last_octet,
+        last_share = EXCLUDED.last_share,
+        offline_tag = EXCLUDED.offline_tag,
+        solo = EXCLUDED.solo;`;
+  }; 
+
+  // Update Shared Workers Using Reset
+  this.updateCurrentSharedWorkersRoundsReset = function(pool, timestamp, type) {
+    return `
+      UPDATE "${ pool }".current_workers
+      SET timestamp = ${ timestamp },
+        effort = 0
+      WHERE solo = false
+      AND type = '${ type }';`;
+  };
+
+  // Update Workers Using Reset
+  this.updateCurrentSoloWorkersRoundsReset = function(pool, timestamp, miner, type) {
+    return `
+      UPDATE "${ pool }".current_workers
+      SET timestamp = ${ timestamp },
+        effort = 0
+      WHERE miner = '${ miner }'
+      AND solo = true
+      AND type = '${ type }';`;
   };
 
   // Delete Rows From Current Round

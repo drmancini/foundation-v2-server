@@ -83,22 +83,25 @@ describe('Test database miners functionality', () => {
     const updates = {
       miner: 'miner1',
       timestamp: 1,
+      efficiency: 100,
       hashrate: 1,
       type: 'primary',
     };
     const response = miners.insertCurrentMinersHashrate('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_miners (
-        timestamp, miner, hashrate,
-        type)
+        timestamp, miner, efficiency,
+        hashrate, type)
       VALUES (
         1,
         'miner1',
+        100,
         1,
         'primary')
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
+        efficiency = EXCLUDED.efficiency,
         hashrate = EXCLUDED.hashrate;`;
     expect(response).toBe(expected);
   });
@@ -108,26 +111,30 @@ describe('Test database miners functionality', () => {
     const updates = {
       miner: 'miner1',
       timestamp: 1,
+      efficiency: 100,
       hashrate: 1,
       type: 'primary',
     };
     const response = miners.insertCurrentMinersHashrate('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_miners (
-        timestamp, miner, hashrate,
-        type)
+        timestamp, miner, efficiency,
+        hashrate, type)
       VALUES (
         1,
         'miner1',
+        100,
         1,
         'primary'), (
         1,
         'miner1',
+        100,
         1,
         'primary')
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
+        efficiency = EXCLUDED.efficiency,
         hashrate = EXCLUDED.hashrate;`;
     expect(response).toBe(expected);
   });
@@ -137,8 +144,7 @@ describe('Test database miners functionality', () => {
     const updates = {
       miner: 'miner1',
       timestamp: 1,
-      efficiency: 100,
-      effort: 100,
+      solo_effort: 100,
       invalid: 0,
       stale: 0,
       type: 'primary',
@@ -147,26 +153,17 @@ describe('Test database miners functionality', () => {
     const response = miners.insertCurrentMinersRounds('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_miners (
-        timestamp, miner, efficiency,
-        effort, invalid, stale, type,
-        valid)
+        timestamp, miner, solo_effort,
+        type)
       VALUES (
         1,
         'miner1',
         100,
-        100,
-        0,
-        0,
-        'primary',
-        1)
+        'primary')
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
-        invalid = "Pool-Main".current_miners.invalid + EXCLUDED.invalid,
-        stale = "Pool-Main".current_miners.stale + EXCLUDED.stale,
-        valid = "Pool-Main".current_miners.valid + EXCLUDED.valid;`;
+        solo_effort = "Pool-Main".current_miners.solo_effort + EXCLUDED.solo_effort;`;
     expect(response).toBe(expected);
   });
 
@@ -175,8 +172,7 @@ describe('Test database miners functionality', () => {
     const updates = {
       miner: 'miner1',
       timestamp: 1,
-      efficiency: 100,
-      effort: 100,
+      solo_effort: 100,
       invalid: 0,
       stale: 0,
       type: 'primary',
@@ -185,34 +181,21 @@ describe('Test database miners functionality', () => {
     const response = miners.insertCurrentMinersRounds('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_miners (
-        timestamp, miner, efficiency,
-        effort, invalid, stale, type,
-        valid)
+        timestamp, miner, solo_effort,
+        type)
       VALUES (
         1,
         'miner1',
         100,
-        100,
-        0,
-        0,
-        'primary',
-        1), (
+        'primary'), (
         1,
         'miner1',
         100,
-        100,
-        0,
-        0,
-        'primary',
-        1)
+        'primary')
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
-        invalid = "Pool-Main".current_miners.invalid + EXCLUDED.invalid,
-        stale = "Pool-Main".current_miners.stale + EXCLUDED.stale,
-        valid = "Pool-Main".current_miners.valid + EXCLUDED.valid;`;
+        solo_effort = "Pool-Main".current_miners.solo_effort + EXCLUDED.solo_effort;`;
     expect(response).toBe(expected);
   });
 
@@ -348,6 +331,18 @@ describe('Test database miners functionality', () => {
   });
 
   test('Test miners command handling [14]', () => {
+    const miners = new CurrentMiners(logger, configMainCopy);
+    const response = miners.insertCurrentMinersRoundsReset('Pool-Main', 1, 'miner1', 'primary');
+    const expected = `
+      UPDATE "Pool-Main".current_miners
+      SET timestamp = 1,
+        solo_effort = 0
+      WHERE miner = 'miner1'
+      AND type = 'primary';`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test miners command handling [16]', () => {
     const miners = new CurrentMiners(logger, configMainCopy);
     const response = miners.deleteCurrentMinersInactive('Pool-Main', 1);
     const expected = `
