@@ -1395,12 +1395,22 @@ describe('Test shares functionality', () => {
         last_share = EXCLUDED.last_share,
         offline_tag = EXCLUDED.offline_tag,
         solo = EXCLUDED.solo;`;
+    const expectedUsers = `
+      INSERT INTO "Pool-Bitcoin".current_users (
+        miner, joined, payout_limit)
+      VALUES (
+        'primary1',
+        1634742080841,
+        0.005)
+      ON CONFLICT ON CONSTRAINT current_users_unique
+      DO NOTHING;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(6);
+      expect(transaction.length).toBe(7);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedMetadata);
       expect(transaction[3]).toBe(expectedRounds);
       expect(transaction[4]).toBe(expectedWorkers);
+      expect(transaction[5]).toBe(expectedUsers);
       done();
     });
     shares.handleShares(lookups, shareData, 'valid', false, () => {});
@@ -1514,12 +1524,22 @@ describe('Test shares functionality', () => {
         last_share = EXCLUDED.last_share,
         offline_tag = EXCLUDED.offline_tag,
         solo = EXCLUDED.solo;`;
+    const expectedUsers = `
+      INSERT INTO "Pool-Bitcoin".current_users (
+        miner, joined, payout_limit)
+      VALUES (
+        'primary1',
+        1634742080841,
+        0.005)
+      ON CONFLICT ON CONSTRAINT current_users_unique
+      DO NOTHING;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(6);
+      expect(transaction.length).toBe(7);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedMetadata);
       expect(transaction[3]).toBe(expectedRounds);
       expect(transaction[4]).toBe(expectedWorkers);
+      expect(transaction[5]).toBe(expectedUsers);
       done();
     });
     shares.handleShares(lookups, shareData, 'valid', false, () => {});
@@ -1652,13 +1672,23 @@ describe('Test shares functionality', () => {
         last_share = EXCLUDED.last_share,
         offline_tag = EXCLUDED.offline_tag,
         solo = EXCLUDED.solo;`;
+    const expectedUsers = `
+      INSERT INTO "Pool-Bitcoin".current_users (
+        miner, joined, payout_limit)
+      VALUES (
+        'primary1',
+        1634742080841,
+        0.005)
+      ON CONFLICT ON CONSTRAINT current_users_unique
+      DO NOTHING;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(7);
+      expect(transaction.length).toBe(8);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedMetadata);
       expect(transaction[3]).toBe(expectedRounds);
       expect(transaction[4]).toBe(expectedWorkers);
-      expect(transaction[5]).toBe(expectedMiners);
+      expect(transaction[5]).toBe(expectedUsers);
+      expect(transaction[6]).toBe(expectedMiners);
       done();
     });
     shares.handleShares(lookups, shareData, 'valid', true, () => {});
@@ -1785,13 +1815,23 @@ describe('Test shares functionality', () => {
         last_share = EXCLUDED.last_share,
         offline_tag = EXCLUDED.offline_tag,
         solo = EXCLUDED.solo;`;
+    const expectedUsers = `
+      INSERT INTO "Pool-Bitcoin".current_users (
+        miner, joined, payout_limit)
+      VALUES (
+        'primary1',
+        1634742080841,
+        0.005)
+      ON CONFLICT ON CONSTRAINT current_users_unique
+      DO NOTHING;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(7);
+      expect(transaction.length).toBe(8);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedMetadata);
       expect(transaction[3]).toBe(expectedRounds);
       expect(transaction[4]).toBe(expectedWorkers);
-      expect(transaction[5]).toBe(expectedMiners);
+      expect(transaction[5]).toBe(expectedUsers);
+      expect(transaction[6]).toBe(expectedMiners);
       done();
     });
     shares.handleShares(lookups, shareData, 'valid', true, () => {});
@@ -2020,18 +2060,26 @@ describe('Test shares functionality', () => {
         last_share = EXCLUDED.last_share,
         offline_tag = EXCLUDED.offline_tag,
         solo = EXCLUDED.solo;`;
+    const expectedUsers = `
+      INSERT INTO "Pool-Bitcoin".current_users (
+        miner, joined, payout_limit)
+      VALUES (
+        'primary1',
+        1634742080841,
+        0.005)
+      ON CONFLICT ON CONSTRAINT current_users_unique
+      DO NOTHING;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(10);
+      expect(transaction.length).toBe(11);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedMetadata);
       expect(transaction[3]).toBe(expectedRounds);
       expect(transaction[4]).toBe(expectedWorkers);
-      // expect(transaction[5]).toBe(expectedMiners);
-      expect(transaction[5]).toBe(expectedAuxHashrate);
-      expect(transaction[6]).toBe(expectedAuxMetadata);
-      expect(transaction[7]).toBe(expectedAuxRounds);
-      expect(transaction[8]).toBe(expectedAuxWorkers);
-      // expect(transaction[10]).toBe(expectedAuxMiners);
+      expect(transaction[5]).toBe(expectedUsers);
+      expect(transaction[6]).toBe(expectedAuxHashrate);
+      expect(transaction[7]).toBe(expectedAuxMetadata);
+      expect(transaction[8]).toBe(expectedAuxRounds);
+      expect(transaction[9]).toBe(expectedAuxWorkers);
       done();
     });
     shares.handleShares(lookups, shareData, 'valid', false, () => {});

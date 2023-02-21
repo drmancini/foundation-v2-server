@@ -111,61 +111,6 @@ const CurrentUsers = function (logger, configMain) {
       ON CONFLICT ON CONSTRAINT current_users_unique
       DO NOTHING;`; 
   };
-
-  // Subscribe User
-  this.updateCurrentUserSubscrbe = function(pool, updates) {
-    return `
-      UPDATE "${ pool }".current_users
-      SET subscribed = true
-      WHERE miner = '${ updates.miner }';`;
-  };
-
-  // Unubscribe User
-  this.updateCurrentUserUnsubscrbe = function(pool, updates) {
-    return `
-      UPDATE "${ pool }".current_users
-      SET activity_notifications = false,
-        email = 'unknown',
-        payment_notifications = false,
-        subscribed = false,
-        token = 'unknown'
-      WHERE miner = '${ updates.miner }';`;
-  };
-
-  // Update User's Payout Limit
-  this.updateCurrentUserPayoutSettings = function(pool, updates) {
-    return `
-      UPDATE "${ pool }".current_users
-      SET payout_limit = ${ updates.payoutLimit }
-      WHERE miner = '${ updates.miner }';`;
-  };
-
-  // Update User's Notifications
-  this.updateCurrentUserNotificationSettings = function(pool, updates) {
-    return `
-      UPDATE "${ pool }".current_users
-      SET activity_limit = ${ updates.activityLimit },
-        activity_notifications = ${ updates.activityNotifications },
-        payment_notifications = ${ updates.paymentNotifications }
-      WHERE miner = '${ updates.miner }';`;
-  };
-
-  // Update User's Email Address
-  this.updateCurrentUserEmailAddress = function(pool, updates) {
-    return `
-      UPDATE "${ pool }".current_users
-      SET email = '${ updates.email }',
-        token = '${ updates.token }'
-      WHERE miner = '${ updates.miner }';`;
-  };
-
-  // Update User's Locale
-  this.updateCurrentUserLocale = function(pool, miner, locale) {
-    return `
-      UPDATE "${ pool }".current_users
-      SET locale = '${ locale }'
-      WHERE miner = '${ miner }';`;
-  };
 };
 
 module.exports = CurrentUsers;
