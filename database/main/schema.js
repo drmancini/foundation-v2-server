@@ -59,9 +59,13 @@ const Schema = function (logger, executor, configMain) {
         type VARCHAR NOT NULL DEFAULT 'primary',
         CONSTRAINT current_blocks_unique UNIQUE (round, type));
       CREATE INDEX current_blocks_miner ON "${ pool }".current_blocks(miner, type);
+      CREATE INDEX current_blocks_miner_solo_submitted ON "${ pool }".current_blocks(miner, solo, submitted, type);
       CREATE INDEX current_blocks_worker ON "${ pool }".current_blocks(worker, type);
       CREATE INDEX current_blocks_category ON "${ pool }".current_blocks(category, type);
       CREATE INDEX current_blocks_identifier ON "${ pool }".current_blocks(identifier, type);
+      CREATE INDEX current_blocks_solo ON "${ pool }".current_blocks(solo, type);
+      CREATE INDEX current_blocks_solo_submitted ON "${ pool }".current_blocks(solo, submitted, type);
+      CREATE INDEX current_blocks_time ON "${ pool }".current_blocks(timestamp, type);
       CREATE INDEX current_blocks_type ON "${ pool }".current_blocks(type);`;
     _this.executor([command], () => callback());
   };
@@ -89,8 +93,9 @@ const Schema = function (logger, executor, configMain) {
         solo BOOLEAN NOT NULL DEFAULT false,
         type VARCHAR NOT NULL DEFAULT 'primary',
         work FLOAT NOT NULL DEFAULT 0);
-      CREATE INDEX current_hashrate_miner ON "${ pool }".current_hashrate(timestamp, miner, solo, type);
+      CREATE INDEX current_hashrate_miner ON "${ pool }".current_hashrate(timestamp, miner, type);
       CREATE INDEX current_hashrate_worker ON "${ pool }".current_hashrate(timestamp, worker, solo, type);
+      CREATE INDEX current_hashrate_timestamp ON "${ pool }".current_hashrate(timestamp, type);
       CREATE INDEX current_hashrate_type ON "${ pool }".current_hashrate(timestamp, solo, type);`;
     _this.executor([command], () => callback());
   };
@@ -147,11 +152,15 @@ const Schema = function (logger, executor, configMain) {
         id BIGSERIAL PRIMARY KEY,
         timestamp BIGINT NOT NULL DEFAULT -1,
         miner VARCHAR NOT NULL DEFAULT 'unknown',
+        active_shared INT NOT NULL DEFAULT 0,
         balance FLOAT NOT NULL DEFAULT 0,
         efficiency FLOAT NOT NULL DEFAULT 0,
         solo_effort FLOAT NOT NULL DEFAULT 0,
         generate FLOAT NOT NULL DEFAULT 0,
         hashrate FLOAT NOT NULL DEFAULT 0,
+        hashrate_12h FLOAT NOT NULL DEFAULT 0,
+        hashrate_24h FLOAT NOT NULL DEFAULT 0,
+        inactive_shared INT NOT NULL DEFAULT 0,
         immature FLOAT NOT NULL DEFAULT 0,
         invalid INT NOT NULL DEFAULT 0,
         paid FLOAT NOT NULL DEFAULT 0,
@@ -160,6 +169,7 @@ const Schema = function (logger, executor, configMain) {
         type VARCHAR NOT NULL DEFAULT 'primary',
         valid INT NOT NULL DEFAULT 0,
         CONSTRAINT current_miners_unique UNIQUE (miner, type));
+      CREATE INDEX current_miners_active ON "${ pool }".current_miners(active_shared, hashrate, solo, type);
       CREATE INDEX current_miners_balance ON "${ pool }".current_miners(balance, type);
       CREATE INDEX current_miners_miner ON "${ pool }".current_miners(miner, type);
       CREATE INDEX current_miners_type ON "${ pool }".current_miners(type);`;
@@ -247,6 +257,7 @@ const Schema = function (logger, executor, configMain) {
       CREATE INDEX current_rounds_worker ON "${ pool }".current_rounds(worker, type);
       CREATE INDEX current_rounds_identifier ON "${ pool }".current_rounds(identifier, type);
       CREATE INDEX current_rounds_round ON "${ pool }".current_rounds(solo, round, type);
+      CREATE INDEX current_rounds_round_miner ON "${ pool }".current_rounds(miner, solo, round, type);
       CREATE INDEX current_rounds_historical ON "${ pool }".current_rounds(worker, solo, type);
       CREATE INDEX current_rounds_combined ON "${ pool }".current_rounds(worker, solo, round, type);`;
     _this.executor([command], () => callback());

@@ -84,9 +84,13 @@ describe('Test schema functionality', () => {
         type VARCHAR NOT NULL DEFAULT 'primary',
         CONSTRAINT current_blocks_unique UNIQUE (round, type));
       CREATE INDEX current_blocks_miner ON "Pool-Main".current_blocks(miner, type);
+      CREATE INDEX current_blocks_miner_solo_submitted ON "Pool-Main".current_blocks(miner, solo, submitted, type);
       CREATE INDEX current_blocks_worker ON "Pool-Main".current_blocks(worker, type);
       CREATE INDEX current_blocks_category ON "Pool-Main".current_blocks(category, type);
       CREATE INDEX current_blocks_identifier ON "Pool-Main".current_blocks(identifier, type);
+      CREATE INDEX current_blocks_solo ON "Pool-Main".current_blocks(solo, type);
+      CREATE INDEX current_blocks_solo_submitted ON "Pool-Main".current_blocks(solo, submitted, type);
+      CREATE INDEX current_blocks_time ON "Pool-Main".current_blocks(timestamp, type);
       CREATE INDEX current_blocks_type ON "Pool-Main".current_blocks(type);`;
     const executor = mockExecutor(null, expected);
     const schema = new Schema(logger, executor, configMainCopy);
@@ -119,8 +123,9 @@ describe('Test schema functionality', () => {
         solo BOOLEAN NOT NULL DEFAULT false,
         type VARCHAR NOT NULL DEFAULT 'primary',
         work FLOAT NOT NULL DEFAULT 0);
-      CREATE INDEX current_hashrate_miner ON "Pool-Main".current_hashrate(timestamp, miner, solo, type);
+      CREATE INDEX current_hashrate_miner ON "Pool-Main".current_hashrate(timestamp, miner, type);
       CREATE INDEX current_hashrate_worker ON "Pool-Main".current_hashrate(timestamp, worker, solo, type);
+      CREATE INDEX current_hashrate_timestamp ON "Pool-Main".current_hashrate(timestamp, type);
       CREATE INDEX current_hashrate_type ON "Pool-Main".current_hashrate(timestamp, solo, type);`;
     const executor = mockExecutor(null, expected);
     const schema = new Schema(logger, executor, configMainCopy);
@@ -187,11 +192,15 @@ describe('Test schema functionality', () => {
         id BIGSERIAL PRIMARY KEY,
         timestamp BIGINT NOT NULL DEFAULT -1,
         miner VARCHAR NOT NULL DEFAULT 'unknown',
+        active_shared INT NOT NULL DEFAULT 0,
         balance FLOAT NOT NULL DEFAULT 0,
         efficiency FLOAT NOT NULL DEFAULT 0,
         solo_effort FLOAT NOT NULL DEFAULT 0,
         generate FLOAT NOT NULL DEFAULT 0,
         hashrate FLOAT NOT NULL DEFAULT 0,
+        hashrate_12h FLOAT NOT NULL DEFAULT 0,
+        hashrate_24h FLOAT NOT NULL DEFAULT 0,
+        inactive_shared INT NOT NULL DEFAULT 0,
         immature FLOAT NOT NULL DEFAULT 0,
         invalid INT NOT NULL DEFAULT 0,
         paid FLOAT NOT NULL DEFAULT 0,
@@ -200,6 +209,7 @@ describe('Test schema functionality', () => {
         type VARCHAR NOT NULL DEFAULT 'primary',
         valid INT NOT NULL DEFAULT 0,
         CONSTRAINT current_miners_unique UNIQUE (miner, type));
+      CREATE INDEX current_miners_active ON "Pool-Main".current_miners(active_shared, hashrate, solo, type);
       CREATE INDEX current_miners_balance ON "Pool-Main".current_miners(balance, type);
       CREATE INDEX current_miners_miner ON "Pool-Main".current_miners(miner, type);
       CREATE INDEX current_miners_type ON "Pool-Main".current_miners(type);`;
@@ -302,6 +312,7 @@ describe('Test schema functionality', () => {
       CREATE INDEX current_rounds_worker ON "Pool-Main".current_rounds(worker, type);
       CREATE INDEX current_rounds_identifier ON "Pool-Main".current_rounds(identifier, type);
       CREATE INDEX current_rounds_round ON "Pool-Main".current_rounds(solo, round, type);
+      CREATE INDEX current_rounds_round_miner ON "Pool-Main".current_rounds(miner, solo, round, type);
       CREATE INDEX current_rounds_historical ON "Pool-Main".current_rounds(worker, solo, type);
       CREATE INDEX current_rounds_combined ON "Pool-Main".current_rounds(worker, solo, round, type);`;
     const executor = mockExecutor(null, expected);
@@ -343,6 +354,44 @@ describe('Test schema functionality', () => {
       SELECT EXISTS (
         SELECT FROM information_schema.tables
         WHERE table_schema = 'Pool-Main'
+        AND table_name = 'current_users');`;
+    const executor = mockExecutor(results, expected);
+    const schema = new Schema(logger, executor, configMainCopy);
+    schema.selectCurrentUsers('Pool-Main', (results) => {
+      expect(results).toBe(true);
+    });
+  });
+
+  test('Test schema functionality [20]', () => {
+    const expected = `
+      CREATE TABLE "Pool-Main".current_users(
+        id BIGSERIAL PRIMARY KEY,
+        miner VARCHAR NOT NULL DEFAULT 'unknown',
+        activity_limit INT NOT NULL DEFAULT 0,
+        activity_notifications BOOLEAN NOT NULL DEFAULT false,
+        consent BOOLEAN NOT NULL DEFAULT false,
+        email VARCHAR NOT NULL DEFAULT 'unknown',
+        joined BIGINT NOT NULL DEFAULT -1,
+        locale VARCHAR NOT NULL DEFAULT 'unknown',
+        payment_notifications BOOLEAN NOT NULL DEFAULT false,
+        payout_limit INT NOT NULL DEFAULT 0,
+        subscribed BOOLEAN NOT NULL DEFAULT false,
+        token VARCHAR NOT NULL DEFAULT 'unknown',
+        CONSTRAINT current_users_unique UNIQUE (miner));
+      CREATE INDEX current_users_activity_subscribed ON "Pool-Main".current_users(activity_notifications, subscribed);
+      CREATE INDEX current_users_miner_token ON "Pool-Main".current_users(miner, token);
+      CREATE INDEX current_users_payout_limit ON "Pool-Main".current_users(miner, payout_limit);`;
+    const executor = mockExecutor(null, expected);
+    const schema = new Schema(logger, executor, configMainCopy);
+    schema.createCurrentUsers('Pool-Main', () => {});
+  });
+
+  test('Test schema functionality [21]', () => {
+    const results = { rows: [{ exists: true }]};
+    const expected = `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'Pool-Main'
         AND table_name = 'current_workers');`;
     const executor = mockExecutor(results, expected);
     const schema = new Schema(logger, executor, configMainCopy);
@@ -351,7 +400,7 @@ describe('Test schema functionality', () => {
     });
   });
 
-  test('Test schema functionality [20]', () => {
+  test('Test schema functionality [22]', () => {
     const expected = `
       CREATE TABLE "Pool-Main".current_workers(
         id BIGSERIAL PRIMARY KEY,
@@ -383,7 +432,7 @@ describe('Test schema functionality', () => {
     schema.createCurrentWorkers('Pool-Main', () => {});
   });
 
-  test('Test schema functionality [21]', () => {
+  test('Test schema functionality [23]', () => {
     const results = { rows: [{ exists: true }]};
     const expected = `
       SELECT EXISTS (
@@ -397,7 +446,7 @@ describe('Test schema functionality', () => {
     });
   });
 
-  test('Test schema functionality [22]', () => {
+  test('Test schema functionality [24]', () => {
     const expected = `
       CREATE TABLE "Pool-Main".historical_blocks(
         id BIGSERIAL PRIMARY KEY,
@@ -428,7 +477,7 @@ describe('Test schema functionality', () => {
     schema.createHistoricalBlocks('Pool-Main', () => {});
   });
 
-  test('Test schema functionality [23]', () => {
+  test('Test schema functionality [25]', () => {
     const results = { rows: [{ exists: true }]};
     const expected = `
       SELECT EXISTS (
@@ -442,7 +491,7 @@ describe('Test schema functionality', () => {
     });
   });
 
-  test('Test schema functionality [24]', () => {
+  test('Test schema functionality [26]', () => {
     const expected = `
       CREATE TABLE "Pool-Main".historical_payments(
         id BIGSERIAL PRIMARY KEY,
@@ -459,7 +508,7 @@ describe('Test schema functionality', () => {
     schema.createHistoricalPayments('Pool-Main', () => {});
   });
 
-  test('Test schema functionality [25]', () => {
+  test('Test schema functionality [27]', () => {
     const results = { rows: [{ exists: true }]};
     const expected = `
       SELECT EXISTS (
@@ -473,7 +522,7 @@ describe('Test schema functionality', () => {
     });
   });
 
-  test('Test schema functionality [26]', () => {
+  test('Test schema functionality [28]', () => {
     const expected = `
       CREATE TABLE "Pool-Main".historical_rounds(
         id BIGSERIAL PRIMARY KEY,
@@ -501,7 +550,7 @@ describe('Test schema functionality', () => {
     schema.createHistoricalRounds('Pool-Main', () => {});
   });
 
-  test('Test schema functionality [27]', () => {
+  test('Test schema functionality [29]', () => {
     const results = { rows: [{ exists: true }]};
     const expected = `
       SELECT EXISTS (
@@ -515,7 +564,7 @@ describe('Test schema functionality', () => {
     });
   });
 
-  test('Test schema functionality [28]', () => {
+  test('Test schema functionality [30]', () => {
     const expected = `
       CREATE TABLE "Pool-Main".historical_transactions(
         id BIGSERIAL PRIMARY KEY,
