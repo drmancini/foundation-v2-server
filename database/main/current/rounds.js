@@ -80,6 +80,7 @@ const CurrentRounds = function (logger, configMain) {
         ${ round.solo },
         ${ round.stale },
         ${ round.times },
+        ${ round.times_increment },
         '${ round.type }',
         ${ round.valid },
         ${ round.work })`;
@@ -95,7 +96,8 @@ const CurrentRounds = function (logger, configMain) {
         timestamp, recent, miner,
         worker, identifier, invalid,
         round, solo, stale, times,
-        type, valid, work)
+        times_increment, type,
+        valid, work)
       VALUES ${ _this.buildCurrentRoundsMain(updates) }
       ON CONFLICT ON CONSTRAINT current_rounds_unique
       DO UPDATE SET
@@ -103,6 +105,7 @@ const CurrentRounds = function (logger, configMain) {
         invalid = "${ pool }".current_rounds.invalid + EXCLUDED.invalid,
         stale = "${ pool }".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("${ pool }".current_rounds.times, EXCLUDED.times),
+        times_increment = "${ pool }".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "${ pool }".current_rounds.valid + EXCLUDED.valid,
         work = "${ pool }".current_rounds.work + EXCLUDED.work;`;
   };

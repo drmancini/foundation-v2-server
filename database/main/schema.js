@@ -249,6 +249,7 @@ const Schema = function (logger, executor, configMain) {
         solo BOOLEAN NOT NULL DEFAULT false,
         stale INT NOT NULL DEFAULT 0,
         times FLOAT NOT NULL DEFAULT 0,
+        times_increment FLOAT NOT NULL DEFAULT 0,
         type VARCHAR NOT NULL DEFAULT 'primary',
         valid INT NOT NULL DEFAULT 0,
         work FLOAT NOT NULL DEFAULT 0,
@@ -400,6 +401,37 @@ const Schema = function (logger, executor, configMain) {
     _this.executor([command], () => callback());
   };
 
+  // Check if Historical Miners Table Exists in Database
+  this.selectHistoricalMiners = function(pool, callback) {
+    const command = `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = '${ pool }'
+        AND table_name = 'historical_miners');`;
+    _this.executor([command], (results) => callback(results.rows[0].exists));
+  };
+
+  // Deploy Historical Miners Table to Database
+  this.createHistoricalMiners = function(pool, callback) {
+    const command = `
+      CREATE TABLE "${ pool }".historical_miners(
+        id BIGSERIAL PRIMARY KEY,
+        timestamp BIGINT NOT NULL DEFAULT -1,
+        recent BIGINT NOT NULL DEFAULT -1,
+        miner VARCHAR NOT NULL DEFAULT 'unknown',
+        hashrate FLOAT NOT NULL DEFAULT 0,
+        invalid INT NOT NULL DEFAULT 0,
+        solo BOOLEAN NOT NULL DEFAULT false,
+        stale INT NOT NULL DEFAULT 0,
+        type VARCHAR NOT NULL DEFAULT 'primary',
+        valid INT NOT NULL DEFAULT 0,
+        work FLOAT NOT NULL DEFAULT 0,
+        CONSTRAINT historical_miners_unique UNIQUE (recent, miner, solo, type));
+      CREATE INDEX historical_miners_miner ON "${ pool }".historical_miners(miner, type);
+      CREATE INDEX historical_miners_type ON "${ pool }".historical_miners(type);`;
+    _this.executor([command], () => callback());
+  };
+
   // Check if Historical Payments Table Exists in Database
   this.selectHistoricalPayments = function(pool, callback) {
     const command = `
@@ -487,6 +519,40 @@ const Schema = function (logger, executor, configMain) {
     _this.executor([command], () => callback());
   };
 
+  // Check if Historical Workers Table Exists in Database
+  this.selectHistoricalWorkers = function(pool, callback) {
+    const command = `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = '${ pool }'
+        AND table_name = 'historical_workers');`;
+    _this.executor([command], (results) => callback(results.rows[0].exists));
+  };
+
+  // Deploy Historical Workers Table to Database
+  this.createHistoricalWorkers = function(pool, callback) {
+    const command = `
+      CREATE TABLE "${ pool }".historical_workers(
+        id BIGSERIAL PRIMARY KEY,
+        timestamp BIGINT NOT NULL DEFAULT -1,
+        recent BIGINT NOT NULL DEFAULT -1,
+        miner VARCHAR NOT NULL DEFAULT 'unknown',
+        worker VARCHAR NOT NULL DEFAULT 'unknown',
+        hashrate FLOAT NOT NULL DEFAULT 0,
+        identifier VARCHAR NOT NULL DEFAULT 'master',
+        invalid INT NOT NULL DEFAULT 0,
+        solo BOOLEAN NOT NULL DEFAULT false,
+        stale INT NOT NULL DEFAULT 0,
+        type VARCHAR NOT NULL DEFAULT 'primary',
+        valid INT NOT NULL DEFAULT 0,
+        work FLOAT NOT NULL DEFAULT 0,
+        CONSTRAINT historical_workers_unique UNIQUE (recent, worker, solo, type));
+      CREATE INDEX historical_workers_miner ON "${ pool }".historical_workers(miner, type);
+      CREATE INDEX historical_workers_worker ON "${ pool }".historical_workers(worker, type);
+      CREATE INDEX historical_workers_type ON "${ pool }".historical_workers(type);`;
+    _this.executor([command], () => callback());
+  };
+
   // Build Schema Promises for Deployment
   /* istanbul ignore next */
   this.handlePromises = function(pool, checker, deployer) {
@@ -514,9 +580,11 @@ const Schema = function (logger, executor, configMain) {
         .then(() => _this.handlePromises(pool, _this.selectCurrentUsers, _this.createCurrentUsers))
         .then(() => _this.handlePromises(pool, _this.selectCurrentWorkers, _this.createCurrentWorkers))
         .then(() => _this.handlePromises(pool, _this.selectHistoricalBlocks, _this.createHistoricalBlocks))
+        .then(() => _this.handlePromises(pool, _this.selectHistoricalMiners, _this.createHistoricalMiners))
         .then(() => _this.handlePromises(pool, _this.selectHistoricalPayments, _this.createHistoricalPayments))
         .then(() => _this.handlePromises(pool, _this.selectHistoricalRounds, _this.createHistoricalRounds))
         .then(() => _this.handlePromises(pool, _this.selectHistoricalTransactions, _this.createHistoricalTransactions))
+        .then(() => _this.handlePromises(pool, _this.selectHistoricalWorkers, _this.createHistoricalWorkers))
         .then(() => resolve());
     });
   };

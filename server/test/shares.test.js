@@ -294,7 +294,6 @@ describe('Test shares functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const shares = new Shares(logger, client, configCopy, configMainCopy);
-    const roundData = { valid: 1, invalid: 0, stale: 0, work: 100 };
     const shareData = { difficulty: 1 };
     const expected = {
       timestamp: 1634742080841,
@@ -302,7 +301,7 @@ describe('Test shares functionality', () => {
       solo_effort: 0.6667,
       type: 'primary',
     };
-    expect(shares.handleCurrentMiners('miner1', 150, roundData, shareData, 'valid', 'primary')).toStrictEqual(expected);
+    expect(shares.handleCurrentMiners('miner1', 150, shareData, 'valid', 'primary')).toStrictEqual(expected);
   });
 
   test('Test shares database updates [14]', () => {
@@ -310,7 +309,6 @@ describe('Test shares functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const shares = new Shares(logger, client, configCopy, configMainCopy);
-    const roundData = { valid: 1, invalid: 0, stale: 0, work: 100 };
     const shareData = { difficulty: 1 };
     const expected = {
       timestamp: 1634742080841,
@@ -318,7 +316,7 @@ describe('Test shares functionality', () => {
       solo_effort: 0.6667,
       type: 'primary',
     };
-    expect(shares.handleCurrentMiners(null, 150, roundData, shareData, 'valid', 'primary')).toStrictEqual(expected);
+    expect(shares.handleCurrentMiners(null, 150, shareData, 'valid', 'primary')).toStrictEqual(expected);
   });
 
   test('Test shares database updates [15]', () => {
@@ -339,6 +337,7 @@ describe('Test shares functionality', () => {
       solo: false,
       stale: 0,
       times: 0.841,
+      times_increment: 0.841,
       type: 'primary',
       valid: 1,
       work: 1,
@@ -364,6 +363,7 @@ describe('Test shares functionality', () => {
       solo: false,
       stale: 0,
       times: 0.841,
+      times_increment: 0.841,
       type: 'primary',
       valid: 1,
       work: 1,
@@ -389,6 +389,7 @@ describe('Test shares functionality', () => {
       solo: false,
       stale: 0,
       times: 0,
+      times_increment: 0,
       type: 'primary',
       valid: 0,
       work: 0,
@@ -414,6 +415,7 @@ describe('Test shares functionality', () => {
       solo: false,
       stale: 1,
       times: 0,
+      times_increment: 0,
       type: 'primary',
       valid: 0,
       work: 0,
@@ -426,7 +428,6 @@ describe('Test shares functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const shares = new Shares(logger, client, configCopy, configMainCopy);
-    const roundData = { valid: 1, invalid: 0, stale: 0, work: 100 };
     const shareData = { difficulty: 1, ip: '1.1.1.1' };
     const expected = {
       timestamp: 1634742080841,
@@ -441,7 +442,7 @@ describe('Test shares functionality', () => {
       solo: false,
       type: 'primary',
     };
-    expect(shares.handleCurrentWorkers('miner1', 150, roundData, shareData, 'valid', false, 'primary')).toStrictEqual(expected);
+    expect(shares.handleCurrentWorkers('miner1', 150, shareData, 'valid', false, 'primary')).toStrictEqual(expected);
   });
 
   test('Test shares database updates [20]', () => {
@@ -449,7 +450,6 @@ describe('Test shares functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const shares = new Shares(logger, client, configCopy, configMainCopy);
-    const roundData = { valid: 1, invalid: 0, stale: 0, work: 100 };
     const shareData = { difficulty: 1, identifier: 'master', ip: '1.1.1.1' };
     const expected = {
       timestamp: 1634742080841,
@@ -464,7 +464,91 @@ describe('Test shares functionality', () => {
       solo: false,
       type: 'primary',
     };
-    expect(shares.handleCurrentWorkers(null, 150, roundData, shareData, 'valid', false, 'primary')).toStrictEqual(expected);
+    expect(shares.handleCurrentWorkers(null, 150, shareData, 'valid', false, 'primary')).toStrictEqual(expected);
+  });
+
+  test('Test shares database updates [21]', () => {
+    MockDate.set(1634742080841);
+    const client = mockClient(configMainCopy, { rows: [] });
+    const logger = new Logger(configMainCopy);
+    const shares = new Shares(logger, client, configCopy, configMainCopy);
+    const shareData = { difficulty: 1, identifier: 'master', ip: '1.1.1.1' };
+    const expected = {
+      timestamp: 1634742080841,
+      recent: 1634742600000,
+      miner: 'miner1',
+      invalid: 0,
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+      work: 1,
+    };
+    expect(shares.handleHistoricalMiners('miner1', shareData, 'valid', false, 'primary')).toStrictEqual(expected);
+  });
+
+  test('Test shares database updates [22]', () => {
+    MockDate.set(1634742080841);
+    const client = mockClient(configMainCopy, { rows: [] });
+    const logger = new Logger(configMainCopy);
+    const shares = new Shares(logger, client, configCopy, configMainCopy);
+    const shareData = { difficulty: 1, identifier: 'master', ip: '1.1.1.1' };
+    const expected = {
+      timestamp: 1634742080841,
+      recent: 1634742600000,
+      miner: '',
+      invalid: 0,
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+      work: 1,
+    };
+    expect(shares.handleHistoricalMiners(null, shareData, 'valid', false, 'primary')).toStrictEqual(expected);
+  });
+
+  test('Test shares database updates [23]', () => {
+    MockDate.set(1634742080841);
+    const client = mockClient(configMainCopy, { rows: [] });
+    const logger = new Logger(configMainCopy);
+    const shares = new Shares(logger, client, configCopy, configMainCopy);
+    const shareData = { difficulty: 1, identifier: 'master', ip: '1.1.1.1' };
+    const expected = {
+      timestamp: 1634742080841,
+      recent: 1634742600000,
+      miner: 'worker1',
+      worker: 'worker1',
+      identifier: 'master',
+      invalid: 0,
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+      work: 1,
+    };
+    expect(shares.handleHistoricalWorkers('worker1', shareData, 'valid', false, 'primary')).toStrictEqual(expected);
+  });
+
+  test('Test shares database updates [23]', () => {
+    MockDate.set(1634742080841);
+    const client = mockClient(configMainCopy, { rows: [] });
+    const logger = new Logger(configMainCopy);
+    const shares = new Shares(logger, client, configCopy, configMainCopy);
+    const shareData = { difficulty: 1, identifier: 'master', ip: '1.1.1.1' };
+    const expected = {
+      timestamp: 1634742080841,
+      recent: 1634742600000,
+      miner: '',
+      worker: null,
+      identifier: 'master',
+      invalid: 0,
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+      work: 1,
+    };
+    expect(shares.handleHistoricalWorkers(null, shareData, 'valid', false, 'primary')).toStrictEqual(expected);
   });
 
   test('Test shares primary updates [1]', (done) => {
@@ -1292,6 +1376,7 @@ describe('Test shares functionality', () => {
       { rows: [{ valid: 1, invalid: 0, stale: 0, work: 100 }] },
       { rows: [{ valid: 1, invalid: 0, stale: 0, work: 100 }] },
       { rows: [{ valid: 1, invalid: 0, stale: 0, work: 100 }] },
+      { rows: [{ }] },
       null];
     const shareData = {
       addrPrimary: 'primary1',
@@ -1344,7 +1429,8 @@ describe('Test shares functionality', () => {
         timestamp, recent, miner,
         worker, identifier, invalid,
         round, solo, stale, times,
-        type, valid, work)
+        times_increment, type,
+        valid, work)
       VALUES (
         1634742080841,
         1634742120000,
@@ -1356,6 +1442,7 @@ describe('Test shares functionality', () => {
         false,
         0,
         0,
+        0,
         'primary',
         1,
         1)
@@ -1365,6 +1452,7 @@ describe('Test shares functionality', () => {
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
+        times_increment = "Pool-Bitcoin".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedWorkers = `
@@ -1395,6 +1483,54 @@ describe('Test shares functionality', () => {
         last_share = EXCLUDED.last_share,
         offline_tag = EXCLUDED.offline_tag,
         solo = EXCLUDED.solo;`;
+    const expectedHistoricalWorkers = `
+      INSERT INTO "Pool-Bitcoin".historical_workers (
+        timestamp, recent, miner,
+        worker, identifier, invalid,
+        solo, stale, type, valid,
+        work)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        'primary1',
+        'primary1',
+        'master',
+        0,
+        false,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        identifier = EXCLUDED.identifier,
+        invalid = "Pool-Bitcoin".historical_workers.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".historical_workers.stale + EXCLUDED.stale,
+        valid = "Pool-Bitcoin".historical_workers.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".historical_workers.work + EXCLUDED.work;`;
+    const expectedHistoricalminers = `
+      INSERT INTO "Pool-Bitcoin".historical_miners (
+        timestamp, recent, miner,
+        invalid, solo, stale, type,
+        valid, work)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        'primary1',
+        0,
+        false,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        invalid = "Pool-Bitcoin".historical_miners.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".historical_miners.stale + EXCLUDED.stale,
+        valid = "Pool-Bitcoin".historical_miners.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".historical_miners.work + EXCLUDED.work;`;
     const expectedUsers = `
       INSERT INTO "Pool-Bitcoin".current_users (
         miner, joined, payout_limit)
@@ -1405,12 +1541,14 @@ describe('Test shares functionality', () => {
       ON CONFLICT ON CONSTRAINT current_users_unique
       DO NOTHING;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(7);
+      expect(transaction.length).toBe(9);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedMetadata);
       expect(transaction[3]).toBe(expectedRounds);
       expect(transaction[4]).toBe(expectedWorkers);
-      expect(transaction[5]).toBe(expectedUsers);
+      expect(transaction[5]).toBe(expectedHistoricalWorkers);
+      expect(transaction[6]).toBe(expectedHistoricalminers);
+      expect(transaction[7]).toBe(expectedUsers);
       done();
     });
     shares.handleShares(lookups, shareData, 'valid', false, () => {});
@@ -1421,7 +1559,7 @@ describe('Test shares functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const shares = new Shares(logger, client, configCopy, configMainCopy);
-    const lookups = [null, { rows: [] }, { rows: [] }, { rows: [] }, { rows: [] }, null];
+    const lookups = [null, { rows: [] }, { rows: [] }, { rows: [] }, { rows: [] }, { rows: [] }, null];
     const shareData = {
       addrPrimary: 'primary1',
       addrAuxiliary: 'auxiliary1',
@@ -1473,7 +1611,8 @@ describe('Test shares functionality', () => {
         timestamp, recent, miner,
         worker, identifier, invalid,
         round, solo, stale, times,
-        type, valid, work)
+        times_increment, type,
+        valid, work)
       VALUES (
         1634742080841,
         1634742120000,
@@ -1485,6 +1624,7 @@ describe('Test shares functionality', () => {
         false,
         0,
         0,
+        0,
         'primary',
         1,
         1)
@@ -1494,6 +1634,7 @@ describe('Test shares functionality', () => {
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
+        times_increment = "Pool-Bitcoin".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedWorkers = `
@@ -1524,6 +1665,54 @@ describe('Test shares functionality', () => {
         last_share = EXCLUDED.last_share,
         offline_tag = EXCLUDED.offline_tag,
         solo = EXCLUDED.solo;`;
+    const expectedHistoricalWorkers = `
+      INSERT INTO "Pool-Bitcoin".historical_workers (
+        timestamp, recent, miner,
+        worker, identifier, invalid,
+        solo, stale, type, valid,
+        work)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        'primary1',
+        'primary1',
+        'master',
+        0,
+        false,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        identifier = EXCLUDED.identifier,
+        invalid = "Pool-Bitcoin".historical_workers.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".historical_workers.stale + EXCLUDED.stale,
+        valid = "Pool-Bitcoin".historical_workers.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".historical_workers.work + EXCLUDED.work;`;
+    const expectedHistoricalminers = `
+      INSERT INTO "Pool-Bitcoin".historical_miners (
+        timestamp, recent, miner,
+        invalid, solo, stale, type,
+        valid, work)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        'primary1',
+        0,
+        false,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        invalid = "Pool-Bitcoin".historical_miners.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".historical_miners.stale + EXCLUDED.stale,
+        valid = "Pool-Bitcoin".historical_miners.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".historical_miners.work + EXCLUDED.work;`;
     const expectedUsers = `
       INSERT INTO "Pool-Bitcoin".current_users (
         miner, joined, payout_limit)
@@ -1534,12 +1723,14 @@ describe('Test shares functionality', () => {
       ON CONFLICT ON CONSTRAINT current_users_unique
       DO NOTHING;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(7);
+      expect(transaction.length).toBe(9);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedMetadata);
       expect(transaction[3]).toBe(expectedRounds);
       expect(transaction[4]).toBe(expectedWorkers);
-      expect(transaction[5]).toBe(expectedUsers);
+      expect(transaction[5]).toBe(expectedHistoricalWorkers);
+      expect(transaction[6]).toBe(expectedHistoricalminers);
+      expect(transaction[7]).toBe(expectedUsers);
       done();
     });
     shares.handleShares(lookups, shareData, 'valid', false, () => {});

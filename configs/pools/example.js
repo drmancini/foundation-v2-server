@@ -13,9 +13,6 @@ config.enabled = false;
 config.name = 'Pool-Bitcoin';
 config.template = 'bitcoin';
 
-// Primary Configuration
-////////////////////////////////////////////////////////////////////////////////
-
 // CryptoNight Rotations
 config.rotations = {};
 config.rotations.enabled = false;
@@ -45,6 +42,9 @@ config.hashLib = {};
 config.hashLib.enabled = false;
 config.hashLib.name = '';
 
+// Primary Configuration
+////////////////////////////////////////////////////////////////////////////////
+
 // Miscellaneous Configuration
 config.primary = {};
 config.primary.address = '[address]';
@@ -64,7 +64,7 @@ config.primary.daemons = [];
 
 const daemons1 = {};
 daemons1.host = '127.0.0.1';
-daemons1.port = 8332;
+daemons1.port = 10225;
 daemons1.username = '';
 daemons1.password = '';
 config.primary.daemons.push(daemons1);
