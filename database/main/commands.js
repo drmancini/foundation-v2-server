@@ -15,9 +15,11 @@ const CurrentWorkers = require('./current/workers');
 
 // Historical Table Commands
 const HistoricalBlocks = require('./historical/blocks');
+const HistoricalMiners = require('./historical/miners');
 const HistoricalPayments = require('./historical/payments');
 const HistoricalRounds = require('./historical/rounds');
 const HistoricalTransactions = require('./historical/transactions');
+const HistoricalWorkers = require('./historical/workers');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -67,9 +69,11 @@ const Commands = function (logger, client, configMain) {
 
   // Initialize Historical Commands
   this.historical.blocks = new HistoricalBlocks(_this.logger, _this.configMain);
+  this.historical.miners = new HistoricalMiners(_this.logger, _this.configMain);
   this.historical.payments = new HistoricalPayments(_this.logger, _this.configMain);
   this.historical.rounds = new HistoricalRounds(_this.logger, _this.configMain);
   this.historical.transactions = new HistoricalTransactions(_this.logger, _this.configMain); 
+  this.historical.workers = new HistoricalWorkers(_this.logger, _this.configMain); 
 };
 
 module.exports = Commands;

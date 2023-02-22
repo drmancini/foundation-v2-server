@@ -116,6 +116,7 @@ describe('Test checks functionality', () => {
       solo: false,
       stale: 0,
       times: 100,
+      times_increment: 10,
       type: 'primary',
       valid: 100,
       work: 100,
@@ -124,9 +125,9 @@ describe('Test checks functionality', () => {
     const miner3 = { ...miner1, miner: 'miner3', worker: 'miner3' };
     const rounds = [[miner1, miner2, miner3], [miner1, miner2, miner3]];
     const expected = [
-      {'identifier': 'master', 'invalid': 0, 'miner': 'miner1', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 200, 'work': 200, 'worker': 'miner1'},
-      {'identifier': 'master', 'invalid': 0, 'miner': 'miner2', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 200, 'work': 200, 'worker': 'miner2'},
-      {'identifier': 'master', 'invalid': 0, 'miner': 'miner3', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 200, 'work': 200, 'worker': 'miner3'}];
+      {'identifier': 'master', 'invalid': 0, 'miner': 'miner1', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'times_increment': 0, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 200, 'work': 200, 'worker': 'miner1'},
+      {'identifier': 'master', 'invalid': 0, 'miner': 'miner2', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'times_increment': 0, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 200, 'work': 200, 'worker': 'miner2'},
+      {'identifier': 'master', 'invalid': 0, 'miner': 'miner3', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'times_increment': 0, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 200, 'work': 200, 'worker': 'miner3'}];
     expect(checks.handleCurrentOrphans(rounds)).toStrictEqual(expected);
   });
 
@@ -145,6 +146,7 @@ describe('Test checks functionality', () => {
       solo: false,
       stale: 0,
       times: 100,
+      times_increment: 10,
       type: 'primary',
       valid: 100,
       work: 100,
@@ -153,9 +155,9 @@ describe('Test checks functionality', () => {
     const miner3 = { ...miner1, miner: 'miner3', worker: 'miner3' };
     const rounds = [[miner1, miner2, miner3]];
     const expected = [
-      {'identifier': 'master', 'invalid': 0, 'miner': 'miner1', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 100, 'work': 100, 'worker': 'miner1'},
-      {'identifier': 'master', 'invalid': 0, 'miner': 'miner2', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 100, 'work': 100, 'worker': 'miner2'},
-      {'identifier': 'master', 'invalid': 0, 'miner': 'miner3', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 100, 'work': 100, 'worker': 'miner3'}];
+      {'identifier': 'master', 'invalid': 0, 'miner': 'miner1', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'times_increment': 0, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 100, 'work': 100, 'worker': 'miner1'},
+      {'identifier': 'master', 'invalid': 0, 'miner': 'miner2', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'times_increment': 0, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 100, 'work': 100, 'worker': 'miner2'},
+      {'identifier': 'master', 'invalid': 0, 'miner': 'miner3', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'times_increment': 0, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 100, 'work': 100, 'worker': 'miner3'}];
     expect(checks.handleCurrentOrphans(rounds)).toStrictEqual(expected);
   });
 
@@ -182,9 +184,9 @@ describe('Test checks functionality', () => {
     const miner3 = { ...miner1, miner: 'miner3', worker: 'miner3' };
     const rounds = [[miner1, miner2, miner3], [miner1, miner2, miner3]];
     const expected = [
-      {'identifier': 'master', 'invalid': 0, 'miner': 'miner1', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 0, 'work': 0, 'worker': 'miner1'},
-      {'identifier': 'master', 'invalid': 0, 'miner': 'miner2', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 0, 'work': 0, 'worker': 'miner2'},
-      {'identifier': 'master', 'invalid': 0, 'miner': 'miner3', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 0, 'work': 0, 'worker': 'miner3'}];
+      {'identifier': 'master', 'invalid': 0, 'miner': 'miner1', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'times_increment': 0, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 0, 'work': 0, 'worker': 'miner1'},
+      {'identifier': 'master', 'invalid': 0, 'miner': 'miner2', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'times_increment': 0, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 0, 'work': 0, 'worker': 'miner2'},
+      {'identifier': 'master', 'invalid': 0, 'miner': 'miner3', 'round': 'current', 'solo': false, 'stale': 0, 'times': 100, 'times_increment': 0, 'timestamp': 1634742080841, 'recent': 1634742060000, 'type': 'primary', 'valid': 0, 'work': 0, 'worker': 'miner3'}];
     expect(checks.handleCurrentOrphans(rounds)).toStrictEqual(expected);
   });
 
@@ -229,6 +231,7 @@ describe('Test checks functionality', () => {
       solo: false,
       stale: 0,
       times: 100,
+      times_increment: 10,
       type: 'primary',
       valid: 100,
       work: 100,
@@ -403,7 +406,8 @@ describe('Test checks functionality', () => {
         timestamp, recent, miner,
         worker, identifier, invalid,
         round, solo, stale, times,
-        type, valid, work)
+        times_increment, type,
+        valid, work)
       VALUES (
         1634742080841,
         1634742060000,
@@ -415,6 +419,7 @@ describe('Test checks functionality', () => {
         false,
         0,
         100,
+        0,
         'primary',
         100,
         100), (
@@ -428,6 +433,7 @@ describe('Test checks functionality', () => {
         false,
         0,
         100,
+        0,
         'primary',
         200,
         200)
@@ -437,6 +443,7 @@ describe('Test checks functionality', () => {
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
+        times_increment = "Pool-Bitcoin".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedOrphanBlocksUpdates = `
@@ -528,6 +535,7 @@ describe('Test checks functionality', () => {
       solo: false,
       stale: 0,
       times: 100,
+      times_increment: 10,
       type: 'primary',
       valid: 100,
       work: 100,
@@ -553,7 +561,8 @@ describe('Test checks functionality', () => {
         timestamp, recent, miner,
         worker, identifier, invalid,
         round, solo, stale, times,
-        type, valid, work)
+        times_increment, type,
+        valid, work)
       VALUES (
         1634742080841,
         1634742060000,
@@ -565,6 +574,7 @@ describe('Test checks functionality', () => {
         false,
         0,
         100,
+        0,
         'primary',
         100,
         100), (
@@ -578,6 +588,7 @@ describe('Test checks functionality', () => {
         false,
         0,
         100,
+        0,
         'primary',
         200,
         200), (
@@ -591,6 +602,7 @@ describe('Test checks functionality', () => {
         false,
         0,
         100,
+        0,
         'primary',
         100,
         100), (
@@ -604,6 +616,7 @@ describe('Test checks functionality', () => {
         false,
         0,
         100,
+        0,
         'primary',
         200,
         200)
@@ -613,6 +626,7 @@ describe('Test checks functionality', () => {
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
+        times_increment = "Pool-Bitcoin".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedOrphanBlocksUpdates = `

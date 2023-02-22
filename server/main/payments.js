@@ -265,7 +265,7 @@ const Payments = function (logger, client, config, configMain) {
           // Validate and Send Out Primary Payments
           _this.stratum.stratum.handlePrimaryBalances(payments, (error) => {
             if (error) _this.handleFailures(updates, () => callback(error));
-            else _this.stratum.stratum.handlePrimaryPayments(payments, (error, amounts, balances, transaction) => {
+            else _this.stratum.stratum.handlePrimaryPayments(payments, [], (error, amounts, balances, transaction) => {
               if (error) _this.handleFailures(updates, () => callback(error));
               else _this.handleUpdates(updates, rounds, amounts, balances, transaction, 'primary', () => callback(null));
             });

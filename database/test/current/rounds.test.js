@@ -115,6 +115,7 @@ describe('Test database rounds functionality', () => {
       solo: true,
       stale: 0,
       times: 100,
+      times_increment: 10,
       type: 'primary',
       valid: 1,
       work: 8
@@ -125,7 +126,8 @@ describe('Test database rounds functionality', () => {
         timestamp, recent, miner,
         worker, identifier, invalid,
         round, solo, stale, times,
-        type, valid, work)
+        times_increment, type,
+        valid, work)
       VALUES (
         1,
         1,
@@ -137,6 +139,7 @@ describe('Test database rounds functionality', () => {
         true,
         0,
         100,
+        10,
         'primary',
         1,
         8)
@@ -146,6 +149,7 @@ describe('Test database rounds functionality', () => {
         invalid = "Pool-Main".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Main".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Main".current_rounds.times, EXCLUDED.times),
+        times_increment = "Pool-Main".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "Pool-Main".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Main".current_rounds.work + EXCLUDED.work;`;
     expect(response).toBe(expected);
@@ -164,6 +168,7 @@ describe('Test database rounds functionality', () => {
       solo: true,
       stale: 0,
       times: 100,
+      times_increment: 10,
       type: 'primary',
       valid: 1,
       work: 8
@@ -174,7 +179,8 @@ describe('Test database rounds functionality', () => {
         timestamp, recent, miner,
         worker, identifier, invalid,
         round, solo, stale, times,
-        type, valid, work)
+        times_increment, type,
+        valid, work)
       VALUES (
         1,
         1,
@@ -186,6 +192,7 @@ describe('Test database rounds functionality', () => {
         true,
         0,
         100,
+        10,
         'primary',
         1,
         8), (
@@ -199,6 +206,7 @@ describe('Test database rounds functionality', () => {
         true,
         0,
         100,
+        10,
         'primary',
         1,
         8)
@@ -208,6 +216,7 @@ describe('Test database rounds functionality', () => {
         invalid = "Pool-Main".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Main".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Main".current_rounds.times, EXCLUDED.times),
+        times_increment = "Pool-Main".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "Pool-Main".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Main".current_rounds.work + EXCLUDED.work;`;
     expect(response).toBe(expected);

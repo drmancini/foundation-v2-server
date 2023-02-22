@@ -149,26 +149,26 @@ const Statistics = function (logger, client, config, configMain, template) {
   };
 
   // Handle Historical Miners Updates
-  this.handleHistoricalMiners = function(miners) {
+  this.handleHistoricalMinersHashrate = function(miners) {
 
     // Calculate Features of Miners
     const timestamp = Date.now();
-    const interval = _this.config.settings.interval.historical;
-    const recent = Math.round(timestamp / interval) * interval;
+    const tenMinutes = 600000;
+    const snapshot = Math.floor(timestamp / tenMinutes) * tenMinutes;
+    const algorithm = _this.config.primary.coin.algorithm || 'sha256d';
+    const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
 
     // Return Miners Updates
     return miners.map((miner) => {
+      const section = miner.recent == snapshot ? tenMinutes : timestamp - snapshot;
+      const hashrate = utils.roundTo((multiplier * miner.work * 1000) / section, 4);
       return {
         timestamp: timestamp,
-        recent: recent,
+        recent: miner.recent,
         miner: miner.miner,
-        efficiency: miner.efficiency,
-        effort: miner.effort,
-        hashrate: miner.hashrate,
-        invalid: miner.invalid,
-        stale: miner.stale,
+        hashrate: hashrate,
+        solo: miner.solo,
         type: miner.type,
-        valid: miner.valid,
       };
     });
   };
@@ -192,29 +192,29 @@ const Statistics = function (logger, client, config, configMain, template) {
     };
   };
 
-  // Handle Historical Workers Updates
-  this.handleHistoricalWorkers = function(workers) {
+  // Handle Historical Workerd Updates
+  this.handleHistoricalWorkersHashrate = function(workers) {
 
     // Calculate Features of Workers
     const timestamp = Date.now();
-    const interval = _this.config.settings.interval.historical;
-    const recent = Math.round(timestamp / interval) * interval;
+    const tenMinutes = 600000;
+    const snapshot = Math.floor(timestamp / tenMinutes) * tenMinutes;
+    const algorithm = _this.config.primary.coin.algorithm || 'sha256d';
+    const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
 
     // Return Workers Updates
     return workers.map((worker) => {
+      // console.log(worker)
+      const section = worker.recent == snapshot ? tenMinutes : timestamp - snapshot;
+      const hashrate = utils.roundTo((multiplier * worker.work * 1000) / section, 4);
       return {
         timestamp: timestamp,
-        recent: recent,
+        recent: worker.recent,
         miner: worker.miner,
         worker: worker.worker,
-        efficiency: worker.efficiency,
-        effort: worker.effort,
-        hashrate: worker.hashrate,
-        invalid: worker.invalid,
+        hashrate: hashrate,
         solo: worker.solo,
-        stale: worker.stale,
         type: worker.type,
-        valid: worker.valid,
       };
     });
   };
@@ -282,6 +282,20 @@ const Statistics = function (logger, client, config, configMain, template) {
             _this.pool, sharedWorkerHashrateResetUpdates));
     }
 
+    if (lookups[17].rows.length >= 1) {
+      const historicalMinersHashrateUpdate = _this.handleHistoricalMinersHashrate(lookups[17].rows);
+      if (historicalMinersHashrateUpdate.length > 0)
+        transaction.push(_this.historical.miners.insertHistoricalMinersHashrate(
+            _this.pool, historicalMinersHashrateUpdate));
+    }
+
+    if (lookups[18].rows.length >= 1) {
+      const historicalWorkerHashrateUpdate = _this.handleHistoricalWorkersHashrate(lookups[18].rows);
+      if (historicalWorkerHashrateUpdate.length > 0)
+        transaction.push(_this.historical.workers.insertHistoricalWorkersHashrate(
+            _this.pool, historicalWorkerHashrateUpdate));
+    }
+    
     // Insert Work into Database
     transaction.push('COMMIT;');
     _this.executor(transaction, () => callback());
@@ -326,7 +340,6 @@ const Statistics = function (logger, client, config, configMain, template) {
 
     // Handle Workers Solo Hashrate Updates
     if (lookups[15].rows.length >= 1) {
-      const timestamp = Date.now();
       const hashrate = lookups[7].rows;
       const soloWorkers = lookups[15].rows;
       const soloWorkersUpdates = _this.handleCurrentWorkers(hashrate, soloWorkers, 'auxiliary');
@@ -340,7 +353,6 @@ const Statistics = function (logger, client, config, configMain, template) {
 
     // Handle Workers Shared Hashrate Updates
     if (lookups[16].rows.length >= 1) {
-      const timestamp = Date.now();
       const hashrate = lookups[8].rows;
       const sharedWorkers = lookups[16].rows;
       const sharedWorkersUpdates = _this.handleCurrentWorkers(hashrate, sharedWorkers, 'auxiliary');
@@ -366,6 +378,8 @@ const Statistics = function (logger, client, config, configMain, template) {
 
     // Calculate Statistics Features
     const timestamp = Date.now();
+    const tenMinutes = 600000;
+    const recentSnapshot = 'ge' + (Math.floor(timestamp / tenMinutes) * tenMinutes);
     const hashrateWindow = timestamp - _this.config.settings.window.hashrate;
     const inactiveWindow = timestamp - _this.config.settings.window.inactive;
     const purgeWindow = timestamp - _this.config.settings.window.purge;
@@ -391,6 +405,8 @@ const Statistics = function (logger, client, config, configMain, template) {
       _this.current.workers.deleteCurrentWorkersInactive(_this.pool, purgeWindow),
       _this.current.workers.selectCurrentWorkersMain(_this.pool, { solo: true, type: blockType }),
       _this.current.workers.selectCurrentWorkersMain(_this.pool, { solo: false, type: blockType }),
+      _this.historical.miners.selectHistoricalMinersMain(_this.pool, { recent: recentSnapshot, type: blockType }),
+      _this.historical.workers.selectHistoricalWorkersMain(_this.pool, { recent: recentSnapshot, type: blockType }),
       'COMMIT;'];
 
     // Establish Separate Behavior

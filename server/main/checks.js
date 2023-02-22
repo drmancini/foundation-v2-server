@@ -81,6 +81,7 @@ const Checks = function (logger, client, config, configMain) {
         current.invalid += round.invalid || 0;
         current.stale += round.stale || 0;
         current.times = Math.max(current.times, round.times);
+        current.times_increment = 0;
         current.valid += round.valid || 0;
         current.work += round.work || 0;
       } else combined[identifier] = round;
@@ -100,6 +101,7 @@ const Checks = function (logger, client, config, configMain) {
         solo: current.solo,
         stale: current.stale,
         times: current.times,
+        times_increment: 0,
         type: current.type,
         valid: current.valid,
         work: current.work,

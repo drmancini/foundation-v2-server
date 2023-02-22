@@ -559,7 +559,7 @@ describe('Test payments functionality', () => {
       handlePrimaryRounds: (blocks, callback) => callback(null, blocks),
       handlePrimaryWorkers: (blocks, rounds, sending, callback) => callback(current),
       handlePrimaryBalances: (current, callback) => callback(null),
-      handlePrimaryPayments: (current, callback) => callback(null, amounts, {}, 'transaction1'),
+      handlePrimaryPayments: (current, users, callback) => callback(null, amounts, {}, 'transaction1'),
     }};
     let currentIdx = 0;
     const expectedGenerateBlocksDeletes = `
@@ -938,7 +938,7 @@ describe('Test payments functionality', () => {
       handlePrimaryRounds: (blocks, callback) => callback(null, blocks),
       handlePrimaryWorkers: (blocks, rounds, sending, callback) => callback(current),
       handlePrimaryBalances: (current, callback) => callback(null),
-      handlePrimaryPayments: (current, callback) => callback(true, {}, {}, null),
+      handlePrimaryPayments: (current, users, callback) => callback(true, {}, {}, null),
     }};
     let currentIdx = 0;
     const expected = `
