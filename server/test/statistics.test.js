@@ -217,28 +217,21 @@ describe('Test statistics functionality', () => {
     const statistics = new Statistics(logger, client, configCopy, configMainCopy, template);
     const miners = [{
       timestamp: 1,
+      recent: 1,
       miner: 'miner1',
-      efficiency: 100,
-      effort: 100,
-      hashrate: 100,
-      invalid: 0,
-      stale: 0,
+      solo: false,
       type: 'primary',
-      valid: 1,
+      work: 0.1,
     }];
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742000000,
+      recent: 1,
       miner: 'miner1',
-      efficiency: 100,
-      effort: 100,
-      hashrate: 100,
-      invalid: 0,
-      stale: 0,
+      hashrate: 5312857.7034,
+      solo: false,
       type: 'primary',
-      valid: 1,
     }];
-    expect(statistics.handleHistoricalMiners(miners)).toStrictEqual(expected);
+    expect(statistics.handleHistoricalMinersHashrate(miners)).toStrictEqual(expected);
   });
 
   test('Test statistics database updates [10]', () => {
@@ -273,32 +266,23 @@ describe('Test statistics functionality', () => {
     const statistics = new Statistics(logger, client, configCopy, configMainCopy, template);
     const workers = [{
       timestamp: 1,
+      recent: 1,
       miner: 'miner1',
       worker: 'worker1',
-      efficiency: 100,
-      effort: 100,
-      hashrate: 100,
-      invalid: 0,
       solo: false,
-      stale: 0,
       type: 'primary',
-      valid: 1,
+      work: 0.1,
     }];
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742000000,
+      recent: 1,
       miner: 'miner1',
       worker: 'worker1',
-      efficiency: 100,
-      effort: 100,
-      hashrate: 100,
-      invalid: 0,
+      hashrate: 5312857.7034,
       solo: false,
-      stale: 0,
       type: 'primary',
-      valid: 1,
     }];
-    expect(statistics.handleHistoricalWorkers(workers)).toStrictEqual(expected);
+    expect(statistics.handleHistoricalWorkersHashrate(workers)).toStrictEqual(expected);
   });
 
   test('Test statistics primary updates [1]', (done) => {
@@ -383,6 +367,8 @@ describe('Test statistics functionality', () => {
         type: 'primary',
         valid: 1,
       }]},
+      { rows: []},
+      { rows: []},
       null];
     const expectedSoloMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
@@ -600,6 +586,25 @@ describe('Test statistics functionality', () => {
         type: 'primary',
         valid: 1,
       }]},
+      { rows: [{
+        timestamp: 1,
+        recent: 1,
+        miner: 'miner1',
+        hashrate: 100,
+        solo: false,
+        type: 'primary',
+        work: 1,
+      }]},
+      { rows: [{
+        timestamp: 1,
+        recent: 1,
+        miner: 'miner1',
+        worker: 'miner1',
+        hashrate: 100,
+        solo: false,
+        type: 'primary',
+        work: 1,
+      }]},
       null];
     const expectedSoloMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
@@ -686,13 +691,47 @@ describe('Test statistics functionality', () => {
         timestamp = EXCLUDED.timestamp,
         efficiency = EXCLUDED.efficiency,
         hashrate = EXCLUDED.hashrate;`;
+    const expectedHistoricalMiners = `
+      INSERT INTO "Pool-Bitcoin".historical_miners (
+        timestamp, recent, miner,
+        hashrate, solo, type)
+      VALUES (
+        1634742080841,
+        1,
+        'miner1',
+        53128577.0339,
+        false,
+        'primary')
+      ON CONFLICT ON CONSTRAINT historical_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate = EXCLUDED.hashrate;`;
+    const expectedHistoricalWorkers = `
+      INSERT INTO "Pool-Bitcoin".historical_workers (
+        timestamp, recent, miner,
+        worker, hashrate, solo,
+        type)
+      VALUES (
+        1634742080841,
+        1,
+        'miner1',
+        'miner1',
+        53128577.0339,
+        false,
+        'primary')
+      ON CONFLICT ON CONSTRAINT historical_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate = EXCLUDED.hashrate;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(7);
+      expect(transaction.length).toBe(9);
       expect(transaction[1]).toBe(expectedSoloMetadata);
       expect(transaction[2]).toBe(expectedSharedMetadata);
       expect(transaction[3]).toBe(expectedMiners);
       expect(transaction[4]).toBe(expectedSoloWorkers);
       expect(transaction[5]).toBe(expectedSharedWorkers);
+      expect(transaction[6]).toBe(expectedHistoricalMiners);
+      expect(transaction[7]).toBe(expectedHistoricalWorkers);
       done();
     });
     statistics.handlePrimary(lookups, () => {});
@@ -722,6 +761,8 @@ describe('Test statistics functionality', () => {
       null,
       { rows: [] },
       { rows: [] },
+      { rows: []},
+      { rows: []},
       null];
     client.on('transaction', (transaction) => {
       expect(transaction.length).toBe(2);
@@ -797,6 +838,8 @@ describe('Test statistics functionality', () => {
         type: 'auxiliary',
         valid: 1,
       }]},
+      { rows: []},
+      { rows: []},
       null];
     const expectedSoloMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
@@ -1145,6 +1188,8 @@ describe('Test statistics functionality', () => {
         solo: false,
         type: 'primary',
       }]},
+      { rows: []},
+      { rows: []},
       null];
     MockDate.set(1634742080841);
     const client = mockClient(configMainCopy, lookups);
@@ -1207,6 +1252,8 @@ describe('Test statistics functionality', () => {
         solo: false,
         type: 'primary',
       }]},
+      { rows: []},
+      { rows: []},
       null];
     MockDate.set(1634742080841);
     const client = mockClient(configMainCopy, lookups);
