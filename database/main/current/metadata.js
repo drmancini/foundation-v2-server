@@ -11,10 +11,10 @@ const CurrentMetadata = function (logger, configMain) {
   this.text = Text[configMain.language];
 
   // Handle Current Parameters
-  this.numbers = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate', 'hashrate_12h', 'hashrate_24h', 
+  this.numbers = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate',
     'invalid', 'miners', 'stale', 'valid', 'work', 'workers'];
   this.strings = ['type'];
-  this.parameters = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate', 'hashrate_12h', 'hashrate_24h',
+  this.parameters = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate',
     'invalid', 'miners', 'solo', 'stale', 'type', 'valid', 'work', 'workers'];
 
   // Handle String Parameters

@@ -88,7 +88,6 @@ const Stratum = function (logger, client, config, configMain, template) {
 
     // Handle Stratum Submission Events
     _this.stratum.on('pool.share', (shareData, shareValid, blockValid) => {
-      _this.logger['debug']('Shares', _this.config.name, [`Caught share emit from ${ shareData.addrPrimary }, ${ shareData.submitTime }`]); // xxx
       _this.shares.handleSubmissions(shareData, shareValid, blockValid, () => {});
     });
   };

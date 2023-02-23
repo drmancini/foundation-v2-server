@@ -255,6 +255,37 @@ const Shares = function (logger, client, config, configMain) {
     };
   };
 
+  // Handle Historical Metadata Updates
+  this.handleHistoricalMetadata = function(work, difficulty, shareData, shareType, minerType, blockType) {
+
+    const tenMinutes = 600000;
+    const timestamp = shareData.submitTime || Date.now();
+    const recent = Math.ceil(timestamp / tenMinutes) * tenMinutes;
+
+    // Calculate Features of Pools
+    const invalid = shareType === 'invalid' ? 1 : 0;
+    const stale = shareType === 'stale' ? 1 : 0;
+    const valid = shareType === 'valid' ? 1 : 0;
+    const current = shareType === 'valid' ? shareData.difficulty : 0;
+
+    // Calculate Effort/Efficiency Metadata
+    const effort = _this.handleEffort(work, shareData.difficulty, shareType, difficulty);
+
+    // Return Metadata Updates
+    return {
+      timestamp: Date.now(),
+      recent: recent,
+      effort: minerType ? 0 : effort,
+      effort: effort,
+      invalid: invalid,
+      solo: minerType,
+      stale: stale,
+      type: blockType,
+      valid: valid,
+      work: current,
+    };
+  };
+
   // Handle Historical Worker Updates
   this.handleHistoricalWorkers = function(worker, shareData, shareType, minerType, blockType) {
 
@@ -396,6 +427,8 @@ const Shares = function (logger, client, config, configMain) {
       shareData.addrPrimary, shareData, shareType, minerType, 'primary');
     const historicalMinerUpdates = _this.handleHistoricalMiners(
       shareData.addrPrimary, shareData, shareType, minerType, 'primary');
+    const historicalMetadataUpdates = _this.handleHistoricalMetadata(
+      work, shareData.blockDiffPrimary, shareData, shareType, minerType, 'primary');
 
     // Build Combined Transaction
     const transaction = [
@@ -405,7 +438,8 @@ const Shares = function (logger, client, config, configMain) {
       _this.current.rounds.insertCurrentRoundsMain(_this.pool, [roundUpdates]),
       _this.current.workers.insertCurrentWorkersRounds(_this.pool, [currentWorkerUpdates]),
       _this.historical.workers.insertHistoricalWorkersRounds(_this.pool, [historicalWorkerUpdates]),
-      _this.historical.miners.insertHistoricalMinersMain(_this.pool, [historicalMinerUpdates])];
+      _this.historical.miners.insertHistoricalMinersMain(_this.pool, [historicalMinerUpdates]),
+      _this.historical.metadata.insertHistoricalMetadataRounds(_this.pool, [historicalMetadataUpdates])];
 
     if (minerType) {
       const currentMinerUpdates = _this.handleCurrentMiners(
@@ -457,11 +491,7 @@ const Shares = function (logger, client, config, configMain) {
 
     // Insert Work into Database
     transaction.push('COMMIT;');
-    _this.logger['debug']('Shares', _this.config.name, [`Data INSERT query ready: ${ shareData.addrPrimary }, ${ shareData.submitTime }`]); // xxx
-    _this.executor(transaction, (result) => {
-      _this.logger['debug']('Shares', _this.config.name, [`Data INSERT done: ${ shareData.addrPrimary }, ${ shareData.submitTime }`]); // xxx
-      callback()
-    });
+    _this.executor(transaction, () => callback());
   };
 
   // Handle Share/Block Submissions
@@ -514,7 +544,6 @@ const Shares = function (logger, client, config, configMain) {
     // Share Behavior
     case 'share':
       _this.executor(transaction, (lookups) => {
-        _this.logger['debug']('Shares', _this.config.name, [`Data selected for processing: ${ shareData.addrPrimary }, ${ shareData.submitTime }`]); // xxx
         _this.handleShares(lookups, shareData, shareType, minerType, () => {
           const type = (shareType === 'valid') ? 'log' : 'error';
           const lines = [(shareType === 'valid') ?

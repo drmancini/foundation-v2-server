@@ -185,6 +185,7 @@ describe('Test statistics functionality', () => {
       hashrate: 100,
       invalid: 0,
       miners: 1,
+      solo: false,
       stale: 0,
       type: 'primary',
       valid: 100,
@@ -193,17 +194,11 @@ describe('Test statistics functionality', () => {
     };
     const expected = {
       timestamp: 1634742080841,
-      recent: 1634742000000,
-      blocks: 1,
-      efficiency: 100,
-      effort: 100,
+      recent: 1634742600000,
       hashrate: 100,
-      invalid: 0,
       miners: 1,
-      stale: 0,
+      solo: false,
       type: 'primary',
-      valid: 100,
-      work: 100,
       workers: 1,
     };
     expect(statistics.handleHistoricalMetadata(metadata)).toStrictEqual(expected);
@@ -387,6 +382,24 @@ describe('Test statistics functionality', () => {
         hashrate = EXCLUDED.hashrate,
         miners = EXCLUDED.miners,
         workers = EXCLUDED.workers;`;
+    const expectedSoloHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, hashrate,
+        miners, solo, type, workers)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        1431655765.3333,
+        1,
+        true,
+        'primary',
+        1)
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate = EXCLUDED.hashrate,
+        miners = EXCLUDED.miners,
+        workers = EXCLUDED.workers;`;
     const expectedSharedMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
         timestamp, hashrate, miners,
@@ -399,6 +412,24 @@ describe('Test statistics functionality', () => {
         'primary',
         2)
       ON CONFLICT ON CONSTRAINT current_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate = EXCLUDED.hashrate,
+        miners = EXCLUDED.miners,
+        workers = EXCLUDED.workers;`;
+    const expectedSharedHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, hashrate,
+        miners, solo, type, workers)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        1431655765.3333,
+        2,
+        false,
+        'primary',
+        2)
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         hashrate = EXCLUDED.hashrate,
@@ -506,14 +537,16 @@ describe('Test statistics functionality', () => {
         hashrate_12h = EXCLUDED.hashrate_12h,
         hashrate_24h = EXCLUDED.hashrate_24h;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(9);
+      expect(transaction.length).toBe(11);
       expect(transaction[1]).toBe(expectedSoloMetadata);
-      expect(transaction[2]).toBe(expectedSharedMetadata);
-      expect(transaction[3]).toBe(expectedMiners);
-      expect(transaction[4]).toBe(expectedSoloWorkers);
-      expect(transaction[5]).toBe(expectedSoloWorkersReset);
-      expect(transaction[6]).toBe(expectedSharedWorkers);
-      expect(transaction[7]).toBe(expectedSharedWorkersReset);
+      expect(transaction[2]).toBe(expectedSoloHistoricalMetadata);
+      expect(transaction[3]).toBe(expectedSharedMetadata);
+      expect(transaction[4]).toBe(expectedSharedHistoricalMetadata);
+      expect(transaction[5]).toBe(expectedMiners);
+      expect(transaction[6]).toBe(expectedSoloWorkers);
+      expect(transaction[7]).toBe(expectedSoloWorkersReset);
+      expect(transaction[8]).toBe(expectedSharedWorkers);
+      expect(transaction[9]).toBe(expectedSharedWorkersReset);
       done();
     });
     statistics.handlePrimary(lookups, () => {});
@@ -623,6 +656,24 @@ describe('Test statistics functionality', () => {
         hashrate = EXCLUDED.hashrate,
         miners = EXCLUDED.miners,
         workers = EXCLUDED.workers;`;
+    const expectedSoloHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, hashrate,
+        miners, solo, type, workers)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        0,
+        0,
+        true,
+        'primary',
+        0)
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate = EXCLUDED.hashrate,
+        miners = EXCLUDED.miners,
+        workers = EXCLUDED.workers;`;
     const expectedSharedMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
         timestamp, hashrate, miners,
@@ -635,6 +686,24 @@ describe('Test statistics functionality', () => {
         'primary',
         0)
       ON CONFLICT ON CONSTRAINT current_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate = EXCLUDED.hashrate,
+        miners = EXCLUDED.miners,
+        workers = EXCLUDED.workers;`;
+    const expectedSharedHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, hashrate,
+        miners, solo, type, workers)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        0,
+        0,
+        false,
+        'primary',
+        0)
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         hashrate = EXCLUDED.hashrate,
@@ -673,7 +742,7 @@ describe('Test statistics functionality', () => {
         timestamp = EXCLUDED.timestamp,
         efficiency = EXCLUDED.efficiency,
         hashrate = EXCLUDED.hashrate;`;
-    const expectedSharedWorkers = `
+    const expectedSoloWorkersReset = `
       INSERT INTO "Pool-Bitcoin".current_workers (
         timestamp, miner, worker,
         efficiency, hashrate, solo,
@@ -724,14 +793,16 @@ describe('Test statistics functionality', () => {
         timestamp = EXCLUDED.timestamp,
         hashrate = EXCLUDED.hashrate;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(9);
+      expect(transaction.length).toBe(11);
       expect(transaction[1]).toBe(expectedSoloMetadata);
-      expect(transaction[2]).toBe(expectedSharedMetadata);
-      expect(transaction[3]).toBe(expectedMiners);
-      expect(transaction[4]).toBe(expectedSoloWorkers);
-      expect(transaction[5]).toBe(expectedSharedWorkers);
-      expect(transaction[6]).toBe(expectedHistoricalMiners);
-      expect(transaction[7]).toBe(expectedHistoricalWorkers);
+      expect(transaction[2]).toBe(expectedSoloHistoricalMetadata);
+      expect(transaction[3]).toBe(expectedSharedMetadata);
+      expect(transaction[4]).toBe(expectedSharedHistoricalMetadata);
+      expect(transaction[5]).toBe(expectedMiners);
+      expect(transaction[6]).toBe(expectedSoloWorkers);
+      expect(transaction[7]).toBe(expectedSoloWorkersReset);
+      expect(transaction[8]).toBe(expectedHistoricalMiners);
+      expect(transaction[9]).toBe(expectedHistoricalWorkers);
       done();
     });
     statistics.handlePrimary(lookups, () => {});

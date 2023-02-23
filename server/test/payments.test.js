@@ -92,6 +92,28 @@ describe('Test payments functionality', () => {
     expect(payments.handleCurrentMiners(amounts, balances, 'primary')).toStrictEqual(expected);
   });
 
+  test('Test payments database updates [4]', () => {
+    MockDate.set(1634742080841);
+    configCopy.primary.payments.minPayment = 15;
+    const client = mockClient(configMainCopy, { rows: [] });
+    const logger = new Logger(configMainCopy);
+    const payments = new Payments(logger, client, configCopy, configMainCopy);
+    const lookup = [{ miner: 'miner1', payout_limit: 10 }, { miner: 'miner2', payout_limit: 20 }];
+    const expected = { miner2: 20 };
+    expect(payments.handleCurrentUsers(lookup)).toStrictEqual(expected);
+  });
+
+  test('Test payments database updates [4]', () => {
+    MockDate.set(1634742080841);
+    configCopy.primary.payments.minPayment = 15;
+    const client = mockClient(configMainCopy, { rows: [] });
+    const logger = new Logger(configMainCopy);
+    const payments = new Payments(logger, client, configCopy, configMainCopy);
+    const lookup = [];
+    const expected = {};
+    expect(payments.handleCurrentUsers(lookup)).toStrictEqual(expected);
+  });
+
   test('Test payments database updates [5]', () => {
     MockDate.set(1634742080841);
     const client = mockClient(configMainCopy, { rows: [] });
@@ -519,6 +541,7 @@ describe('Test payments functionality', () => {
     };
     const lookups = [
       null,
+      { rows: [{ miner: 'miner1', payout_limit: 5 }]},
       { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
         { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
         { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
@@ -758,6 +781,7 @@ describe('Test payments functionality', () => {
     };
     const lookups = [
       null,
+      { rows: []},
       { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
         { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
         { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
