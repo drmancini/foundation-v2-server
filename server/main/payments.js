@@ -59,6 +59,21 @@ const Payments = function (logger, client, config, configMain) {
     });
   };
 
+  // Handle Custom User Payout Limits
+  this.handleCurrentUsers = function(data) {
+    const users = {};
+
+    if (data.length > 0) {
+      data
+        .filter(user => user.payout_limit > _this.config.primary.payments.minPayment)
+        .forEach(user => {
+          users[user.miner] = user.payout_limit;
+        });
+    }
+
+    return users;
+  };
+
   // Handle Historical Blocks Updates
   this.handleHistoricalBlocks = function(blocks) {
 
@@ -243,6 +258,9 @@ const Payments = function (logger, client, config, configMain) {
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
 
+    // Add User Payment Limits to Transaction 
+    transaction.push(_this.current.users.selectCurrentUsers(_this.pool, { payout_limit: 'gt' + _this.config.primary.payments.minPayment }));
+
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
       const parameters = { solo: block.solo, round: block.round, type: 'primary' };
@@ -253,7 +271,8 @@ const Payments = function (logger, client, config, configMain) {
     // Determine Workers for Rounds
     transaction.push('COMMIT;');
     _this.executor(transaction, (results) => {
-      const rounds = results.slice(1, -1).map((round) => round.rows);
+      const users = _this.handleCurrentUsers(results[1].rows) || {};
+      const rounds = results.slice(2, -1).map((round) => round.rows);
 
       // Collect Round/Worker Data and Amounts
       const sending = true;
@@ -265,7 +284,7 @@ const Payments = function (logger, client, config, configMain) {
           // Validate and Send Out Primary Payments
           _this.stratum.stratum.handlePrimaryBalances(payments, (error) => {
             if (error) _this.handleFailures(updates, () => callback(error));
-            else _this.stratum.stratum.handlePrimaryPayments(payments, [], (error, amounts, balances, transaction) => {
+            else _this.stratum.stratum.handlePrimaryPayments(payments, users, (error, amounts, balances, transaction) => {
               if (error) _this.handleFailures(updates, () => callback(error));
               else _this.handleUpdates(updates, rounds, amounts, balances, transaction, 'primary', () => callback(null));
             });

@@ -484,6 +484,43 @@ describe('Test schema functionality', () => {
       SELECT EXISTS (
         SELECT FROM information_schema.tables
         WHERE table_schema = 'Pool-Main'
+        AND table_name = 'historical_metadata');`;
+    const executor = mockExecutor(results, expected);
+    const schema = new Schema(logger, executor, configMainCopy);
+    schema.selectHistoricalMetadata('Pool-Main', (results) => {
+      expect(results).toBe(true);
+    });
+  });
+
+  test('Test schema functionality [26]', () => {
+    const expected = `
+      CREATE TABLE "Pool-Main".historical_metadata(
+        id BIGSERIAL PRIMARY KEY,
+        timestamp BIGINT NOT NULL DEFAULT -1,
+        recent BIGINT NOT NULL DEFAULT -1,
+        effort FLOAT NOT NULL DEFAULT 0,
+        hashrate FLOAT NOT NULL DEFAULT 0,
+        invalid INT NOT NULL DEFAULT 0,
+        miners INT NOT NULL DEFAULT 0,
+        solo BOOLEAN NOT NULL DEFAULT false,
+        stale INT NOT NULL DEFAULT 0,
+        type VARCHAR NOT NULL DEFAULT 'primary',
+        valid INT NOT NULL DEFAULT 0,
+        work FLOAT NOT NULL DEFAULT 0,
+        workers INT NOT NULL DEFAULT 0,
+        CONSTRAINT historical_metadata_unique UNIQUE (recent, solo, type));
+      CREATE INDEX historical_metadata_type ON "Pool-Main".historical_metadata(type);`;
+    const executor = mockExecutor(null, expected);
+    const schema = new Schema(logger, executor, configMainCopy);
+    schema.createHistoricalMetadata('Pool-Main', () => {});
+  });
+
+  test('Test schema functionality [25]', () => {
+    const results = { rows: [{ exists: true }]};
+    const expected = `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'Pool-Main'
         AND table_name = 'historical_miners');`;
     const executor = mockExecutor(results, expected);
     const schema = new Schema(logger, executor, configMainCopy);

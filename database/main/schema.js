@@ -401,6 +401,38 @@ const Schema = function (logger, executor, configMain) {
     _this.executor([command], () => callback());
   };
 
+  // Check if Historical Metadata Table Exists in Database
+  this.selectHistoricalMetadata = function(pool, callback) {
+    const command = `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = '${ pool }'
+        AND table_name = 'historical_metadata');`;
+    _this.executor([command], (results) => callback(results.rows[0].exists));
+  };
+
+  // Deploy Historical Metadata Table to Database
+  this.createHistoricalMetadata = function(pool, callback) {
+    const command = `
+      CREATE TABLE "${ pool }".historical_metadata(
+        id BIGSERIAL PRIMARY KEY,
+        timestamp BIGINT NOT NULL DEFAULT -1,
+        recent BIGINT NOT NULL DEFAULT -1,
+        effort FLOAT NOT NULL DEFAULT 0,
+        hashrate FLOAT NOT NULL DEFAULT 0,
+        invalid INT NOT NULL DEFAULT 0,
+        miners INT NOT NULL DEFAULT 0,
+        solo BOOLEAN NOT NULL DEFAULT false,
+        stale INT NOT NULL DEFAULT 0,
+        type VARCHAR NOT NULL DEFAULT 'primary',
+        valid INT NOT NULL DEFAULT 0,
+        work FLOAT NOT NULL DEFAULT 0,
+        workers INT NOT NULL DEFAULT 0,
+        CONSTRAINT historical_metadata_unique UNIQUE (recent, solo, type));
+      CREATE INDEX historical_metadata_type ON "${ pool }".historical_metadata(type);`;
+    _this.executor([command], () => callback());
+  };
+
   // Check if Historical Miners Table Exists in Database
   this.selectHistoricalMiners = function(pool, callback) {
     const command = `
@@ -581,6 +613,7 @@ const Schema = function (logger, executor, configMain) {
         .then(() => _this.handlePromises(pool, _this.selectCurrentWorkers, _this.createCurrentWorkers))
         .then(() => _this.handlePromises(pool, _this.selectHistoricalBlocks, _this.createHistoricalBlocks))
         .then(() => _this.handlePromises(pool, _this.selectHistoricalMiners, _this.createHistoricalMiners))
+        .then(() => _this.handlePromises(pool, _this.selectHistoricalMetadata, _this.createHistoricalMetadata))
         .then(() => _this.handlePromises(pool, _this.selectHistoricalPayments, _this.createHistoricalPayments))
         .then(() => _this.handlePromises(pool, _this.selectHistoricalRounds, _this.createHistoricalRounds))
         .then(() => _this.handlePromises(pool, _this.selectHistoricalTransactions, _this.createHistoricalTransactions))

@@ -3,18 +3,18 @@ const Text = require('../../../locales/index');
 ////////////////////////////////////////////////////////////////////////////////
 
 // Main Schema Function
-const CurrentMetadata = function (logger, configMain) {
+const HistoricalMetadata = function (logger, configMain) {
 
   const _this = this;
   this.logger = logger;
   this.configMain = configMain;
   this.text = Text[configMain.language];
 
-  // Handle Current Parameters
-  this.numbers = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate',
+  // Handle Historical Parameters
+  this.numbers = ['timestamp', 'blocks', 'effort', 'hashrate', 
     'invalid', 'miners', 'stale', 'valid', 'work', 'workers'];
   this.strings = ['type'];
-  this.parameters = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate',
+  this.parameters = ['timestamp', 'blocks', 'effort', 'hashrate',
     'invalid', 'miners', 'solo', 'stale', 'type', 'valid', 'work', 'workers'];
 
   // Handle String Parameters
@@ -52,9 +52,9 @@ const CurrentMetadata = function (logger, configMain) {
     return output;
   };
 
-  // Select Current Metadata Using Parameters
-  this.selectCurrentMetadataMain = function(pool, parameters) {
-    let output = `SELECT * FROM "${ pool }".current_metadata`;
+  // Select Historical Metadata Using Parameters
+  this.selectHistoricalMetadataMain = function(pool, parameters) {
+    let output = `SELECT * FROM "${ pool }".historical_metadata`;
     const filtered = Object.keys(parameters).filter((key) => _this.parameters.includes(key));
     filtered.forEach((parameter, idx) => {
       if (idx === 0) output += ' WHERE ';
@@ -67,7 +67,7 @@ const CurrentMetadata = function (logger, configMain) {
   };
 
   // Build Metadata Values String
-  this.buildCurrentMetadataBlocks = function(updates) {
+  this.buildHistoricalMetadataBlocks = function(updates) {
     let values = '';
     updates.forEach((metadata, idx) => {
       values += `(
@@ -81,23 +81,24 @@ const CurrentMetadata = function (logger, configMain) {
   };
 
   // Insert Rows Using Blocks Data
-  this.insertCurrentMetadataBlocks = function(pool, updates) {
+  this.insertHistoricalMetadataBlocks = function(pool, updates) {
     return `
-      INSERT INTO "${ pool }".current_metadata (
+      INSERT INTO "${ pool }".historical_metadata (
         timestamp, blocks, solo, type)
-      VALUES ${ _this.buildCurrentMetadataBlocks(updates) }
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
+      VALUES ${ _this.buildHistoricalMetadataBlocks(updates) }
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        blocks = "${ pool }".current_metadata.blocks + EXCLUDED.blocks;`;
+        blocks = "${ pool }".historical_metadata.blocks + EXCLUDED.blocks;`;
   };
 
   // Build Metadata Values String
-  this.buildCurrentMetadataHashrate = function(updates) {
+  this.buildHistoricalMetadataHashrate = function(updates) {
     let values = '';
     updates.forEach((metadata, idx) => {
       values += `(
         ${ metadata.timestamp },
+        ${ metadata.recent },
         ${ metadata.hashrate },
         ${ metadata.miners },
         ${ metadata.solo },
@@ -109,13 +110,13 @@ const CurrentMetadata = function (logger, configMain) {
   };
 
   // Insert Rows Using Hashrate Data
-  this.insertCurrentMetadataHashrate = function(pool, updates) {
+  this.insertHistoricalMetadataHashrate = function(pool, updates) {
     return `
-      INSERT INTO "${ pool }".current_metadata (
-        timestamp, hashrate, miners,
-        solo, type, workers)
-      VALUES ${ _this.buildCurrentMetadataHashrate(updates) }
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
+      INSERT INTO "${ pool }".historical_metadata (
+        timestamp, recent, hashrate,
+        miners, solo, type, workers)
+      VALUES ${ _this.buildHistoricalMetadataHashrate(updates) }
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         hashrate = EXCLUDED.hashrate,
@@ -124,7 +125,7 @@ const CurrentMetadata = function (logger, configMain) {
   };
 
   // Build Metadata Values String
-  this.buildCurrentMetadataRoundsReset = function(updates) {
+  this.buildHistoricalMetadataRoundsReset = function(updates) {
     let values = '';
     updates.forEach((metadata, idx) => {
       values += `(
@@ -136,14 +137,14 @@ const CurrentMetadata = function (logger, configMain) {
   };
 
   // Insert Rows Using Reset
-  this.insertCurrentMetadataRoundsReset = function(pool, updates) {
+  this.insertHistoricalMetadataRoundsReset = function(pool, updates) {
     return `
-      INSERT INTO "${ pool }".current_metadata (
+      INSERT INTO "${ pool }".historical_metadata (
         timestamp, efficiency, effort,
         invalid, solo, stale, type,
         valid, work)
-      VALUES ${ _this.buildCurrentMetadataRoundsReset(updates) }
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
+      VALUES ${ _this.buildHistoricalMetadataRoundsReset(updates) }
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         efficiency = 0, effort = 0, invalid = 0,
@@ -151,12 +152,12 @@ const CurrentMetadata = function (logger, configMain) {
   };
 
   // Build Metadata Values String
-  this.buildCurrentMetadataRounds = function(updates) {
+  this.buildHistoricalMetadataRounds = function(updates) {
     let values = '';
     updates.forEach((metadata, idx) => {
       values += `(
         ${ metadata.timestamp },
-        ${ metadata.efficiency },
+        ${ metadata.recent },
         ${ metadata.effort },
         ${ metadata.invalid },
         ${ metadata.solo },
@@ -170,23 +171,22 @@ const CurrentMetadata = function (logger, configMain) {
   };
 
   // Insert Rows Using Round Data
-  this.insertCurrentMetadataRounds = function(pool, updates) {
+  this.insertHistoricalMetadataRounds = function(pool, updates) {
     return `
-      INSERT INTO "${ pool }".current_metadata (
-        timestamp, efficiency, effort,
+      INSERT INTO "${ pool }".historical_metadata (
+        timestamp, recent, effort,
         invalid, solo, stale, type,
         valid, work)
-      VALUES ${ _this.buildCurrentMetadataRounds(updates) }
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
+      VALUES ${ _this.buildHistoricalMetadataRounds(updates) }
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = EXCLUDED.efficiency,
         effort = EXCLUDED.effort,
-        invalid = "${ pool }".current_metadata.invalid + EXCLUDED.invalid,
-        stale = "${ pool }".current_metadata.stale + EXCLUDED.stale,
-        valid = "${ pool }".current_metadata.valid + EXCLUDED.valid,
-        work = "${ pool }".current_metadata.work + EXCLUDED.work;`;
+        invalid = "${ pool }".historical_metadata.invalid + EXCLUDED.invalid,
+        stale = "${ pool }".historical_metadata.stale + EXCLUDED.stale,
+        valid = "${ pool }".historical_metadata.valid + EXCLUDED.valid,
+        work = "${ pool }".historical_metadata.work + EXCLUDED.work;`;
   };
 };
 
-module.exports = CurrentMetadata;
+module.exports = HistoricalMetadata;

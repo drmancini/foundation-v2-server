@@ -122,32 +122,6 @@ const Statistics = function (logger, client, config, configMain, template) {
       });
   };
 
-  // Handle Historical Metadata Updates
-  this.handleHistoricalMetadata = function(metadata) {
-
-    // Calculate Features of Metadata
-    const timestamp = Date.now();
-    const interval = _this.config.settings.interval.historical;
-    const recent = Math.round(timestamp / interval) * interval;
-
-    // Return Metadata Updates
-    return {
-      timestamp: timestamp,
-      recent: recent,
-      blocks: metadata.blocks,
-      efficiency: metadata.efficiency,
-      effort: metadata.effort,
-      hashrate: metadata.hashrate,
-      invalid: metadata.invalid,
-      miners: metadata.miners,
-      stale: metadata.stale,
-      type: metadata.type,
-      valid: metadata.valid,
-      work: metadata.work,
-      workers: metadata.workers,
-    };
-  };
-
   // Handle Historical Miners Updates
   this.handleHistoricalMinersHashrate = function(miners) {
 
@@ -171,6 +145,25 @@ const Statistics = function (logger, client, config, configMain, template) {
         type: miner.type,
       };
     });
+  };
+
+  // Handle Historical Metadata Updates
+  this.handleHistoricalMetadata = function(updates) {
+
+    const timestamp = Date.now();
+    const interval = _this.config.settings.interval.historical;
+    const recent = Math.ceil(timestamp / interval) * interval;
+    
+    // Return Metadata Updates
+    return {
+      timestamp: timestamp,
+      recent: recent,
+      hashrate: updates.hashrate,
+      miners: updates.miners,
+      solo: updates.solo,
+      type: updates.type,
+      workers: updates.workers,
+    };
   };
 
   // Handle Historical Network Updates
@@ -232,8 +225,11 @@ const Statistics = function (logger, client, config, configMain, template) {
       const currentMetadata = lookups[9].rows[0].current_work || 0;
       const metadataUpdates = _this.handleCurrentMetadata(
         minersMetadata, workersMetadata, currentMetadata, 'primary', true);
+      const historicalMetadataUpdates = _this.handleHistoricalMetadata(metadataUpdates);
       transaction.push(_this.current.metadata.insertCurrentMetadataHashrate(
         _this.pool, [metadataUpdates]));
+      transaction.push(_this.historical.metadata.insertHistoricalMetadataHashrate(
+        _this.pool, [historicalMetadataUpdates]));
     }
 
     // Handle Shared Metadata Hashrate Updates
@@ -243,8 +239,11 @@ const Statistics = function (logger, client, config, configMain, template) {
       const currentMetadata = lookups[10].rows[0].current_work || 0;
       const metadataUpdates = _this.handleCurrentMetadata(
         minersMetadata, workersMetadata, currentMetadata, 'primary', false);
+      const historicalMetadataUpdates = _this.handleHistoricalMetadata(metadataUpdates);
       transaction.push(_this.current.metadata.insertCurrentMetadataHashrate(
         _this.pool, [metadataUpdates]));
+      transaction.push(_this.historical.metadata.insertHistoricalMetadataHashrate(
+        _this.pool, [historicalMetadataUpdates]));
     }
 
     // Handle Miners Hashrate Updates
