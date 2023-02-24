@@ -65,6 +65,21 @@ const CurrentWorkers = function (logger, configMain) {
     return output + ';';
   };
 
+  // Select Last Share of Workers
+  this.selectCurrentWorkersLastShare = function(pool, active_cutoff, inactive_cutoff, solo, type) {
+    return `
+      SELECT miner,
+        COUNT(CASE WHEN last_share > ${ active_cutoff }
+          THEN 1 ELSE null END) AS active_workers,
+        COUNT(CASE WHEN last_share > ${ inactive_cutoff }
+          AND last_share < ${ active_cutoff }
+          THEN 1 ELSE null END) AS inactive_workers
+      FROM "${ pool }".current_workers
+      WHERE solo = ${ solo }
+        AND type = '${ type }'
+      GROUP BY miner;`;
+  };
+  
   // Build Workers Values String
   this.buildCurrentWorkersHashrate = function(updates) {
     let values = '';

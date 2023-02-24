@@ -75,16 +75,19 @@ describe('Test database metadata functionality', () => {
     const updates = {
       timestamp: 1,
       blocks: 1,
+      identifier: 'master',
       solo: true,
       type: 'primary',
     };
     const response = metadata.insertCurrentMetadataBlocks('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES (
         1,
         1,
+        'master',
         true,
         'primary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
@@ -99,20 +102,24 @@ describe('Test database metadata functionality', () => {
     const updates = {
       timestamp: 1,
       blocks: 1,
+      identifier: 'master',
       solo: true,
       type: 'primary',
     };
     const response = metadata.insertCurrentMetadataBlocks('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES (
         1,
         1,
+        'master',
         true,
         'primary'), (
         1,
         1,
+        'master',
         true,
         'primary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
@@ -127,6 +134,7 @@ describe('Test database metadata functionality', () => {
     const updates = {
       timestamp: 1,
       hashrate: 1,
+      identifier: 'master',
       miners: 1,
       solo: true,
       type: 'primary',
@@ -135,11 +143,12 @@ describe('Test database metadata functionality', () => {
     const response = metadata.insertCurrentMetadataHashrate('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
-        timestamp, hashrate, miners,
-        solo, type, workers)
+        timestamp, hashrate, identifier,
+        miners, solo, type, workers)
       VALUES (
         1,
         1,
+        'master',
         1,
         true,
         'primary',
@@ -158,6 +167,7 @@ describe('Test database metadata functionality', () => {
     const updates = {
       timestamp: 1,
       hashrate: 1,
+      identifier: 'master',
       miners: 1,
       solo: true,
       type: 'primary',
@@ -166,17 +176,19 @@ describe('Test database metadata functionality', () => {
     const response = metadata.insertCurrentMetadataHashrate('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
-        timestamp, hashrate, miners,
-        solo, type, workers)
+        timestamp, hashrate, identifier,
+        miners, solo, type, workers)
       VALUES (
         1,
         1,
+        'master',
         1,
         true,
         'primary',
         1), (
         1,
         1,
+        'master',
         1,
         true,
         'primary',
@@ -192,7 +204,7 @@ describe('Test database metadata functionality', () => {
 
   test('Test metadata command handling [8]', () => {
     const metadata = new CurrentMetadata(logger, configMainCopy);
-    const updates = { timestamp: 1, solo: true, type: 'primary' };
+    const updates = { timestamp: 1, identifier: 'master', solo: true, type: 'primary' };
     const response = metadata.insertCurrentMetadataRoundsReset('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
@@ -212,7 +224,7 @@ describe('Test database metadata functionality', () => {
 
   test('Test metadata command handling [9]', () => {
     const metadata = new CurrentMetadata(logger, configMainCopy);
-    const updates = { timestamp: 1, solo: true, type: 'primary' };
+    const updates = { timestamp: 1, identifier: 'master', solo: true, type: 'primary' };
     const response = metadata.insertCurrentMetadataRoundsReset('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
@@ -238,6 +250,7 @@ describe('Test database metadata functionality', () => {
       timestamp: 1,
       efficiency: 100,
       effort: 100,
+      identifier: 'master',
       invalid: 0,
       solo: true,
       stale: 0,
@@ -249,12 +262,13 @@ describe('Test database metadata functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
         timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        identifier, invalid, solo,
+        stale, type, valid, work)
       VALUES (
         1,
         100,
         100,
+        'master',
         0,
         true,
         0,
@@ -279,6 +293,7 @@ describe('Test database metadata functionality', () => {
       timestamp: 1,
       efficiency: 100,
       effort: 100,
+      identifier: 'master',
       invalid: 0,
       solo: true,
       stale: 0,
@@ -290,12 +305,13 @@ describe('Test database metadata functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
         timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        identifier, invalid, solo,
+        stale, type, valid, work)
       VALUES (
         1,
         100,
         100,
+        'master',
         0,
         true,
         0,
@@ -305,6 +321,7 @@ describe('Test database metadata functionality', () => {
         1,
         100,
         100,
+        'master',
         0,
         true,
         0,

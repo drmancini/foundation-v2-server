@@ -155,8 +155,7 @@ describe('Test schema functionality', () => {
         efficiency FLOAT NOT NULL DEFAULT 0,
         effort FLOAT NOT NULL DEFAULT 0,
         hashrate FLOAT NOT NULL DEFAULT 0,
-        hashrate_12h FLOAT NOT NULL DEFAULT 0,
-        hashrate_24h FLOAT NOT NULL DEFAULT 0,
+        identifier VARCHAR NOT NULL DEFAULT 'master',
         invalid INT NOT NULL DEFAULT 0,
         miners INT NOT NULL DEFAULT 0,
         solo BOOLEAN NOT NULL DEFAULT false,
@@ -165,7 +164,7 @@ describe('Test schema functionality', () => {
         valid INT NOT NULL DEFAULT 0,
         work FLOAT NOT NULL DEFAULT 0,
         workers INT NOT NULL DEFAULT 0,
-        CONSTRAINT current_metadata_unique UNIQUE (solo, type));
+        CONSTRAINT current_metadata_unique UNIQUE (identifier, solo, type));
       CREATE INDEX current_metadata_type ON "Pool-Main".current_metadata(type);`;
     const executor = mockExecutor(null, expected);
     const schema = new Schema(logger, executor, configMainCopy);
@@ -498,17 +497,15 @@ describe('Test schema functionality', () => {
         id BIGSERIAL PRIMARY KEY,
         timestamp BIGINT NOT NULL DEFAULT -1,
         recent BIGINT NOT NULL DEFAULT -1,
-        effort FLOAT NOT NULL DEFAULT 0,
+        blocks INT NOT NULL DEFAULT 0,
         hashrate FLOAT NOT NULL DEFAULT 0,
-        invalid INT NOT NULL DEFAULT 0,
+        identifier VARCHAR NOT NULL DEFAULT 'master',
         miners INT NOT NULL DEFAULT 0,
         solo BOOLEAN NOT NULL DEFAULT false,
-        stale INT NOT NULL DEFAULT 0,
         type VARCHAR NOT NULL DEFAULT 'primary',
-        valid INT NOT NULL DEFAULT 0,
         work FLOAT NOT NULL DEFAULT 0,
         workers INT NOT NULL DEFAULT 0,
-        CONSTRAINT historical_metadata_unique UNIQUE (recent, solo, type));
+        CONSTRAINT historical_metadata_unique UNIQUE (recent, identifier, solo, type));
       CREATE INDEX historical_metadata_type ON "Pool-Main".historical_metadata(type);`;
     const executor = mockExecutor(null, expected);
     const schema = new Schema(logger, executor, configMainCopy);

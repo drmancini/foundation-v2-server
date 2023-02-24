@@ -73,8 +73,10 @@ const CurrentMiners = function (logger, configMain) {
       values += `(
         ${ miner.timestamp },
         '${ miner.miner }',
+        ${ miner.active_shared },
         ${ miner.efficiency },
         ${ miner.hashrate },
+        ${ miner.inactive_shared },
         '${ miner.type }')`;
       if (idx < updates.length - 1) values += ', ';
     });
@@ -85,14 +87,17 @@ const CurrentMiners = function (logger, configMain) {
   this.insertCurrentMinersHashrate = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_miners (
-        timestamp, miner, efficiency,
-        hashrate, type)
+        timestamp, miner, active_shared,
+        efficiency, hashrate, inactive_shared,
+        type)
       VALUES ${ _this.buildCurrentMinersHashrate(updates) }
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
+        active_shared = EXCLUDED.active_shared,
         efficiency = EXCLUDED.efficiency,
-        hashrate = EXCLUDED.hashrate;`;
+        hashrate = EXCLUDED.hashrate,
+        inactive_shared = EXCLUDED.inactive_shared;`;
   };
 
   // Build Miners Values String

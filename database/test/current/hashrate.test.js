@@ -56,17 +56,46 @@ describe('Test database hashrate functionality', () => {
 
   test('Test hashrate command handling [2]', () => {
     const hashrate = new CurrentHashrate(logger, configMainCopy);
-    const response = hashrate.countCurrentHashrateMiner('Pool-Main', 1, true, 'primary');
-    const expected = `
-      SELECT CAST(COUNT(DISTINCT miner) AS INT)
-      FROM "Pool-Main".current_hashrate
-      WHERE timestamp >= 1
-      AND solo IN (true, null) 
-      AND type = 'primary';`;
+    const parameters = { timestamp: 'ge1', worker: 'worker1', solo: false, type: 'primary' };
+    const response = hashrate.selectCurrentHashrateMain('Pool-Main', parameters);
+    const expected = 'SELECT * FROM "Pool-Main".current_hashrate WHERE timestamp >= 1 AND worker = \'worker1\' AND solo = false AND type = \'primary\';';
     expect(response).toBe(expected);
   });
 
   test('Test hashrate command handling [3]', () => {
+    const hashrate = new CurrentHashrate(logger, configMainCopy);
+    const parameters = { timestamp: 'ge1', solo: false, type: 'primary' };
+    const response = hashrate.selectCurrentHashrateMain('Pool-Main', parameters);
+    const expected = 'SELECT * FROM "Pool-Main".current_hashrate WHERE timestamp >= 1 AND solo = false AND type = \'primary\';';
+    expect(response).toBe(expected);
+  });
+
+  test('Test hashrate command handling [4]', () => {
+    const hashrate = new CurrentHashrate(logger, configMainCopy);
+    const response = hashrate.countCurrentHashrateIdentifiedMiner('Pool-Main', 1, true, 'primary');
+    const expected = `
+      SELECT identifier, CAST(COUNT(DISTINCT miner) AS INT)
+      FROM "Pool-Main".current_hashrate
+      WHERE timestamp >= 1
+      AND solo IN (true, null) 
+      AND type = 'primary'
+      GROUP BY identifier;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test hashrate command handling [5]', () => {
+    const hashrate = new CurrentHashrate(logger, configMainCopy);
+    const response = hashrate.countCurrentHashrateIdentifiedWorker('Pool-Main', 1, false, 'primary');
+    const expected = `
+      SELECT identifier, CAST(COUNT(DISTINCT worker) AS INT)
+      FROM "Pool-Main".current_hashrate
+      WHERE timestamp >= 1
+      AND solo = false AND type = 'primary'
+      GROUP BY identifier;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test hashrate command handling [6]', () => {
     const hashrate = new CurrentHashrate(logger, configMainCopy);
     const response = hashrate.sumCurrentHashrateMiner('Pool-Main', 1, 'primary');
     const expected = `
@@ -77,26 +106,16 @@ describe('Test database hashrate functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test hashrate command handling [4]', () => {
+  test('Test hashrate command handling [7]', () => {
     const hashrate = new CurrentHashrate(logger, configMainCopy);
-    const parameters = { timestamp: 'ge1', worker: 'worker1', solo: false, type: 'primary' };
+    const parameters = { timestamp: 'ge1', solo: false, type: 'primary', hmm: 'test' };
     const response = hashrate.selectCurrentHashrateMain('Pool-Main', parameters);
-    const expected = 'SELECT * FROM "Pool-Main".current_hashrate WHERE timestamp >= 1 AND worker = \'worker1\' AND solo = false AND type = \'primary\';';
+    const expected = 'SELECT * FROM "Pool-Main".current_hashrate WHERE timestamp >= 1 AND solo = false AND type = \'primary\';';
     expect(response).toBe(expected);
   });
 
-  test('Test hashrate command handling [5]', () => {
-    const hashrate = new CurrentHashrate(logger, configMainCopy);
-    const response = hashrate.countCurrentHashrateWorker('Pool-Main', 1, false, 'primary');
-    const expected = `
-      SELECT CAST(COUNT(DISTINCT worker) AS INT)
-      FROM "Pool-Main".current_hashrate
-      WHERE timestamp >= 1
-      AND solo = false AND type = 'primary';`;
-    expect(response).toBe(expected);
-  });
 
-  test('Test hashrate command handling [6]', () => {
+  test('Test hashrate command handling [8]', () => {
     const hashrate = new CurrentHashrate(logger, configMainCopy);
     const response = hashrate.sumCurrentHashrateWorker('Pool-Main', 1, false, 'primary');
     const expected = `
@@ -108,30 +127,15 @@ describe('Test database hashrate functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test hashrate command handling [7]', () => {
-    const hashrate = new CurrentHashrate(logger, configMainCopy);
-    const parameters = { timestamp: 'ge1', solo: false, type: 'primary' };
-    const response = hashrate.selectCurrentHashrateMain('Pool-Main', parameters);
-    const expected = 'SELECT * FROM "Pool-Main".current_hashrate WHERE timestamp >= 1 AND solo = false AND type = \'primary\';';
-    expect(response).toBe(expected);
-  });
-
-  test('Test hashrate command handling [8]', () => {
-    const hashrate = new CurrentHashrate(logger, configMainCopy);
-    const response = hashrate.sumCurrentHashrateType('Pool-Main', 1, false, 'primary');
-    const expected = `
-      SELECT SUM(work) as current_work
-      FROM "Pool-Main".current_hashrate
-      WHERE timestamp >= 1
-      AND solo = false AND type = 'primary';`;
-    expect(response).toBe(expected);
-  });
-
   test('Test hashrate command handling [9]', () => {
     const hashrate = new CurrentHashrate(logger, configMainCopy);
-    const parameters = { timestamp: 'ge1', solo: false, type: 'primary', hmm: 'test' };
-    const response = hashrate.selectCurrentHashrateMain('Pool-Main', parameters);
-    const expected = 'SELECT * FROM "Pool-Main".current_hashrate WHERE timestamp >= 1 AND solo = false AND type = \'primary\';';
+    const response = hashrate.sumCurrentIdentifiedHashrate('Pool-Main', 1, false, 'primary');
+    const expected = `
+      SELECT identifier, SUM(work) as current_work
+      FROM "Pool-Main".current_hashrate
+      WHERE timestamp >= 1
+      AND solo = false AND type = 'primary'
+      GROUP BY identifier;`;
     expect(response).toBe(expected);
   });
 

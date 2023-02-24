@@ -138,21 +138,6 @@ const Shares = function (logger, client, config, configMain) {
     };
   };
 
-  // Handle Miner Updates
-  this.handleCurrentMiners = function(worker, difficulty, shareData, shareType, blockType) {
-
-    // Calculate Effort Metadata
-    const effort = _this.handleEffortIncrement(shareData.difficulty, shareType, difficulty);
-    
-    // Return Miner Updates
-    return {
-      timestamp: Date.now(),
-      miner: (worker || '').split('.')[0],
-      solo_effort: effort,
-      type: blockType,
-    };
-  };
-
   // Handle Round Updates
   this.handleCurrentRounds = function(worker, workerData, shareData, shareType, minerType, blockType) {
 
@@ -191,6 +176,21 @@ const Shares = function (logger, client, config, configMain) {
       type: blockType,
       valid: valid,
       work: current,
+    };
+  };
+
+  // Handle Solo Miner Updates
+  this.handleCurrentSoloMiners = function(worker, difficulty, shareData, shareType, blockType) {
+
+    // Calculate Effort Metadata
+    const effort = _this.handleEffortIncrement(shareData.difficulty, shareType, difficulty);
+    
+    // Return Miner Updates
+    return {
+      timestamp: Date.now(),
+      miner: (worker || '').split('.')[0],
+      solo_effort: effort,
+      type: blockType,
     };
   };
 
@@ -332,41 +332,39 @@ const Shares = function (logger, client, config, configMain) {
   this.handlePrimary = function(lookups, shareData, shareType, minerType, callback) {
 
     // Build Round Update Data
-    const roundIdentifier = uuid.v4();
+    const blockIdentifier = uuid.v4();
     const miner = (shareData.addrPrimary || '').split('.')[0];
 
     // Establish Specific Lookups
-    const metadata = lookups[1].rows[0] || {};
+    const metadataWork = lookups[1].rows.map(el => el.work).reduce((a, b) => a + b, 0) || 0;
     const round = lookups[3].rows[0] || {};
-    const work = minerType ? (round.work || 0) : (metadata.work || 0);
+    const work = minerType ? (round.work || 0) : metadataWork;
 
     // Build Round Block to Submit
     const blocks = _this.handleCurrentBlocks(
-      work, shareData.addrPrimary, shareData.blockDiffPrimary, roundIdentifier, shareData,
+      work, shareData.addrPrimary, shareData.blockDiffPrimary, blockIdentifier, shareData,
       shareType, minerType, 'primary');
 
-    
     // Build Round Update Transactions
-    const metadataBlocks = _this.handleMetadataBlocks(shareData, minerType, blockType);
+    const metadataBlocks = _this.handleMetadataBlocks(shareData, minerType, 'primary');
     const metadataReset = { timestamp: Date.now(), solo: minerType, type: 'primary' };
     const workersReset = (minerType) ? (
     _this.current.workers.updateCurrentSoloWorkersRoundsReset(_this.pool, Date.now(), miner, 'primary')) : (
     _this.current.workers.updateCurrentSharedWorkersRoundsReset(_this.pool, Date.now(), 'primary'));
     const primaryUpdate = (minerType) ? (
-      _this.current.rounds.updateCurrentRoundsMainSolo(_this.pool, miner, roundIdentifier, 'primary')) : (
-      _this.current.rounds.updateCurrentRoundsMainShared(_this.pool, roundIdentifier, 'primary'));
+      _this.current.rounds.updateCurrentRoundsMainSolo(_this.pool, miner, blockIdentifier, 'primary')) : (
+      _this.current.rounds.updateCurrentRoundsMainShared(_this.pool, blockIdentifier, 'primary'));
     
-
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
       _this.current.blocks.insertCurrentBlocksMain(_this.pool, [blocks]),
       _this.current.metadata.insertCurrentMetadataBlocks(_this.pool, [metadataBlocks]),
-      _this.current.metadata.insertHistoricalMetadataBlocks(_this.pool, [metadataBlocks]),
+      _this.historical.metadata.insertHistoricalMetadataBlocks(_this.pool, [metadataBlocks]),
       workersReset,
       primaryUpdate];
     if (minerType) {
-      transaction.push(_this.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'primary'));
+      transaction.push(_this.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'primary')); // new
     } else {
       transaction.push(_this.current.metadata.insertCurrentMetadataRoundsReset(_this.pool, [metadataReset]));
     }
@@ -385,9 +383,9 @@ const Shares = function (logger, client, config, configMain) {
     const miner = (shareData.addrAuxiliary || '').split('.')[0];
 
     // Establish Specific Lookups
-    const metadata = lookups[2].rows[0] || {};
+    const metadataWork = lookups[2].rows.map(el => el.work).reduce((a, b) => a + b, 0) || 0;
     const round = lookups[4].rows[0] || {};
-    const work = minerType ? (round.work || 0) : (metadata.work || 0);
+    const work = minerType ? (round.work || 0) : metadataWork;
 
     // Build Round Block to Submit
     const blocks = _this.handleCurrentBlocks(
@@ -395,7 +393,7 @@ const Shares = function (logger, client, config, configMain) {
       shareType, minerType, 'auxiliary');
 
     // Build Round Update Transactions
-    const metadataBlocks = _this.handleMetadataBlocks(shareData, minerType, blockType);
+    const metadataBlocks = _this.handleMetadataBlocks(shareData, minerType, 'auxiliary');
     const metadataReset = { timestamp: Date.now(), solo: minerType, type: 'auxiliary' };
     const workersReset = (minerType) ? (
     _this.current.workers.updateCurrentSoloWorkersRoundsReset(_this.pool, Date.now(), miner, 'auxiliary')) : (
@@ -409,6 +407,7 @@ const Shares = function (logger, client, config, configMain) {
       'BEGIN;',
       _this.current.blocks.insertCurrentBlocksMain(_this.pool, [blocks]),
       _this.current.metadata.insertCurrentMetadataBlocks(_this.pool, [metadataBlocks]),
+      _this.historical.metadata.insertHistoricalMetadataBlocks(_this.pool, [metadataBlocks]),
       workersReset,
       auxiliaryUpdate];
     if (minerType) {
@@ -425,16 +424,15 @@ const Shares = function (logger, client, config, configMain) {
 
   // Handle Share Updates
   this.handleShares = function(lookups, shareData, shareType, minerType, callback) {
-
+    const identifier = shareData.identifier || 'master';
     const miner = shareData.addrPrimary.split('.')[0];
 
     // Establish Specific Lookups
-    const metadata = lookups[1].rows[0] || {};
+    const metadata = lookups[1].rows.filter(el => el.identifier === identifier)[0] || {};    
     const round = lookups[3].rows[0] || {};
     const user = lookups[5].rows[0] || {};
-
     const work = minerType ? (round.work || 0) : (metadata.work || 0);
-
+    
     // Handle Updates
     const hashrateUpdates = _this.handleCurrentHashrate(
       shareData.addrPrimary, shareData.difficulty, shareData, shareType, minerType, 'primary');
@@ -463,9 +461,9 @@ const Shares = function (logger, client, config, configMain) {
       _this.historical.metadata.insertHistoricalMetadataRounds(_this.pool, [historicalMetadataUpdates])];
 
     if (minerType) {
-      const currentMinerUpdates = _this.handleCurrentMiners(
+      const currentSoloMinerUpdates = _this.handleCurrentSoloMiners(
         shareData.addrPrimary, shareData.blockDiffPrimary, shareData, shareType, 'primary');
-      transaction.push(_this.current.miners.insertCurrentMinersRounds(_this.pool, [currentMinerUpdates]));
+      transaction.push(_this.current.miners.insertCurrentMinersRounds(_this.pool, [currentSoloMinerUpdates]));
     };
 
     // Create New User
@@ -497,9 +495,9 @@ const Shares = function (logger, client, config, configMain) {
       const auxCurrentWorkerUpdates = _this.handleCurrentWorkers(
         shareData.addrAuxiliary, shareData.blockDiffAuxiliary, shareData, shareType, minerType, 'auxiliary');
       const auxHistoricalWorkerUpdates = _this.handleHistoricalWorkers(
-        shareData.addrPrimary, shareData, shareType, minerType, 'auxiliary');
+        shareData.addrAuxiliary, shareData, shareType, minerType, 'auxiliary');
       const auxHistoricalMinerUpdates = _this.handleHistoricalMiners(
-        shareData.addrPrimary, shareData, shareType, minerType, 'auxiliary');
+        shareData.addrAuxiliary, shareData, shareType, minerType, 'auxiliary');
       const auxHistoricalMetadataUpdates = _this.handleHistoricalMetadata(
         shareData, shareType, minerType, 'auxiliary');
 
@@ -512,9 +510,9 @@ const Shares = function (logger, client, config, configMain) {
       transaction.push(_this.historical.metadata.insertHistoricalMetadataRounds(_this.pool, [auxHistoricalMetadataUpdates]));
 
       if (minerType) {
-        const auxMinerUpdates = _this.handleCurrentMiners(
+        const auxSoloMinerUpdates = _this.handleCurrentSoloMiners(
           shareData.addrAuxiliary, shareData.blockDiffAuxiliary, shareData, shareType, 'auxiliary');
-        transaction.push(_this.current.miners.insertCurrentMinersRounds(_this.pool, [auxMinerUpdates]));
+        transaction.push(_this.current.miners.insertCurrentMinersRounds(_this.pool, [auxSoloMinerUpdates]));
       }
     }
 
@@ -527,7 +525,6 @@ const Shares = function (logger, client, config, configMain) {
   this.handleSubmissions = function(shareData, shareValid, blockValid, callback) {
 
     // Calculate Share Features
-    const identifier = shareData.identifier || 'master';
     const minerType = utils.checkSoloMining(_this.config, shareData);
     let shareType = 'valid';
     if (shareData.error && shareData.error === 'job not found') shareType = 'stale';
@@ -541,8 +538,8 @@ const Shares = function (logger, client, config, configMain) {
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
-      _this.current.metadata.selectCurrentMetadataMain(_this.pool, { identifier: identifier, solo: minerType, type: 'primary' }),
-      _this.current.metadata.selectCurrentMetadataMain(_this.pool, { identifier: identifier, solo: minerType, type: 'auxiliary' }),
+      _this.current.metadata.selectCurrentMetadataMain(_this.pool, { solo: minerType, type: 'primary' }),
+      _this.current.metadata.selectCurrentMetadataMain(_this.pool, { solo: minerType, type: 'auxiliary' }),
       _this.current.rounds.selectCurrentRoundsMain(_this.pool, parameters),
       _this.current.rounds.selectCurrentRoundsMain(_this.pool, auxParameters),
       _this.current.users.selectCurrentUsers(_this.pool, { miner: miner }),

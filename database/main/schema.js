@@ -120,8 +120,6 @@ const Schema = function (logger, executor, configMain) {
         efficiency FLOAT NOT NULL DEFAULT 0,
         effort FLOAT NOT NULL DEFAULT 0,
         hashrate FLOAT NOT NULL DEFAULT 0,
-        hashrate_12h FLOAT NOT NULL DEFAULT 0,
-        hashrate_24h FLOAT NOT NULL DEFAULT 0,
         identifier VARCHAR NOT NULL DEFAULT 'master',
         invalid INT NOT NULL DEFAULT 0,
         miners INT NOT NULL DEFAULT 0,
