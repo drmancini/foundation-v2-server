@@ -282,6 +282,23 @@ describe('Test database workers functionality', () => {
     expect(response).toBe(expected);
   });
 
+  test('Test workers command handling [10]', () => {
+    const workers = new CurrentWorkers(logger, configMainCopy);
+    const response = workers.selectCurrentWorkersLastShare('Pool-Main', 100, 50, false, 'primary');
+    const expected = `
+      SELECT miner,
+        COUNT(CASE WHEN last_share > 100
+          THEN 1 ELSE null END) AS active_workers,
+        COUNT(CASE WHEN last_share > 50
+          AND last_share < 100
+          THEN 1 ELSE null END) AS inactive_workers
+      FROM "Pool-Main".current_workers
+      WHERE solo = false
+        AND type = 'primary'
+      GROUP BY miner;`;
+    expect(response).toBe(expected);
+  });
+
   test('Test workers command handling [11]', () => {
     const workers = new CurrentWorkers(logger, configMainCopy);
     const updates = {

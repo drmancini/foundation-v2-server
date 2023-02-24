@@ -74,17 +74,22 @@ describe('Test database metadata functionality', () => {
     const metadata = new HistoricalMetadata(logger, configMainCopy);
     const updates = {
       timestamp: 1,
+      recent: 1,
       blocks: 1,
+      identifier: 'master',
       solo: true,
       type: 'primary',
     };
     const response = metadata.insertHistoricalMetadataBlocks('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, recent, blocks,
+        identifier, solo, type)
       VALUES (
         1,
         1,
+        1,
+        'master',
         true,
         'primary')
       ON CONFLICT ON CONSTRAINT historical_metadata_unique
@@ -98,21 +103,28 @@ describe('Test database metadata functionality', () => {
     const metadata = new HistoricalMetadata(logger, configMainCopy);
     const updates = {
       timestamp: 1,
+      recent: 1,
       blocks: 1,
+      identifier: 'master',
       solo: true,
       type: 'primary',
     };
     const response = metadata.insertHistoricalMetadataBlocks('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, recent, blocks,
+        identifier, solo, type)
       VALUES (
         1,
         1,
+        1,
+        'master',
         true,
         'primary'), (
         1,
         1,
+        1,
+        'master',
         true,
         'primary')
       ON CONFLICT ON CONSTRAINT historical_metadata_unique
@@ -128,6 +140,7 @@ describe('Test database metadata functionality', () => {
       timestamp: 1,
       recent: 1,
       hashrate: 1,
+      identifier: 'master',
       miners: 1,
       solo: true,
       type: 'primary',
@@ -136,11 +149,13 @@ describe('Test database metadata functionality', () => {
     const response = metadata.insertHistoricalMetadataHashrate('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_metadata (
-        timestamp, recent, hashrate,
-        miners, solo, type, workers)
+        timestamp, recent, identifier,
+        hashrate, miners, solo, type,
+        workers)
       VALUES (
         1,
         1,
+        'master',
         1,
         1,
         true,
@@ -161,6 +176,7 @@ describe('Test database metadata functionality', () => {
       timestamp: 1,
       recent: 1,
       hashrate: 1,
+      identifier: 'master',
       miners: 1,
       solo: true,
       type: 'primary',
@@ -169,11 +185,13 @@ describe('Test database metadata functionality', () => {
     const response = metadata.insertHistoricalMetadataHashrate('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_metadata (
-        timestamp, recent, hashrate,
-        miners, solo, type, workers)
+        timestamp, recent, identifier,
+        hashrate, miners, solo, type,
+        workers)
       VALUES (
         1,
         1,
+        'master',
         1,
         1,
         true,
@@ -181,6 +199,7 @@ describe('Test database metadata functionality', () => {
         1), (
         1,
         1,
+        'master',
         1,
         1,
         true,
@@ -195,85 +214,31 @@ describe('Test database metadata functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test metadata command handling [8]', () => {
-    const metadata = new HistoricalMetadata(logger, configMainCopy);
-    const updates = { timestamp: 1, solo: true, type: 'primary' };
-    const response = metadata.insertHistoricalMetadataRoundsReset('Pool-Main', [updates]);
-    const expected = `
-      INSERT INTO "Pool-Main".historical_metadata (
-        timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
-      VALUES (
-        1, 0, 0, 0,
-        true, 0, 'primary', 0, 0)
-      ON CONFLICT ON CONSTRAINT historical_metadata_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        efficiency = 0, effort = 0, invalid = 0,
-        stale = 0, valid = 0, work = 0;`;
-    expect(response).toBe(expected);
-  });
-
-  test('Test metadata command handling [9]', () => {
-    const metadata = new HistoricalMetadata(logger, configMainCopy);
-    const updates = { timestamp: 1, solo: true, type: 'primary' };
-    const response = metadata.insertHistoricalMetadataRoundsReset('Pool-Main', [updates, updates]);
-    const expected = `
-      INSERT INTO "Pool-Main".historical_metadata (
-        timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
-      VALUES (
-        1, 0, 0, 0,
-        true, 0, 'primary', 0, 0), (
-        1, 0, 0, 0,
-        true, 0, 'primary', 0, 0)
-      ON CONFLICT ON CONSTRAINT historical_metadata_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        efficiency = 0, effort = 0, invalid = 0,
-        stale = 0, valid = 0, work = 0;`;
-    expect(response).toBe(expected);
-  });
-
   test('Test metadata command handling [10]', () => {
     const metadata = new HistoricalMetadata(logger, configMainCopy);
     const updates = {
       timestamp: 1,
       recent: 1,
-      efficiency: 100,
-      effort: 100,
-      invalid: 0,
+      identifier: 'master',
       solo: true,
-      stale: 0,
       type: 'primary',
-      valid: 1,
       work: 8,
     };
     const response = metadata.insertHistoricalMetadataRounds('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_metadata (
-        timestamp, recent, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        timestamp, recent, identifier,
+        solo, type, work)
       VALUES (
         1,
         1,
-        100,
-        0,
+        'master',
         true,
-        0,
         'primary',
-        1,
         8)
       ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = EXCLUDED.effort,
-        invalid = "Pool-Main".historical_metadata.invalid + EXCLUDED.invalid,
-        stale = "Pool-Main".historical_metadata.stale + EXCLUDED.stale,
-        valid = "Pool-Main".historical_metadata.valid + EXCLUDED.valid,
         work = "Pool-Main".historical_metadata.work + EXCLUDED.work;`;
     expect(response).toBe(expected);
   });
@@ -283,47 +248,32 @@ describe('Test database metadata functionality', () => {
     const updates = {
       timestamp: 1,
       recent: 1,
-      efficiency: 100,
-      effort: 100,
-      invalid: 0,
+      identifier: 'master',
       solo: true,
-      stale: 0,
       type: 'primary',
-      valid: 1,
       work: 8,
     };
     const response = metadata.insertHistoricalMetadataRounds('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_metadata (
-        timestamp, recent, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        timestamp, recent, identifier,
+        solo, type, work)
       VALUES (
         1,
         1,
-        100,
-        0,
+        'master',
         true,
-        0,
         'primary',
-        1,
         8), (
         1,
         1,
-        100,
-        0,
+        'master',
         true,
-        0,
         'primary',
-        1,
         8)
       ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = EXCLUDED.effort,
-        invalid = "Pool-Main".historical_metadata.invalid + EXCLUDED.invalid,
-        stale = "Pool-Main".historical_metadata.stale + EXCLUDED.stale,
-        valid = "Pool-Main".historical_metadata.valid + EXCLUDED.valid,
         work = "Pool-Main".historical_metadata.work + EXCLUDED.work;`;
     expect(response).toBe(expected);
   });

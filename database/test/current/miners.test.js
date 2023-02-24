@@ -83,26 +83,33 @@ describe('Test database miners functionality', () => {
     const updates = {
       miner: 'miner1',
       timestamp: 1,
+      active_shared: 1,
       efficiency: 100,
       hashrate: 1,
+      inactive_shared: 1,
       type: 'primary',
     };
     const response = miners.insertCurrentMinersHashrate('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_miners (
-        timestamp, miner, efficiency,
-        hashrate, type)
+        timestamp, miner, active_shared,
+        efficiency, hashrate, inactive_shared,
+        type)
       VALUES (
         1,
         'miner1',
+        1,
         100,
+        1,
         1,
         'primary')
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
+        active_shared = EXCLUDED.active_shared,
         efficiency = EXCLUDED.efficiency,
-        hashrate = EXCLUDED.hashrate;`;
+        hashrate = EXCLUDED.hashrate,
+        inactive_shared = EXCLUDED.inactive_shared;`;
     expect(response).toBe(expected);
   });
 
@@ -111,31 +118,40 @@ describe('Test database miners functionality', () => {
     const updates = {
       miner: 'miner1',
       timestamp: 1,
+      active_shared: 1,
       efficiency: 100,
       hashrate: 1,
+      inactive_shared: 1,
       type: 'primary',
     };
     const response = miners.insertCurrentMinersHashrate('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_miners (
-        timestamp, miner, efficiency,
-        hashrate, type)
+        timestamp, miner, active_shared,
+        efficiency, hashrate, inactive_shared,
+        type)
       VALUES (
         1,
         'miner1',
+        1,
         100,
+        1,
         1,
         'primary'), (
         1,
         'miner1',
+        1,
         100,
+        1,
         1,
         'primary')
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
+        active_shared = EXCLUDED.active_shared,
         efficiency = EXCLUDED.efficiency,
-        hashrate = EXCLUDED.hashrate;`;
+        hashrate = EXCLUDED.hashrate,
+        inactive_shared = EXCLUDED.inactive_shared;`;
     expect(response).toBe(expected);
   });
 

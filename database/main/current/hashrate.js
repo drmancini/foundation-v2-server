@@ -76,14 +76,15 @@ const CurrentHashrate = function (logger, configMain) {
       GROUP BY identifier;`;
   };
 
+
   // Select Sum of Rows Using Identifiers
-  this.sumCurrentHashrateIdentifiedMiner = function(pool, timestamp, type) {
-    return `
-      SELECT identifier, SUM(work) as current_work
-      FROM "${ pool }".current_hashrate
-      WHERE timestamp >= ${ timestamp }
-      AND type = '${ type }' GROUP BY identifier;`;
-  };
+  // this.sumCurrentHashrateIdentifiedMiner = function(pool, timestamp, type) {
+  //   return `
+  //     SELECT identifier, SUM(work) as current_work
+  //     FROM "${ pool }".current_hashrate
+  //     WHERE timestamp >= ${ timestamp }
+  //     AND type = '${ type }' GROUP BY identifier;`;
+  // };
 
   // Select Count of Distinct Workers by Identifier
   this.countCurrentHashrateIdentifiedWorker = function(pool, timestamp, solo, type) {

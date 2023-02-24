@@ -38,12 +38,19 @@ describe('Test shares functionality', () => {
     expect(typeof shares.handleEfficiency).toBe('function');
     expect(typeof shares.handleEffort).toBe('function');
     expect(typeof shares.handleEffortIncrement).toBe('function');
+    expect(typeof shares.handleTimes).toBe('function');
+    expect(typeof shares.handleTimesIncrement).toBe('function');
+    expect(typeof shares.handleCurrentBlocks).toBe('function');
+    expect(typeof shares.handleCurrentHashrate).toBe('function');
+    expect(typeof shares.handleCurrentMetadata).toBe('function');
+    expect(typeof shares.handleCurrentRounds).toBe('function');
   });
 
   test('Test shares database updates [1]', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const shares = new Shares(logger, client, configCopy, configMainCopy);
+    expect(shares.handleEfficiency({ valid: 0, invalid: 0, stale: 0 }, 'valid')).toBe(100);
     expect(shares.handleEfficiency({ valid: 1, invalid: 0, stale: 0 }, 'valid')).toBe(100);
     expect(shares.handleEfficiency({ valid: 0, invalid: 1, stale: 0 }, 'valid')).toBe(50);
     expect(shares.handleEfficiency({ valid: 1, invalid: 1, stale: 0 }, 'valid')).toBe(66.67);
@@ -52,7 +59,7 @@ describe('Test shares functionality', () => {
     expect(shares.handleEfficiency({}, 'invalid')).toBe(0);
   });
 
-  test('Test shares database updates [2a]', () => {
+  test('Test shares database updates [2]', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const shares = new Shares(logger, client, configCopy, configMainCopy);
@@ -62,7 +69,7 @@ describe('Test shares functionality', () => {
     expect(shares.handleEffort(0, undefined, 'invalid', 100)).toBe(0);
   });
 
-  test('Test shares database updates [2b]', () => {
+  test('Test shares database updates [3]', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const shares = new Shares(logger, client, configCopy, configMainCopy);
@@ -72,7 +79,7 @@ describe('Test shares functionality', () => {
     expect(shares.handleEffortIncrement(undefined, 'invalid', 100)).toBe(0);
   });
 
-  test('Test shares database updates [3]', () => {
+  test('Test shares database updates [4]', () => {
     MockDate.set(1634742080841);
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
@@ -85,7 +92,7 @@ describe('Test shares functionality', () => {
     expect(shares.handleTimes({ timestamp: 1634742080841, times: 145 }, 1634842370841)).toBe(145);
   });
 
-  test('Test shares database updates [3b]', () => {
+  test('Test shares database updates [5]', () => {
     MockDate.set(1634742080841);
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
@@ -95,12 +102,12 @@ describe('Test shares functionality', () => {
     expect(shares.handleTimesIncrement({ timestamp: 1634742080841 }, 1634842370841)).toBe(0);
   });
 
-  test('Test shares database updates [4]', () => {
+  test('Test shares database updates [6]', () => {
     MockDate.set(1634742080841);
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const shares = new Shares(logger, client, configCopy, configMainCopy);
-    const shareData = { hash: 'hash', height: 1, identifier: 'master', transaction: 'transaction1' };
+    const shareData = { difficulty: 10, hash: 'hash', height: 1, identifier: 'master', transaction: 'transaction1' };
     const expected = {
       timestamp: 1634742080841,
       submitted: 1634742080841,
@@ -108,18 +115,18 @@ describe('Test shares functionality', () => {
       worker: 'miner1.worker1',
       category: 'pending',
       confirmations: -1,
-      difficulty: 150,
+      difficulty: 200,
       hash: 'hash',
       height: 1,
       identifier: 'master',
-      luck:  66.67,
+      luck:  50,
       reward: 0,
       round: 'round',
       solo: false,
       transaction: 'transaction1',
       type: 'primary',
     };
-    expect(shares.handleCurrentBlocks(100, 'miner1.worker1', 150, 'round', shareData, 'valid', false, 'primary')).toStrictEqual(expected);
+    expect(shares.handleCurrentBlocks(90, 'miner1.worker1', 200, 'round', shareData, 'valid', false, 'primary')).toStrictEqual(expected);
   });
 
   test('Test shares database updates [5]', () => {
@@ -216,6 +223,7 @@ describe('Test shares functionality', () => {
       timestamp: 1634742080841,
       efficiency: 100,
       effort: 151,
+      identifier: 'master',
       invalid: 0,
       solo: false,
       stale: 0,
@@ -235,14 +243,15 @@ describe('Test shares functionality', () => {
     const shareData = { difficulty: 1, solo: true };
     const expected = {
       timestamp: 1634742080841,
-      efficiency: 100,
+      efficiency: 0,
       effort: 0,
+      identifier: 'master',
       invalid: 0,
       solo: true,
       stale: 0,
       type: 'primary',
-      valid: 1,
-      work: 1,
+      valid: 0,
+      work: 0,
     };
     expect(shares.handleCurrentMetadata(150, 100, roundData, shareData, 'valid', true, 'primary')).toStrictEqual(expected);
   });
@@ -258,6 +267,7 @@ describe('Test shares functionality', () => {
       timestamp: 1634742080841,
       efficiency: 50,
       effort: 150,
+      identifier: 'master',
       invalid: 1,
       solo: false,
       stale: 0,
@@ -279,6 +289,7 @@ describe('Test shares functionality', () => {
       timestamp: 1634742080841,
       efficiency: 50,
       effort: 150,
+      identifier: 'master',
       invalid: 0,
       solo: false,
       stale: 1,
@@ -301,7 +312,7 @@ describe('Test shares functionality', () => {
       solo_effort: 0.6667,
       type: 'primary',
     };
-    expect(shares.handleCurrentMiners('miner1', 150, shareData, 'valid', 'primary')).toStrictEqual(expected);
+    expect(shares.handleCurrentSoloMiners('miner1', 150, shareData, 'valid', 'primary')).toStrictEqual(expected);
   });
 
   test('Test shares database updates [14]', () => {
@@ -316,7 +327,7 @@ describe('Test shares functionality', () => {
       solo_effort: 0.6667,
       type: 'primary',
     };
-    expect(shares.handleCurrentMiners(null, 150, shareData, 'valid', 'primary')).toStrictEqual(expected);
+    expect(shares.handleCurrentSoloMiners(null, 150, shareData, 'valid', 'primary')).toStrictEqual(expected);
   });
 
   test('Test shares database updates [15]', () => {
@@ -600,19 +611,36 @@ describe('Test shares functionality', () => {
         solo = EXCLUDED.solo,
         transaction = EXCLUDED.transaction,
         type = EXCLUDED.type;`;
-    const expectedMetadata = `
+    const expectedCurrentMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES (
         1634742080841,
         1,
+        'master',
         false,
         'primary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         blocks = "Pool-Bitcoin".current_metadata.blocks + EXCLUDED.blocks;`;
-    const expectedReset = `
+    const expectedHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, blocks,
+        identifier, solo, type)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        1,
+        'master',
+        false,
+        'primary')
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        blocks = "Pool-Bitcoin".historical_metadata.blocks + EXCLUDED.blocks;`;
+    const expectedMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
         timestamp, efficiency, effort,
         invalid, solo, stale, type,
@@ -637,12 +665,13 @@ describe('Test shares functionality', () => {
       WHERE round = 'current' AND solo = false
       AND type = 'primary';`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(7);
+      expect(transaction.length).toBe(8);
       expect(transaction[1]).toBe(expectedBlocks);
-      expect(transaction[2]).toBe(expectedMetadata);
-      expect(transaction[3]).toBe(expectedReset);
+      expect(transaction[2]).toBe(expectedCurrentMetadata);
+      expect(transaction[3]).toBe(expectedHistoricalMetadata);
       expect(transaction[4]).toBe(expectedWorkers);
       expect(transaction[5]).toBe(expectedPrimary);
+      expect(transaction[6]).toBe(expectedMetadata);
       done();
     });
     shares.handlePrimary(lookups, shareData, 'valid', false, () => {});
@@ -697,19 +726,42 @@ describe('Test shares functionality', () => {
         solo = EXCLUDED.solo,
         transaction = EXCLUDED.transaction,
         type = EXCLUDED.type;`;
-    const expectedMetadata = `
+    const expectedCurrentMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES (
         1634742080841,
         1,
+        'master',
         false,
         'primary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         blocks = "Pool-Bitcoin".current_metadata.blocks + EXCLUDED.blocks;`;
+    const expectedHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, blocks,
+        identifier, solo, type)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        1,
+        'master',
+        false,
+        'primary')
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        blocks = "Pool-Bitcoin".historical_metadata.blocks + EXCLUDED.blocks;`;
     const expectedReset = `
+      UPDATE "Pool-Bitcoin".current_workers
+      SET timestamp = 1634742080841,
+        effort = 0
+      WHERE solo = false
+      AND type = 'primary';`;
+    const expectedMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
         timestamp, efficiency, effort,
         invalid, solo, stale, type,
@@ -722,30 +774,19 @@ describe('Test shares functionality', () => {
         timestamp = EXCLUDED.timestamp,
         efficiency = 0, effort = 0, invalid = 0,
         stale = 0, valid = 0, work = 0;`;
-    const expectedMiners = `
-      UPDATE "Pool-Bitcoin".current_miners
-      SET timestamp = 1634742080841,
-        effort = 0
-      WHERE solo = false
-      AND type = 'primary';`;
-    const expectedWorkers = `
-      UPDATE "Pool-Bitcoin".current_workers
-      SET timestamp = 1634742080841,
-        effort = 0
-      WHERE solo = false
-      AND type = 'primary';`;
     const expectedPrimary = `
       UPDATE "Pool-Bitcoin".current_rounds
       SET round = '123456789'
       WHERE round = 'current' AND solo = false
       AND type = 'primary';`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(7);
+      expect(transaction.length).toBe(8);
       expect(transaction[1]).toBe(expectedBlocks);
-      expect(transaction[2]).toBe(expectedMetadata);
-      expect(transaction[3]).toBe(expectedReset);
-      expect(transaction[4]).toBe(expectedWorkers);
+      expect(transaction[2]).toBe(expectedCurrentMetadata);
+      expect(transaction[3]).toBe(expectedHistoricalMetadata);
+      expect(transaction[4]).toBe(expectedReset);
       expect(transaction[5]).toBe(expectedPrimary);
+      expect(transaction[6]).toBe(expectedMetadata);
       done();
     });
     shares.handlePrimary(lookups, shareData, 'valid', false, () => {});
@@ -800,43 +841,47 @@ describe('Test shares functionality', () => {
         solo = EXCLUDED.solo,
         transaction = EXCLUDED.transaction,
         type = EXCLUDED.type;`;
-    const expectedMetadata = `
+    const expectedCurrentMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES (
         1634742080841,
         1,
+        'master',
         true,
         'primary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         blocks = "Pool-Bitcoin".current_metadata.blocks + EXCLUDED.blocks;`;
-    const expectedReset = `
-      INSERT INTO "Pool-Bitcoin".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+    const expectedHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, blocks,
+        identifier, solo, type)
       VALUES (
-        1634742080841, 0, 0, 0,
-        true, 0, 'primary', 0, 0)
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
+        1634742080841,
+        1634742600000,
+        1,
+        'master',
+        true,
+        'primary')
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = 0, effort = 0, invalid = 0,
-        stale = 0, valid = 0, work = 0;`;
-    const expectedMiners = `
-      UPDATE "Pool-Bitcoin".current_miners
-      SET timestamp = 1634742080841,
-        solo_effort = 0
-      WHERE miner = 'miner1'
-      AND type = 'primary';`;
-    const expectedWorkers = `
+        blocks = "Pool-Bitcoin".historical_metadata.blocks + EXCLUDED.blocks;`;
+    const expectedReset = `
       UPDATE "Pool-Bitcoin".current_workers
       SET timestamp = 1634742080841,
         effort = 0
       WHERE miner = 'miner1'
       AND solo = true
+      AND type = 'primary';`;
+    const expectedMiners = `
+      UPDATE "Pool-Bitcoin".current_miners
+      SET timestamp = 1634742080841,
+        solo_effort = 0
+      WHERE miner = 'miner1'
       AND type = 'primary';`;
     const expectedPrimary = `
       UPDATE "Pool-Bitcoin".current_rounds
@@ -846,9 +891,9 @@ describe('Test shares functionality', () => {
     client.on('transaction', (transaction) => {
       expect(transaction.length).toBe(8);
       expect(transaction[1]).toBe(expectedBlocks);
-      expect(transaction[2]).toBe(expectedMetadata);
-      expect(transaction[3]).toBe(expectedReset);
-      expect(transaction[4]).toBe(expectedWorkers);
+      expect(transaction[2]).toBe(expectedCurrentMetadata);
+      expect(transaction[3]).toBe(expectedHistoricalMetadata);
+      expect(transaction[4]).toBe(expectedReset);
       expect(transaction[5]).toBe(expectedPrimary);
       expect(transaction[6]).toBe(expectedMiners);
       done();
@@ -905,43 +950,47 @@ describe('Test shares functionality', () => {
         solo = EXCLUDED.solo,
         transaction = EXCLUDED.transaction,
         type = EXCLUDED.type;`;
-    const expectedMetadata = `
+    const expectedCurrentMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES (
         1634742080841,
         1,
+        'master',
         true,
         'primary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         blocks = "Pool-Bitcoin".current_metadata.blocks + EXCLUDED.blocks;`;
-    const expectedReset = `
-      INSERT INTO "Pool-Bitcoin".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+    const expectedHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, blocks,
+        identifier, solo, type)
       VALUES (
-        1634742080841, 0, 0, 0,
-        true, 0, 'primary', 0, 0)
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
+        1634742080841,
+        1634742600000,
+        1,
+        'master',
+        true,
+        'primary')
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = 0, effort = 0, invalid = 0,
-        stale = 0, valid = 0, work = 0;`;
-    const expectedMiners = `
-      UPDATE "Pool-Bitcoin".current_miners
-      SET timestamp = 1634742080841,
-        solo_effort = 0
-      WHERE miner = ''
-      AND type = 'primary';`;
+        blocks = "Pool-Bitcoin".historical_metadata.blocks + EXCLUDED.blocks;`;
     const expectedWorkers = `
       UPDATE "Pool-Bitcoin".current_workers
       SET timestamp = 1634742080841,
         effort = 0
       WHERE miner = ''
       AND solo = true
+      AND type = 'primary';`;
+    const expectedMiners = `
+      UPDATE "Pool-Bitcoin".current_miners
+      SET timestamp = 1634742080841,
+        solo_effort = 0
+      WHERE miner = ''
       AND type = 'primary';`;
     const expectedPrimary = `
       UPDATE "Pool-Bitcoin".current_rounds
@@ -951,8 +1000,8 @@ describe('Test shares functionality', () => {
     client.on('transaction', (transaction) => {
       expect(transaction.length).toBe(8);
       expect(transaction[1]).toBe(expectedBlocks);
-      expect(transaction[2]).toBe(expectedMetadata);
-      expect(transaction[3]).toBe(expectedReset);
+      expect(transaction[2]).toBe(expectedCurrentMetadata);
+      expect(transaction[3]).toBe(expectedHistoricalMetadata);
       expect(transaction[4]).toBe(expectedWorkers);
       expect(transaction[5]).toBe(expectedPrimary);
       expect(transaction[6]).toBe(expectedMiners);
@@ -1010,19 +1059,36 @@ describe('Test shares functionality', () => {
         solo = EXCLUDED.solo,
         transaction = EXCLUDED.transaction,
         type = EXCLUDED.type;`;
-    const expectedMetadata = `
+    const expectedCurrentMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES (
         1634742080841,
         1,
+        'master',
         false,
         'auxiliary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         blocks = "Pool-Bitcoin".current_metadata.blocks + EXCLUDED.blocks;`;
-    const expectedReset = `
+    const expectedHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, blocks,
+        identifier, solo, type)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        1,
+        'master',
+        false,
+        'auxiliary')
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        blocks = "Pool-Bitcoin".historical_metadata.blocks + EXCLUDED.blocks;`;
+    const expectedMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
         timestamp, efficiency, effort,
         invalid, solo, stale, type,
@@ -1047,12 +1113,13 @@ describe('Test shares functionality', () => {
       WHERE round = 'current' AND solo = false
       AND type = 'auxiliary';`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(7);
+      expect(transaction.length).toBe(8);
       expect(transaction[1]).toBe(expectedBlocks);
-      expect(transaction[2]).toBe(expectedMetadata);
-      expect(transaction[3]).toBe(expectedReset);
+      expect(transaction[2]).toBe(expectedCurrentMetadata);
+      expect(transaction[3]).toBe(expectedHistoricalMetadata);
       expect(transaction[4]).toBe(expectedWorkers);
       expect(transaction[5]).toBe(expectedAuxiliary);
+      expect(transaction[6]).toBe(expectedMetadata);
       done();
     });
     shares.handleAuxiliary(lookups, shareData, 'valid', false, () => {});
@@ -1107,19 +1174,42 @@ describe('Test shares functionality', () => {
         solo = EXCLUDED.solo,
         transaction = EXCLUDED.transaction,
         type = EXCLUDED.type;`;
-    const expectedMetadata = `
+    const expectedCurrentMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES (
         1634742080841,
         1,
+        'master',
         false,
         'auxiliary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         blocks = "Pool-Bitcoin".current_metadata.blocks + EXCLUDED.blocks;`;
+    const expectedHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, blocks,
+        identifier, solo, type)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        1,
+        'master',
+        false,
+        'auxiliary')
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        blocks = "Pool-Bitcoin".historical_metadata.blocks + EXCLUDED.blocks;`;
     const expectedReset = `
+      UPDATE "Pool-Bitcoin".current_workers
+      SET timestamp = 1634742080841,
+        effort = 0
+      WHERE solo = false
+      AND type = 'auxiliary';`;
+    const expectedMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
         timestamp, efficiency, effort,
         invalid, solo, stale, type,
@@ -1132,24 +1222,19 @@ describe('Test shares functionality', () => {
         timestamp = EXCLUDED.timestamp,
         efficiency = 0, effort = 0, invalid = 0,
         stale = 0, valid = 0, work = 0;`;
-    const expectedWorkers = `
-      UPDATE "Pool-Bitcoin".current_workers
-      SET timestamp = 1634742080841,
-        effort = 0
-      WHERE solo = false
-      AND type = 'auxiliary';`;
     const expectedAuxiliary = `
       UPDATE "Pool-Bitcoin".current_rounds
       SET round = '123456789'
       WHERE round = 'current' AND solo = false
       AND type = 'auxiliary';`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(7);
+      expect(transaction.length).toBe(8);
       expect(transaction[1]).toBe(expectedBlocks);
-      expect(transaction[2]).toBe(expectedMetadata);
-      expect(transaction[3]).toBe(expectedReset);
-      expect(transaction[4]).toBe(expectedWorkers);
+      expect(transaction[2]).toBe(expectedCurrentMetadata);
+      expect(transaction[3]).toBe(expectedHistoricalMetadata);
+      expect(transaction[4]).toBe(expectedReset);
       expect(transaction[5]).toBe(expectedAuxiliary);
+      expect(transaction[6]).toBe(expectedMetadata);
       done();
     });
     shares.handleAuxiliary(lookups, shareData, 'valid', false, () => {});
@@ -1204,43 +1289,47 @@ describe('Test shares functionality', () => {
         solo = EXCLUDED.solo,
         transaction = EXCLUDED.transaction,
         type = EXCLUDED.type;`;
-    const expectedMetadata = `
+    const expectedCurrentMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES (
         1634742080841,
         1,
+        'master',
         true,
         'auxiliary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         blocks = "Pool-Bitcoin".current_metadata.blocks + EXCLUDED.blocks;`;
-    const expectedReset = `
-      INSERT INTO "Pool-Bitcoin".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+    const expectedHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, blocks,
+        identifier, solo, type)
       VALUES (
-        1634742080841, 0, 0, 0,
-        true, 0, 'auxiliary', 0, 0)
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
+        1634742080841,
+        1634742600000,
+        1,
+        'master',
+        true,
+        'auxiliary')
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = 0, effort = 0, invalid = 0,
-        stale = 0, valid = 0, work = 0;`;
-    const expectedMiners = `
-      UPDATE "Pool-Bitcoin".current_miners
-      SET timestamp = 1634742080841,
-        solo_effort = 0
-      WHERE miner = 'miner1'
-      AND type = 'auxiliary';`;
-    const expectedWorkers = `
+        blocks = "Pool-Bitcoin".historical_metadata.blocks + EXCLUDED.blocks;`;
+    const expectedReset = `
       UPDATE "Pool-Bitcoin".current_workers
       SET timestamp = 1634742080841,
         effort = 0
       WHERE miner = 'miner1'
       AND solo = true
+      AND type = 'auxiliary';`;
+    const expectedMiners = `
+      UPDATE "Pool-Bitcoin".current_miners
+      SET timestamp = 1634742080841,
+        solo_effort = 0
+      WHERE miner = 'miner1'
       AND type = 'auxiliary';`;
     const expectedAuxiliary = `
       UPDATE "Pool-Bitcoin".current_rounds
@@ -1250,9 +1339,9 @@ describe('Test shares functionality', () => {
     client.on('transaction', (transaction) => {
       expect(transaction.length).toBe(8);
       expect(transaction[1]).toBe(expectedBlocks);
-      expect(transaction[2]).toBe(expectedMetadata);
-      expect(transaction[3]).toBe(expectedReset);
-      expect(transaction[4]).toBe(expectedWorkers);
+      expect(transaction[2]).toBe(expectedCurrentMetadata);
+      expect(transaction[3]).toBe(expectedHistoricalMetadata);
+      expect(transaction[4]).toBe(expectedReset);
       expect(transaction[5]).toBe(expectedAuxiliary);
       expect(transaction[6]).toBe(expectedMiners);
       done();
@@ -1309,31 +1398,42 @@ describe('Test shares functionality', () => {
         solo = EXCLUDED.solo,
         transaction = EXCLUDED.transaction,
         type = EXCLUDED.type;`;
-    const expectedMetadata = `
+    const expectedCurrentMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES (
         1634742080841,
         1,
+        'master',
         true,
         'auxiliary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         blocks = "Pool-Bitcoin".current_metadata.blocks + EXCLUDED.blocks;`;
-    const expectedReset = `
-      INSERT INTO "Pool-Bitcoin".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+    const expectedHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, blocks,
+        identifier, solo, type)
       VALUES (
-        1634742080841, 0, 0, 0,
-        true, 0, 'auxiliary', 0, 0)
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
+        1634742080841,
+        1634742600000,
+        1,
+        'master',
+        true,
+        'auxiliary')
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = 0, effort = 0, invalid = 0,
-        stale = 0, valid = 0, work = 0;`;
+        blocks = "Pool-Bitcoin".historical_metadata.blocks + EXCLUDED.blocks;`;
+    const expectedReset = `
+      UPDATE "Pool-Bitcoin".current_workers
+      SET timestamp = 1634742080841,
+        effort = 0
+      WHERE miner = ''
+      AND solo = true
+      AND type = 'auxiliary';`;
     const expectedMiners = `
       UPDATE "Pool-Bitcoin".current_miners
       SET timestamp = 1634742080841,
@@ -1355,9 +1455,9 @@ describe('Test shares functionality', () => {
     client.on('transaction', (transaction) => {
       expect(transaction.length).toBe(8);
       expect(transaction[1]).toBe(expectedBlocks);
-      expect(transaction[2]).toBe(expectedMetadata);
-      expect(transaction[3]).toBe(expectedReset);
-      expect(transaction[4]).toBe(expectedWorkers);
+      expect(transaction[2]).toBe(expectedCurrentMetadata);
+      expect(transaction[3]).toBe(expectedHistoricalMetadata);
+      expect(transaction[4]).toBe(expectedReset);
       expect(transaction[5]).toBe(expectedAuxiliary);
       expect(transaction[6]).toBe(expectedMiners);
       done();
@@ -1403,12 +1503,13 @@ describe('Test shares functionality', () => {
     const expectedMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
         timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        identifier, invalid, solo,
+        stale, type, valid, work)
       VALUES (
         1634742080841,
         100,
-        67.33,
+        0.6667,
+        'master',
         0,
         false,
         0,
@@ -1533,26 +1634,18 @@ describe('Test shares functionality', () => {
         work = "Pool-Bitcoin".historical_miners.work + EXCLUDED.work;`;
     const expectedHistoricalMetadata = `
       INSERT INTO "Pool-Bitcoin".historical_metadata (
-        timestamp, recent, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        timestamp, recent, identifier,
+        solo, type, work)
       VALUES (
         1634742080841,
         1634742600000,
-        67.33,
-        0,
+        'master',
         false,
-        0,
         'primary',
-        1,
         1)
       ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = EXCLUDED.effort,
-        invalid = "Pool-Bitcoin".historical_metadata.invalid + EXCLUDED.invalid,
-        stale = "Pool-Bitcoin".historical_metadata.stale + EXCLUDED.stale,
-        valid = "Pool-Bitcoin".historical_metadata.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_metadata.work + EXCLUDED.work;`;
     const expectedUsers = `
       INSERT INTO "Pool-Bitcoin".current_users (
@@ -1609,12 +1702,13 @@ describe('Test shares functionality', () => {
     const expectedMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
         timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        identifier, invalid, solo,
+        stale, type, valid, work)
       VALUES (
         1634742080841,
         100,
         0.6667,
+        'master',
         0,
         false,
         0,
@@ -1739,26 +1833,18 @@ describe('Test shares functionality', () => {
         work = "Pool-Bitcoin".historical_miners.work + EXCLUDED.work;`;
     const expectedHistoricalMetadata = `
       INSERT INTO "Pool-Bitcoin".historical_metadata (
-        timestamp, recent, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        timestamp, recent, identifier,
+        solo, type, work)
       VALUES (
         1634742080841,
         1634742600000,
-        0.6667,
-        0,
+        'master',
         false,
-        0,
         'primary',
-        1,
         1)
       ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = EXCLUDED.effort,
-        invalid = "Pool-Bitcoin".historical_metadata.invalid + EXCLUDED.invalid,
-        stale = "Pool-Bitcoin".historical_metadata.stale + EXCLUDED.stale,
-        valid = "Pool-Bitcoin".historical_metadata.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_metadata.work + EXCLUDED.work;`;
     const expectedUsers = `
       INSERT INTO "Pool-Bitcoin".current_users (
@@ -1822,18 +1908,19 @@ describe('Test shares functionality', () => {
     const expectedMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
         timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        identifier, invalid, solo,
+        stale, type, valid, work)
       VALUES (
         1634742080841,
-        100,
         0,
+        0,
+        'master',
         0,
         true,
         0,
         'primary',
-        1,
-        1)
+        0,
+        0)
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
@@ -1965,26 +2052,18 @@ describe('Test shares functionality', () => {
         work = "Pool-Bitcoin".historical_miners.work + EXCLUDED.work;`;
     const expectedHistoricalMetadata = `
       INSERT INTO "Pool-Bitcoin".historical_metadata (
-        timestamp, recent, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        timestamp, recent, identifier,
+        solo, type, work)
       VALUES (
         1634742080841,
         1634742600000,
-        67.33,
-        0,
+        'master',
         true,
-        0,
         'primary',
-        1,
         1)
       ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = EXCLUDED.effort,
-        invalid = "Pool-Bitcoin".historical_metadata.invalid + EXCLUDED.invalid,
-        stale = "Pool-Bitcoin".historical_metadata.stale + EXCLUDED.stale,
-        valid = "Pool-Bitcoin".historical_metadata.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_metadata.work + EXCLUDED.work;`;
       const expectedUsers = `
       INSERT INTO "Pool-Bitcoin".current_users (
@@ -2042,18 +2121,19 @@ describe('Test shares functionality', () => {
     const expectedMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
         timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        identifier, invalid, solo,
+        stale, type, valid, work)
       VALUES (
         1634742080841,
-        100,
         0,
+        0,
+        'master',
         0,
         true,
         0,
         'primary',
-        1,
-        1)
+        0,
+        0)
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
@@ -2185,26 +2265,18 @@ describe('Test shares functionality', () => {
         work = "Pool-Bitcoin".historical_miners.work + EXCLUDED.work;`;
     const expectedHistoricalMetadata = `
       INSERT INTO "Pool-Bitcoin".historical_metadata (
-        timestamp, recent, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        timestamp, recent, identifier,
+        solo, type, work)
       VALUES (
         1634742080841,
         1634742600000,
-        0.6667,
-        0,
+        'master',
         true,
-        0,
         'primary',
-        1,
         1)
       ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = EXCLUDED.effort,
-        invalid = "Pool-Bitcoin".historical_metadata.invalid + EXCLUDED.invalid,
-        stale = "Pool-Bitcoin".historical_metadata.stale + EXCLUDED.stale,
-        valid = "Pool-Bitcoin".historical_metadata.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_metadata.work + EXCLUDED.work;`;
     const expectedUsers = `
       INSERT INTO "Pool-Bitcoin".current_users (
@@ -2271,12 +2343,13 @@ describe('Test shares functionality', () => {
     const expectedMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
         timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        identifier, invalid, solo,
+        stale, type, valid, work)
       VALUES (
         1634742080841,
         100,
-        67.33,
+        0.6667,
+        'master',
         0,
         false,
         0,
@@ -2364,6 +2437,78 @@ describe('Test shares functionality', () => {
         last_share = EXCLUDED.last_share,
         offline_tag = EXCLUDED.offline_tag,
         solo = EXCLUDED.solo;`;
+    const expectedHistoricalWorkers = `
+      INSERT INTO "Pool-Bitcoin".historical_workers (
+        timestamp, recent, miner,
+        worker, identifier, invalid,
+        solo, stale, type, valid,
+        work)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        'primary1',
+        'primary1',
+        'master',
+        0,
+        false,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        identifier = EXCLUDED.identifier,
+        invalid = "Pool-Bitcoin".historical_workers.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".historical_workers.stale + EXCLUDED.stale,
+        valid = "Pool-Bitcoin".historical_workers.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".historical_workers.work + EXCLUDED.work;`;
+    const expectedHistoricalMiners = `
+      INSERT INTO "Pool-Bitcoin".historical_miners (
+        timestamp, recent, miner,
+        invalid, solo, stale, type,
+        valid, work)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        'primary1',
+        0,
+        false,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        invalid = "Pool-Bitcoin".historical_miners.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".historical_miners.stale + EXCLUDED.stale,
+        valid = "Pool-Bitcoin".historical_miners.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".historical_miners.work + EXCLUDED.work;`;
+    const expectedHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent, identifier,
+        solo, type, work)
+      VALUES (
+        1634742080841,
+        1634742600000,
+        'master',
+        false,
+        'primary',
+        1)
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        work = "Pool-Bitcoin".historical_metadata.work + EXCLUDED.work;`;
+    const expectedUsers = `
+      INSERT INTO "Pool-Bitcoin".current_users (
+        miner, joined, payout_limit)
+      VALUES (
+        'primary1',
+        1634742080841,
+        0.005)
+      ON CONFLICT ON CONSTRAINT current_users_unique
+      DO NOTHING;`;
     const expectedAuxHashrate = `
       INSERT INTO "Pool-Bitcoin".current_hashrate (
         timestamp, miner, worker,
@@ -2381,12 +2526,13 @@ describe('Test shares functionality', () => {
     const expectedAuxMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
         timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        identifier, invalid, solo,
+        stale, type, valid, work)
       VALUES (
         1634742080841,
         100,
         67.33,
+        'master',
         0,
         false,
         0,
@@ -2461,7 +2607,7 @@ describe('Test shares functionality', () => {
         last_share = EXCLUDED.last_share,
         offline_tag = EXCLUDED.offline_tag,
         solo = EXCLUDED.solo;`;
-    const expectedHistoricalWorkers = `
+    const expectedAuxHistoricalWorkers = `
       INSERT INTO "Pool-Bitcoin".historical_workers (
         timestamp, recent, miner,
         worker, identifier, invalid,
@@ -2470,13 +2616,13 @@ describe('Test shares functionality', () => {
       VALUES (
         1634742080841,
         1634742600000,
-        'primary1',
-        'primary1',
+        'auxiliary1',
+        'auxiliary1',
         'master',
         0,
         false,
         0,
-        'primary',
+        'auxiliary',
         1,
         1)
       ON CONFLICT ON CONSTRAINT historical_workers_unique
@@ -2487,7 +2633,7 @@ describe('Test shares functionality', () => {
         stale = "Pool-Bitcoin".historical_workers.stale + EXCLUDED.stale,
         valid = "Pool-Bitcoin".historical_workers.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_workers.work + EXCLUDED.work;`;
-    const expectedHistoricalMiners = `
+    const expectedAuxHistoricalMiners = `
       INSERT INTO "Pool-Bitcoin".historical_miners (
         timestamp, recent, miner,
         invalid, solo, stale, type,
@@ -2495,11 +2641,11 @@ describe('Test shares functionality', () => {
       VALUES (
         1634742080841,
         1634742600000,
-        'primary1',
+        'auxiliary1',
         0,
         false,
         0,
-        'primary',
+        'auxiliary',
         1,
         1)
       ON CONFLICT ON CONSTRAINT historical_miners_unique
@@ -2509,40 +2655,23 @@ describe('Test shares functionality', () => {
         stale = "Pool-Bitcoin".historical_miners.stale + EXCLUDED.stale,
         valid = "Pool-Bitcoin".historical_miners.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_miners.work + EXCLUDED.work;`;
-    const expectedHistoricalMetadata = `
+    const expectedAuxHistoricalMetadata = `
       INSERT INTO "Pool-Bitcoin".historical_metadata (
-        timestamp, recent, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        timestamp, recent, identifier,
+        solo, type, work)
       VALUES (
         1634742080841,
         1634742600000,
-        67.33,
-        0,
+        'master',
         false,
-        0,
-        'primary',
-        1,
+        'auxiliary',
         1)
       ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = EXCLUDED.effort,
-        invalid = "Pool-Bitcoin".historical_metadata.invalid + EXCLUDED.invalid,
-        stale = "Pool-Bitcoin".historical_metadata.stale + EXCLUDED.stale,
-        valid = "Pool-Bitcoin".historical_metadata.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_metadata.work + EXCLUDED.work;`;
-    const expectedUsers = `
-      INSERT INTO "Pool-Bitcoin".current_users (
-        miner, joined, payout_limit)
-      VALUES (
-        'primary1',
-        1634742080841,
-        0.005)
-      ON CONFLICT ON CONSTRAINT current_users_unique
-      DO NOTHING;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(14);
+      expect(transaction.length).toBe(17);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedMetadata);
       expect(transaction[3]).toBe(expectedRounds);
@@ -2555,6 +2684,9 @@ describe('Test shares functionality', () => {
       expect(transaction[10]).toBe(expectedAuxMetadata);
       expect(transaction[11]).toBe(expectedAuxRounds);
       expect(transaction[12]).toBe(expectedAuxWorkers);
+      expect(transaction[13]).toBe(expectedAuxHistoricalWorkers);
+      expect(transaction[14]).toBe(expectedAuxHistoricalMiners);
+      expect(transaction[15]).toBe(expectedAuxHistoricalMetadata);
       done();
     });
     shares.handleShares(lookups, shareData, 'valid', false, () => {});
