@@ -65,14 +65,34 @@ const CurrentHashrate = function (logger, configMain) {
     return output + ';';
   };
 
-  // Select Count of Distinct Miners
-  this.countCurrentHashrateMiner = function(pool, timestamp, solo, type) {
+  // Select Count of Distinct Miners by Identifier
+  this.countCurrentHashrateIdentifiedMiner = function(pool, timestamp, solo, type) {
     return `
-      SELECT CAST(COUNT(DISTINCT miner) AS INT)
+      SELECT identifier, CAST(COUNT(DISTINCT miner) AS INT)
       FROM "${ pool }".current_hashrate
       WHERE timestamp >= ${ timestamp }
       AND solo IN (${ solo }, null) 
-      AND type = '${ type }';`;
+      AND type = '${ type }'
+      GROUP BY identifier;`;
+  };
+
+  // Select Sum of Rows Using Identifiers
+  this.sumCurrentHashrateIdentifiedMiner = function(pool, timestamp, type) {
+    return `
+      SELECT identifier, SUM(work) as current_work
+      FROM "${ pool }".current_hashrate
+      WHERE timestamp >= ${ timestamp }
+      AND type = '${ type }' GROUP BY identifier;`;
+  };
+
+  // Select Count of Distinct Workers by Identifier
+  this.countCurrentHashrateIdentifiedWorker = function(pool, timestamp, solo, type) {
+    return `
+      SELECT identifier, CAST(COUNT(DISTINCT worker) AS INT)
+      FROM "${ pool }".current_hashrate
+      WHERE timestamp >= ${ timestamp }
+      AND solo = ${ solo } AND type = '${ type }'
+      GROUP BY identifier;`;
   };
 
   // Select Sum of Rows Using Miners
@@ -82,15 +102,6 @@ const CurrentHashrate = function (logger, configMain) {
       FROM "${ pool }".current_hashrate
       WHERE timestamp >= ${ timestamp }
       AND type = '${ type }' GROUP BY miner;`;
-  };
-
-  // Select Count of Distinct Workers
-  this.countCurrentHashrateWorker = function(pool, timestamp, solo, type) {
-    return `
-      SELECT CAST(COUNT(DISTINCT worker) AS INT)
-      FROM "${ pool }".current_hashrate
-      WHERE timestamp >= ${ timestamp }
-      AND solo = ${ solo } AND type = '${ type }';`;
   };
 
   // Select Sum of Rows Using Workers
@@ -104,12 +115,13 @@ const CurrentHashrate = function (logger, configMain) {
   };
 
   // Select Sum of Rows Using Types
-  this.sumCurrentHashrateType = function(pool, timestamp, solo, type) {
+  this.sumCurrentIdentifiedHashrate = function(pool, timestamp, solo, type) {
     return `
-      SELECT SUM(work) as current_work
+      SELECT identifier, SUM(work) as current_work
       FROM "${ pool }".current_hashrate
       WHERE timestamp >= ${ timestamp }
-      AND solo = ${ solo } AND type = '${ type }';`;
+      AND solo = ${ solo } AND type = '${ type }'
+      GROUP BY identifier;`;
   };
 
   // Build Hashrate Values String

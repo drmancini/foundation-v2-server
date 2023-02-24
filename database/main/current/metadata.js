@@ -12,10 +12,12 @@ const CurrentMetadata = function (logger, configMain) {
 
   // Handle Current Parameters
   this.numbers = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate',
-    'invalid', 'miners', 'stale', 'valid', 'work', 'workers'];
-  this.strings = ['type'];
+    'hashrate_12h', 'hashrate_24h', 'invalid', 'miners', 'stale', 'valid',
+    'work', 'workers'];
+  this.strings = ['identifier', 'type'];
   this.parameters = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate',
-    'invalid', 'miners', 'solo', 'stale', 'type', 'valid', 'work', 'workers'];
+    'hashrate_12h', 'hashrate_24h', 'identifier', 'invalid', 'miners', 'solo',
+    'stale', 'type', 'valid', 'work', 'workers'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -73,6 +75,7 @@ const CurrentMetadata = function (logger, configMain) {
       values += `(
         ${ metadata.timestamp },
         ${ metadata.blocks },
+        '${ metadata.identifier }',
         ${ metadata.solo },
         '${ metadata.type }')`;
       if (idx < updates.length - 1) values += ', ';
@@ -84,7 +87,8 @@ const CurrentMetadata = function (logger, configMain) {
   this.insertCurrentMetadataBlocks = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_metadata (
-        timestamp, blocks, solo, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES ${ _this.buildCurrentMetadataBlocks(updates) }
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
@@ -99,6 +103,9 @@ const CurrentMetadata = function (logger, configMain) {
       values += `(
         ${ metadata.timestamp },
         ${ metadata.hashrate },
+        ${ metadata.hashrate_12h },
+        ${ metadata.hashrate_24h },
+        '${ metadata.identifier }',
         ${ metadata.miners },
         ${ metadata.solo },
         '${ metadata.type }',
@@ -112,13 +119,16 @@ const CurrentMetadata = function (logger, configMain) {
   this.insertCurrentMetadataHashrate = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_metadata (
-        timestamp, hashrate, miners,
+        timestamp, hashrate, hashrate_12h,
+        hashrate_24h, identifier, miners,
         solo, type, workers)
       VALUES ${ _this.buildCurrentMetadataHashrate(updates) }
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         hashrate = EXCLUDED.hashrate,
+        hashrate_12h = EXCLUDED.hashrate_12h,
+        hashrate_24h = EXCLUDED.hashrate_24h,
         miners = EXCLUDED.miners,
         workers = EXCLUDED.workers;`;
   };
@@ -128,8 +138,8 @@ const CurrentMetadata = function (logger, configMain) {
     let values = '';
     updates.forEach((metadata, idx) => {
       values += `(
-        ${ metadata.timestamp }, 0, 0, 0,
-        ${ metadata.solo }, 0, '${ metadata.type }', 0, 0)`;
+        ${ metadata.timestamp }, 0, 0, '${ metadata.identifier }',
+        0, ${ metadata.solo }, 0, '${ metadata.type }', 0, 0)`;
       if (idx < updates.length - 1) values += ', ';
     });
     return values;
@@ -140,8 +150,8 @@ const CurrentMetadata = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_metadata (
         timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        identifier, invalid, solo, stale,
+        type, valid, work)
       VALUES ${ _this.buildCurrentMetadataRoundsReset(updates) }
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
@@ -158,6 +168,7 @@ const CurrentMetadata = function (logger, configMain) {
         ${ metadata.timestamp },
         ${ metadata.efficiency },
         ${ metadata.effort },
+        '${ metadata.identifier }',
         ${ metadata.invalid },
         ${ metadata.solo },
         ${ metadata.stale },
@@ -174,8 +185,8 @@ const CurrentMetadata = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_metadata (
         timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
+        identifier, invalid, solo, 
+        stale, type, valid, work)
       VALUES ${ _this.buildCurrentMetadataRounds(updates) }
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
