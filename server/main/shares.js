@@ -179,19 +179,23 @@ const Shares = function (logger, client, config, configMain) {
     };
   };
 
-  // Handle Solo Miner Updates
-  this.handleCurrentSoloMiners = function(worker, difficulty, shareData, shareType, blockType) {
+  // Handle Miner Updates
+  this.handleCurrentMiners = function(worker, difficulty, shareData, shareType, minerType, blockType) {
 
-    // Calculate Effort Metadata
-    const effort = _this.handleEffortIncrement(shareData.difficulty, shareType, difficulty);
-    
-    // Return Miner Updates
-    return {
+    const output = {
       timestamp: Date.now(),
       miner: (worker || '').split('.')[0],
-      solo_effort: effort,
       type: blockType,
     };
+
+    // Calculate Effort Metadata
+    if (minerType) {
+      const effort = _this.handleEffortIncrement(shareData.difficulty, shareType, difficulty);
+      output.solo_effort = effort;
+    }
+    
+    // Return Miner Updates
+    return output;
   };
 
   // Handle Current Worker Updates
@@ -448,6 +452,8 @@ const Shares = function (logger, client, config, configMain) {
       shareData.addrPrimary, shareData, shareType, minerType, 'primary');
     const historicalMetadataUpdates = _this.handleHistoricalMetadata(
       shareData, shareType, minerType, 'primary');
+    const currentMinerUpdates = _this.handleCurrentMiners(
+      shareData.addrPrimary, shareData.blockDiffPrimary, shareData, shareType, minerType, 'primary');
 
     // Build Combined Transaction
     const transaction = [
@@ -461,9 +467,9 @@ const Shares = function (logger, client, config, configMain) {
       _this.historical.metadata.insertHistoricalMetadataRounds(_this.pool, [historicalMetadataUpdates])];
 
     if (minerType) {
-      const currentSoloMinerUpdates = _this.handleCurrentSoloMiners(
-        shareData.addrPrimary, shareData.blockDiffPrimary, shareData, shareType, 'primary');
-      transaction.push(_this.current.miners.insertCurrentMinersRounds(_this.pool, [currentSoloMinerUpdates]));
+      transaction.push(_this.current.miners.insertCurrentMinersSoloRounds(_this.pool, [currentMinerUpdates]));
+    } else {
+      transaction.push(_this.current.miners.insertCurrentMinersSharedRounds(_this.pool, [currentMinerUpdates]));
     };
 
     // Create New User

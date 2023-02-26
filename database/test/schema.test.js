@@ -203,7 +203,6 @@ describe('Test schema functionality', () => {
         immature FLOAT NOT NULL DEFAULT 0,
         invalid INT NOT NULL DEFAULT 0,
         paid FLOAT NOT NULL DEFAULT 0,
-        solo BOOLEAN DEFAULT null,
         stale INT NOT NULL DEFAULT 0,
         type VARCHAR NOT NULL DEFAULT 'primary',
         valid INT NOT NULL DEFAULT 0,
