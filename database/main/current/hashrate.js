@@ -71,8 +71,7 @@ const CurrentHashrate = function (logger, configMain) {
       SELECT identifier, CAST(COUNT(DISTINCT miner) AS INT)
       FROM "${ pool }".current_hashrate
       WHERE timestamp >= ${ timestamp }
-      AND solo IN (${ solo }, null) 
-      AND type = '${ type }'
+      AND solo = ${ solo } AND type = '${ type }'
       GROUP BY identifier;`;
   };
 

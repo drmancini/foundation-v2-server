@@ -112,24 +112,25 @@ const Statistics = function (logger, client, config, configMain, template) {
     });
   };
 
-  // Handle Hashrate Reset for Inactive Workers 
-  this.handleCurrentWorkersHashrateReset = function(workers, blockType) {
+  // Handle Share, Average Hashrate Updates for Current Workers 
+  this.handleCurrentWorkerAggregates = function(workers, blockType) {
 
     // Calculate Features of Workers
     const timestamp = Date.now();
-    const oneDay = 24 * 3600000;
 
     // Return Workers Updates
-    return workers.filter(worker => (timestamp - worker.last_share) > oneDay)
+    return workers
       .map(worker => {
         return {
           timestamp: timestamp, 
           miner: worker.miner,
           worker: worker.worker,
-          hashrate_12h: 0,
-          hashrate_24h: 0,
+          average_hashrate: Math.round(worker.average_hashrate * 10000) / 10000,
+          invalid: worker.invalid,
           solo: worker.solo,
+          stale: worker.stale,
           type: blockType,
+          valid: worker.valid,
         };
       });
   };
@@ -279,10 +280,6 @@ const Statistics = function (logger, client, config, configMain, template) {
       const soloWorkersUpdates = _this.handleCurrentWorkers(hashrate, soloWorkers, 'primary');
       transaction.push(_this.current.workers.insertCurrentWorkersHashrate(
         _this.pool, soloWorkersUpdates));
-      const soloWorkerHashrateResetUpdates = _this.handleCurrentWorkersHashrateReset(soloWorkers, 'primary');
-      if (soloWorkerHashrateResetUpdates.length > 0)
-        transaction.push(_this.current.workers.insertCurrentWorkersResetHashrate(
-          _this.pool, soloWorkerHashrateResetUpdates));
     }
 
     // Handle Workers Shared Hashrate Updates
@@ -292,10 +289,6 @@ const Statistics = function (logger, client, config, configMain, template) {
       const sharedWorkersUpdates = _this.handleCurrentWorkers(hashrate, sharedWorkers, 'primary');
       transaction.push(_this.current.workers.insertCurrentWorkersHashrate(
         _this.pool, sharedWorkersUpdates));
-      const sharedWorkerHashrateResetUpdates = _this.handleCurrentWorkersHashrateReset(sharedWorkers, 'primary');
-      if (sharedWorkerHashrateResetUpdates.length > 0)
-        transaction.push(_this.current.workers.insertCurrentWorkersResetHashrate(
-            _this.pool, sharedWorkerHashrateResetUpdates));
     }
 
     if (lookups[17].rows.length >= 1) {
@@ -311,6 +304,13 @@ const Statistics = function (logger, client, config, configMain, template) {
         transaction.push(_this.historical.workers.insertHistoricalWorkersHashrate(
             _this.pool, historicalWorkerHashrateUpdate));
     }
+
+    if (lookups[20].rows.length >= 1) {
+      const currentWorkerSharesUpdate = _this.handleCurrentWorkerAggregates(lookups[20].rows, 'primary');
+      if (currentWorkerSharesUpdate.length > 0)
+        transaction.push(_this.current.workers.insertCurrentWorkersUpdates(
+          _this.pool, currentWorkerSharesUpdate));
+    } 
     
     // Insert Work into Database
     transaction.push('COMMIT;');
@@ -365,10 +365,6 @@ const Statistics = function (logger, client, config, configMain, template) {
       const soloWorkersUpdates = _this.handleCurrentWorkers(hashrate, soloWorkers, 'auxiliary');
       transaction.push(_this.current.workers.insertCurrentWorkersHashrate(
         _this.pool, soloWorkersUpdates));
-      const soloWorkerHashrateResetUpdates = _this.handleCurrentWorkersHashrateReset(soloWorkers, 'auxiliary');
-      if (soloWorkerHashrateResetUpdates.length > 0)
-        transaction.push(_this.current.workers.insertCurrentWorkersResetHashrate(
-          _this.pool, soloWorkerHashrateResetUpdates));
     }
 
     // Handle Workers Shared Hashrate Updates
@@ -378,10 +374,6 @@ const Statistics = function (logger, client, config, configMain, template) {
       const sharedWorkersUpdates = _this.handleCurrentWorkers(hashrate, sharedWorkers, 'auxiliary');
       transaction.push(_this.current.workers.insertCurrentWorkersHashrate(
         _this.pool, sharedWorkersUpdates));
-      const sharedWorkerHashrateResetUpdates = _this.handleCurrentWorkersHashrateReset(sharedWorkers, 'auxiliary');
-      if (sharedWorkerHashrateResetUpdates.length > 0)
-        transaction.push(_this.current.workers.insertCurrentWorkersResetHashrate(
-            _this.pool, sharedWorkerHashrateResetUpdates));
     }
 
     // Insert Work into Database
@@ -411,6 +403,15 @@ const Statistics = function (logger, client, config, configMain, template) {
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
+      // _this.current.hashrate.deleteCurrentHashrateInactive(_this.pool, hashrateWindow),
+      // _this.current.hashrate.countCurrentHashrateMiner(_this.pool, hashrateWindow, blockType),
+      // _this.current.hashrate.countCurrentHashrateWorker(_this.pool, hashrateWindow, true, blockType),
+      // _this.current.hashrate.countCurrentHashrateWorker(_this.pool, hashrateWindow, false, blockType),
+      // _this.current.hashrate.sumCurrentHashrateMiner(_this.pool, hashrateWindow, blockType),
+      // _this.current.hashrate.sumCurrentHashrateWorker(_this.pool, hashrateWindow, true, blockType),
+      // _this.current.hashrate.sumCurrentHashrateWorker(_this.pool, hashrateWindow, false, blockType),
+      // _this.current.hashrate.sumCurrentHashrateType(_this.pool, hashrateWindow, false, blockType),
+
       _this.current.hashrate.deleteCurrentHashrateInactive(_this.pool, snapshotWindow),
       _this.current.hashrate.countCurrentHashrateIdentifiedMiner(_this.pool, inactiveWindow, true, blockType),
       _this.current.hashrate.countCurrentHashrateIdentifiedMiner(_this.pool, inactiveWindow, false, blockType),
@@ -430,6 +431,7 @@ const Statistics = function (logger, client, config, configMain, template) {
       _this.historical.miners.selectHistoricalMinersMain(_this.pool, { recent: recentSnapshot, type: blockType }),
       _this.historical.workers.selectHistoricalWorkersMain(_this.pool, { recent: recentSnapshot, type: blockType }),
       _this.current.workers.selectCurrentWorkersLastShare(_this.pool, inactiveWindow, oneDayWindow, false, blockType),
+      _this.historical.workers.selectHistoricalWorkersAggregates(_this.pool, oneDayWindow, blockType),
       'COMMIT;'];
 
     // Establish Separate Behavior

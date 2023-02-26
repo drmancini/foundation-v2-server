@@ -112,38 +112,6 @@ const CurrentWorkers = function (logger, configMain) {
         hashrate = EXCLUDED.hashrate;`;
   };
 
-  // Build Workers Reset Values String
-  this.buildCurrentWorkersResetHashrate = function(updates) {
-    let values = '';
-    updates.forEach((worker, idx) => {
-      values += `(
-        ${ worker.timestamp },
-        '${ worker.miner }',
-        '${ worker.worker }',
-        ${ worker.hashrate_12h },
-        ${ worker.hashrate_24h },
-        ${ worker.solo },
-        '${ worker.type }')`;
-      if (idx < updates.length - 1) values += ', ';
-    });
-    return values;
-  };
-
-  // Insert Hashrate Reset for Workers
-  this.insertCurrentWorkersResetHashrate = function(pool, updates) {
-    return `
-      INSERT INTO "${ pool }".current_workers (
-        timestamp, miner, worker,
-        hashrate_12h, hashrate_24h,
-        solo, type)
-      VALUES ${ _this.buildCurrentWorkersResetHashrate(updates) }
-      ON CONFLICT ON CONSTRAINT current_workers_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        hashrate_12h = EXCLUDED.hashrate_12h,
-        hashrate_24h = EXCLUDED.hashrate_24h;`;
-  };
-
   // Build Workers Values String
   this.buildCurrentWorkersRounds = function(updates) {
     let values = '';
@@ -185,6 +153,42 @@ const CurrentWorkers = function (logger, configMain) {
         offline_tag = EXCLUDED.offline_tag,
         solo = EXCLUDED.solo;`;
   }; 
+
+  // Build Workers Values String
+  this.buildCurrentWorkersShares = function(updates) {
+    let values = '';
+    updates.forEach((worker, idx) => {
+      values += `(
+        ${ worker.timestamp },
+        '${ worker.miner }',
+        '${ worker.worker }',
+        ${ worker.average_hashrate },
+        ${ worker.invalid },
+        ${ worker.solo },
+        ${ worker.stale },
+        '${ worker.type }',
+        ${ worker.valid })`;
+      if (idx < updates.length - 1) values += ', ';
+    });
+    return values;
+  };
+
+  // Insert Rows Using Average Hashrate, Share Data
+  this.insertCurrentWorkersUpdates = function(pool, updates) {
+    return `
+      INSERT INTO "${ pool }".current_workers (
+        timestamp, miner, worker,
+        average_hashrate, invalid,
+        solo, stale, type, valid)
+      VALUES ${ _this.buildCurrentWorkersShares(updates) }
+      ON CONFLICT ON CONSTRAINT current_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        average_hashrate = EXCLUDED.average_hashrate,
+        invalid = EXCLUDED.invalid,
+        stale = EXCLUDED.stale,
+        valid = EXCLUDED.valid;`;
+  };
 
   // Update Shared Workers Using Reset
   this.updateCurrentSharedWorkersRoundsReset = function(pool, timestamp, type) {

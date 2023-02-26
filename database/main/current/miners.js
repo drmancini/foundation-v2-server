@@ -101,7 +101,7 @@ const CurrentMiners = function (logger, configMain) {
   };
 
   // Build Miners Values String
-  this.buildCurrentMinersRounds = function(updates) {
+  this.buildCurrentMinersSoloRounds = function(updates) {
     let values = '';
     updates.forEach((miner, idx) => {
       values += `(
@@ -115,16 +115,40 @@ const CurrentMiners = function (logger, configMain) {
   };
 
   // Insert Rows Using Round Data
-  this.insertCurrentMinersRounds = function(pool, updates) {
+  this.insertCurrentMinersSoloRounds = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_miners (
         timestamp, miner, solo_effort,
         type)
-      VALUES ${ _this.buildCurrentMinersRounds(updates) }
+      VALUES ${ _this.buildCurrentMinersSoloRounds(updates) }
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         solo_effort = "${ pool }".current_miners.solo_effort + EXCLUDED.solo_effort;`;
+  };
+
+  // Build Miners Values String
+  this.buildCurrentMinersSharedRounds = function(updates) {
+    let values = '';
+    updates.forEach((miner, idx) => {
+      values += `(
+        ${ miner.timestamp },
+        '${ miner.miner }',
+        ${ miner.solo_effort },
+        '${ miner.type }')`;
+      if (idx < updates.length - 1) values += ', ';
+    });
+    return values;
+  };
+
+  // Insert Rows Using Round Data
+  this.insertCurrentMinersSharedRounds = function(pool, updates) {
+    return `
+      INSERT INTO "${ pool }".current_miners (
+        timestamp, miner, type)
+      VALUES ${ _this.buildCurrentMinersSharedRounds(updates) }
+      ON CONFLICT ON CONSTRAINT current_miners_unique
+      DO NOTHING;`;
   };
 
   // Build Miners Values String
