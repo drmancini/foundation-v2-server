@@ -134,7 +134,6 @@ const CurrentMiners = function (logger, configMain) {
       values += `(
         ${ miner.timestamp },
         '${ miner.miner }',
-        ${ miner.solo_effort },
         '${ miner.type }')`;
       if (idx < updates.length - 1) values += ', ';
     });
