@@ -19,10 +19,11 @@ const Shares = function (logger, client, config, configMain) {
   process.setMaxListeners(0);
   this.forkId = process.env.forkId;
 
-  // Database Variables
-  this.executor = _this.client.commands.executor;
-  this.current = _this.client.commands.current;
-  this.historical = _this.client.commands.historical;
+  // Client Handlers
+  this.master = {
+    executor: _this.client.master.commands.executor,
+    current: _this.client.master.commands.current,
+    historical: _this.client.master.commands.historical };
 
   // Handle Efficiency Updates
   this.handleEfficiency = function(roundData, shareType) {
@@ -353,30 +354,30 @@ const Shares = function (logger, client, config, configMain) {
     const metadataBlocks = _this.handleMetadataBlocks(shareData, minerType, 'primary');
     const metadataReset = { timestamp: Date.now(), solo: minerType, type: 'primary' };
     const workersReset = (minerType) ? (
-    _this.current.workers.updateCurrentSoloWorkersRoundsReset(_this.pool, Date.now(), miner, 'primary')) : (
-    _this.current.workers.updateCurrentSharedWorkersRoundsReset(_this.pool, Date.now(), 'primary'));
+    _this.master.current.workers.updateCurrentSoloWorkersRoundsReset(_this.pool, Date.now(), miner, 'primary')) : (
+    _this.master.current.workers.updateCurrentSharedWorkersRoundsReset(_this.pool, Date.now(), 'primary'));
     const primaryUpdate = (minerType) ? (
-      _this.current.rounds.updateCurrentRoundsMainSolo(_this.pool, miner, blockIdentifier, 'primary')) : (
-      _this.current.rounds.updateCurrentRoundsMainShared(_this.pool, blockIdentifier, 'primary'));
+      _this.master.current.rounds.updateCurrentRoundsMainSolo(_this.pool, miner, blockIdentifier, 'primary')) : (
+      _this.master.current.rounds.updateCurrentRoundsMainShared(_this.pool, blockIdentifier, 'primary'));
     
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
-      _this.current.blocks.insertCurrentBlocksMain(_this.pool, [blocks]),
-      _this.current.metadata.insertCurrentMetadataBlocks(_this.pool, [metadataBlocks]),
-      _this.historical.metadata.insertHistoricalMetadataBlocks(_this.pool, [metadataBlocks]),
+      _this.master.current.blocks.insertCurrentBlocksMain(_this.pool, [blocks]),
+      _this.master.current.metadata.insertCurrentMetadataBlocks(_this.pool, [metadataBlocks]),
+      _this.master.historical.metadata.insertHistoricalMetadataBlocks(_this.pool, [metadataBlocks]),
       workersReset,
       primaryUpdate];
     if (minerType) {
-      transaction.push(_this.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'primary')); // new
+      transaction.push(_this.master.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'primary')); // new
     } else {
-      transaction.push(_this.current.metadata.insertCurrentMetadataRoundsReset(_this.pool, [metadataReset]));
+      transaction.push(_this.master.current.metadata.insertCurrentMetadataRoundsReset(_this.pool, [metadataReset]));
     }
 
     transaction.push('COMMIT;');
 
     // Insert Work into Database
-    _this.executor(transaction, () => callback());
+    _this.master.executor(transaction, () => callback());
   };
 
   // Handle Auxiliary Updates
@@ -400,30 +401,30 @@ const Shares = function (logger, client, config, configMain) {
     const metadataBlocks = _this.handleMetadataBlocks(shareData, minerType, 'auxiliary');
     const metadataReset = { timestamp: Date.now(), solo: minerType, type: 'auxiliary' };
     const workersReset = (minerType) ? (
-    _this.current.workers.updateCurrentSoloWorkersRoundsReset(_this.pool, Date.now(), miner, 'auxiliary')) : (
-    _this.current.workers.updateCurrentSharedWorkersRoundsReset(_this.pool, Date.now(), 'auxiliary'));
+    _this.master.current.workers.updateCurrentSoloWorkersRoundsReset(_this.pool, Date.now(), miner, 'auxiliary')) : (
+    _this.master.current.workers.updateCurrentSharedWorkersRoundsReset(_this.pool, Date.now(), 'auxiliary'));
     const auxiliaryUpdate = (minerType) ? (
-      _this.current.rounds.updateCurrentRoundsMainSolo(_this.pool, miner, blockIdentifier, 'auxiliary')) : (
-      _this.current.rounds.updateCurrentRoundsMainShared(_this.pool, blockIdentifier, 'auxiliary'));
+      _this.master.current.rounds.updateCurrentRoundsMainSolo(_this.pool, miner, blockIdentifier, 'auxiliary')) : (
+      _this.master.current.rounds.updateCurrentRoundsMainShared(_this.pool, blockIdentifier, 'auxiliary'));
       
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
-      _this.current.blocks.insertCurrentBlocksMain(_this.pool, [blocks]),
-      _this.current.metadata.insertCurrentMetadataBlocks(_this.pool, [metadataBlocks]),
-      _this.historical.metadata.insertHistoricalMetadataBlocks(_this.pool, [metadataBlocks]),
+      _this.master.current.blocks.insertCurrentBlocksMain(_this.pool, [blocks]),
+      _this.master.current.metadata.insertCurrentMetadataBlocks(_this.pool, [metadataBlocks]),
+      _this.master.historical.metadata.insertHistoricalMetadataBlocks(_this.pool, [metadataBlocks]),
       workersReset,
       auxiliaryUpdate];
     if (minerType) {
-      transaction.push(_this.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'auxiliary'));
+      transaction.push(_this.master.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'auxiliary'));
     } else {
-      transaction.push(_this.current.metadata.insertCurrentMetadataRoundsReset(_this.pool, [metadataReset]));
+      transaction.push(_this.master.current.metadata.insertCurrentMetadataRoundsReset(_this.pool, [metadataReset]));
     }
 
     transaction.push('COMMIT;');
 
     // Insert Work into Database
-    _this.executor(transaction, () => callback());
+    _this.master.executor(transaction, () => callback());
   };
 
   // Handle Share Updates
@@ -458,18 +459,18 @@ const Shares = function (logger, client, config, configMain) {
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
-      _this.current.hashrate.insertCurrentHashrateMain(_this.pool, [hashrateUpdates]),
-      _this.current.metadata.insertCurrentMetadataRounds(_this.pool, [metadataUpdates]),
-      _this.current.rounds.insertCurrentRoundsMain(_this.pool, [roundUpdates]),
-      _this.current.workers.insertCurrentWorkersRounds(_this.pool, [currentWorkerUpdates]),
-      _this.historical.workers.insertHistoricalWorkersRounds(_this.pool, [historicalWorkerUpdates]),
-      _this.historical.miners.insertHistoricalMinersMain(_this.pool, [historicalMinerUpdates]),
-      _this.historical.metadata.insertHistoricalMetadataRounds(_this.pool, [historicalMetadataUpdates])];
+      _this.master.current.hashrate.insertCurrentHashrateMain(_this.pool, [hashrateUpdates]),
+      _this.master.current.metadata.insertCurrentMetadataRounds(_this.pool, [metadataUpdates]),
+      _this.master.current.rounds.insertCurrentRoundsMain(_this.pool, [roundUpdates]),
+      _this.master.current.workers.insertCurrentWorkersRounds(_this.pool, [currentWorkerUpdates]),
+      _this.master.historical.workers.insertHistoricalWorkersRounds(_this.pool, [historicalWorkerUpdates]),
+      _this.master.historical.miners.insertHistoricalMinersMain(_this.pool, [historicalMinerUpdates]),
+      _this.master.historical.metadata.insertHistoricalMetadataRounds(_this.pool, [historicalMetadataUpdates])];
 
     if (minerType) {
-      transaction.push(_this.current.miners.insertCurrentMinersSoloRounds(_this.pool, [currentMinerUpdates]));
+      transaction.push(_this.master.current.miners.insertCurrentMinersSoloRounds(_this.pool, [currentMinerUpdates]));
     } else {
-      transaction.push(_this.current.miners.insertCurrentMinersSharedRounds(_this.pool, [currentMinerUpdates]));
+      transaction.push(_this.master.current.miners.insertCurrentMinersSharedRounds(_this.pool, [currentMinerUpdates]));
     };
 
     // Create New User
@@ -479,7 +480,7 @@ const Shares = function (logger, client, config, configMain) {
         joined: shareData.submitTime || Date.now(),
         payout_limit: config.primary.payments.minPayment
       };
-      transaction.push(_this.current.users.createCurrentUser(_this.pool, userData));
+      transaction.push(_this.master.current.users.createCurrentUser(_this.pool, userData));
     };
 
     // Add Support for Auxiliary Handling
@@ -506,25 +507,27 @@ const Shares = function (logger, client, config, configMain) {
         shareData.addrAuxiliary, shareData, shareType, minerType, 'auxiliary');
       const auxHistoricalMetadataUpdates = _this.handleHistoricalMetadata(
         shareData, shareType, minerType, 'auxiliary');
+      const auxCurrentMinerUpdates = _this.handleCurrentMiners(
+        shareData.addrAuxiliary, shareData.blockDiffAuxiliary, shareData, shareType, minerType, 'auxiliary');
 
-      transaction.push(_this.current.hashrate.insertCurrentHashrateMain(_this.pool, [auxHashrateUpdates]));
-      transaction.push(_this.current.metadata.insertCurrentMetadataRounds(_this.pool, [auxMetadataUpdates]));
-      transaction.push(_this.current.rounds.insertCurrentRoundsMain(_this.pool, [auxRoundUpdates]));
-      transaction.push(_this.current.workers.insertCurrentWorkersRounds(_this.pool, [auxCurrentWorkerUpdates]));
-      transaction.push(_this.historical.workers.insertHistoricalWorkersRounds(_this.pool, [auxHistoricalWorkerUpdates]));
-      transaction.push(_this.historical.miners.insertHistoricalMinersMain(_this.pool, [auxHistoricalMinerUpdates]));
-      transaction.push(_this.historical.metadata.insertHistoricalMetadataRounds(_this.pool, [auxHistoricalMetadataUpdates]));
+      transaction.push(_this.master.current.hashrate.insertCurrentHashrateMain(_this.pool, [auxHashrateUpdates]));
+      transaction.push(_this.master.current.metadata.insertCurrentMetadataRounds(_this.pool, [auxMetadataUpdates]));
+      transaction.push(_this.master.current.rounds.insertCurrentRoundsMain(_this.pool, [auxRoundUpdates]));
+      transaction.push(_this.master.current.workers.insertCurrentWorkersRounds(_this.pool, [auxCurrentWorkerUpdates]));
+      transaction.push(_this.master.historical.workers.insertHistoricalWorkersRounds(_this.pool, [auxHistoricalWorkerUpdates]));
+      transaction.push(_this.master.historical.miners.insertHistoricalMinersMain(_this.pool, [auxHistoricalMinerUpdates]));
+      transaction.push(_this.master.historical.metadata.insertHistoricalMetadataRounds(_this.pool, [auxHistoricalMetadataUpdates]));
 
       if (minerType) {
-        const auxSoloMinerUpdates = _this.handleCurrentSoloMiners(
-          shareData.addrAuxiliary, shareData.blockDiffAuxiliary, shareData, shareType, 'auxiliary');
-        transaction.push(_this.current.miners.insertCurrentMinersRounds(_this.pool, [auxSoloMinerUpdates]));
-      }
+        transaction.push(_this.master.current.miners.insertCurrentMinersSoloRounds(_this.pool, [auxCurrentMinerUpdates]));
+      } else {
+        transaction.push(_this.master.current.miners.insertCurrentMinersSharedRounds(_this.pool, [auxCurrentMinerUpdates]));
+      };
     }
 
     // Insert Work into Database
     transaction.push('COMMIT;');
-    _this.executor(transaction, () => callback());
+    _this.master.executor(transaction, () => callback());
   };
 
   // Handle Share/Block Submissions
@@ -544,11 +547,11 @@ const Shares = function (logger, client, config, configMain) {
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
-      _this.current.metadata.selectCurrentMetadataMain(_this.pool, { solo: minerType, type: 'primary' }),
-      _this.current.metadata.selectCurrentMetadataMain(_this.pool, { solo: minerType, type: 'auxiliary' }),
-      _this.current.rounds.selectCurrentRoundsMain(_this.pool, parameters),
-      _this.current.rounds.selectCurrentRoundsMain(_this.pool, auxParameters),
-      _this.current.users.selectCurrentUsers(_this.pool, { miner: miner }),
+      _this.master.current.metadata.selectCurrentMetadataMain(_this.pool, { solo: minerType, type: 'primary' }),
+      _this.master.current.metadata.selectCurrentMetadataMain(_this.pool, { solo: minerType, type: 'auxiliary' }),
+      _this.master.current.rounds.selectCurrentRoundsMain(_this.pool, parameters),
+      _this.master.current.rounds.selectCurrentRoundsMain(_this.pool, auxParameters),
+      _this.master.current.users.selectCurrentUsers(_this.pool, { miner: miner }),
       'COMMIT;'];
 
     // Establish Separate Behavior
@@ -556,7 +559,7 @@ const Shares = function (logger, client, config, configMain) {
 
     // Primary Behavior
     case 'primary':
-      _this.executor(transaction, (lookups) => {
+      _this.master.executor(transaction, (lookups) => {
         _this.handleShares(lookups, shareData, shareType, minerType, () => {
           if (blockValid) _this.handlePrimary(lookups, shareData, shareType, minerType, () => callback());
           else callback();
@@ -566,7 +569,7 @@ const Shares = function (logger, client, config, configMain) {
 
     // Auxiliary Behavior
     case 'auxiliary':
-      _this.executor(transaction, (lookups) => {
+      _this.master.executor(transaction, (lookups) => {
         _this.handleShares(lookups, shareData, shareType, minerType, () => {
           if (blockValid) _this.handleAuxiliary(lookups, shareData, shareType, minerType, () => callback());
           else callback();
@@ -576,7 +579,7 @@ const Shares = function (logger, client, config, configMain) {
 
     // Share Behavior
     case 'share':
-      _this.executor(transaction, (lookups) => {
+      _this.master.executor(transaction, (lookups) => {
         _this.handleShares(lookups, shareData, shareType, minerType, () => {
           const type = (shareType === 'valid') ? 'log' : 'error';
           const lines = [(shareType === 'valid') ?
