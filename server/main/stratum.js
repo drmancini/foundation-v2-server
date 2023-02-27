@@ -16,9 +16,10 @@ const Stratum = function (logger, client, config, configMain, template) {
   this.template = template;
   this.text = Text[configMain.language];
 
-  // Database Variables
-  this.executor = _this.client.commands.executor;
-  this.current = _this.client.commands.current;
+  // Client Handlers
+  this.master = {
+    executor: _this.client.master.commands.executor,
+    current: _this.client.master.commands.current };
 
   // Stratum Variables
   process.setMaxListeners(0);
@@ -35,10 +36,10 @@ const Stratum = function (logger, client, config, configMain, template) {
 
     const transaction = [
       'BEGIN;',
-      _this.current.rounds.selectCurrentRoundsMain(_this.pool, parameters),
+      _this.master.current.rounds.selectCurrentRoundsMain(_this.pool, parameters),
       'COMMIT;'];
 
-      _this.executor(transaction, (lookups) => {
+      _this.master.executor(transaction, (lookups) => {
         const workers = {};
         if (lookups[1].rowCount > 0) {
           lookups[1].rows.forEach(entry => {

@@ -1,6 +1,6 @@
 const Logger = require('../main/logger');
 const Stratum = require('../main/stratum');
-const Commands = require('../../database/main/commands');
+const Commands = require('../../database/main/master/commands');
 const config = require('../../configs/pools/example');
 const configMain = require('../../configs/main/example.js');
 const events = require('events');
@@ -16,8 +16,9 @@ config.primary.daemons = [{
 
 function mockClient(configMain, result) {
   const client = new events.EventEmitter();
-  client.commands = new Commands(null, null, configMain);
-  client.commands.executor = (commands, callback) => callback(result);
+  client.master = {};
+  client.master.commands = new Commands(null, null, configMain);
+  client.master.commands.executor = (commands, callback) => callback(result);
   return client;
 }
 

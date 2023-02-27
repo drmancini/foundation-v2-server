@@ -13,11 +13,12 @@ const Payments = function (logger, client, config, configMain) {
   this.pool = config.name;
   this.text = Text[configMain.language];
 
-  // Database Variables
-  this.executor = _this.client.commands.executor;
-  this.current = _this.client.commands.current;
-  this.historical = _this.client.commands.historical;
-
+  // Client Handlers
+  this.master = {
+    executor: _this.client.master.commands.executor,
+    current: _this.client.master.commands.current,
+    historical: _this.client.master.commands.historical };
+  
   // Combine Balances and Payments
   this.handleCurrentCombined = function(balances, payments) {
 
@@ -183,12 +184,12 @@ const Payments = function (logger, client, config, configMain) {
 
     // Remove Finished Payments from Table
     const paymentsDelete = blocks.map((block) => `'${ block.round }'`);
-    transaction.push(_this.current.payments.deleteCurrentPaymentsMain(
+    transaction.push(_this.master.current.payments.deleteCurrentPaymentsMain(
       _this.pool, paymentsDelete));
 
     // Insert Work into Database
     transaction.push('COMMIT;');
-    _this.executor(transaction, () => callback());
+    _this.master.executor(transaction, () => callback());
   };
 
   // Handle Round Success Updates
@@ -200,56 +201,56 @@ const Payments = function (logger, client, config, configMain) {
     // Handle Generate Block Delete Updates
     const generateBlocksDelete = blocks.map((block) => `'${ block.round }'`);
     if (generateBlocksDelete.length >= 1) {
-      transaction.push(_this.current.blocks.deleteCurrentBlocksMain(
+      transaction.push(_this.master.current.blocks.deleteCurrentBlocksMain(
         _this.pool, generateBlocksDelete));
     }
 
     // Handle Miners Updates
     const minersUpdates = _this.handleCurrentMiners(amounts, balances, blockType);
-    transaction.push(_this.current.miners.insertCurrentMinersReset(_this.pool, blockType));
+    transaction.push(_this.master.current.miners.insertCurrentMinersReset(_this.pool, blockType));
     if (minersUpdates.length >= 1) {
-      transaction.push(_this.current.miners.insertCurrentMinersPayments(
+      transaction.push(_this.master.current.miners.insertCurrentMinersPayments(
         _this.pool, minersUpdates));
     }
 
     // Handle Generate Round Delete Updates
     const generateRoundsDelete = blocks.map((block) => `'${ block.round }'`);
     if (generateRoundsDelete.length >= 1) {
-      transaction.push(_this.current.rounds.deleteCurrentRoundsMain(
+      transaction.push(_this.master.current.rounds.deleteCurrentRoundsMain(
         _this.pool, generateRoundsDelete));
     }
 
     // Handle Historical Generate Block Updates
     const generateBlocksUpdates = _this.handleHistoricalBlocks(blocks);
     if (generateBlocksUpdates.length >= 1) {
-      transaction.push(_this.historical.blocks.insertHistoricalBlocksMain(
+      transaction.push(_this.master.historical.blocks.insertHistoricalBlocksMain(
         _this.pool, generateBlocksUpdates));
     }
 
     // Handle Historical Payments Updates
     const paymentsUpdates = _this.handleHistoricalPayments(amounts, record, blockType);
     if (paymentsUpdates.length >= 1) {
-      transaction.push(_this.historical.payments.insertHistoricalPaymentsMain(
+      transaction.push(_this.master.historical.payments.insertHistoricalPaymentsMain(
         _this.pool, paymentsUpdates));
     }
 
     // Handle Historical Generate Round Updates
     const generateRoundsUpdates = _this.handleHistoricalRounds(rounds);
     if (generateRoundsUpdates.length >= 1) {
-      transaction.push(_this.historical.rounds.insertHistoricalRoundsMain(
+      transaction.push(_this.master.historical.rounds.insertHistoricalRoundsMain(
         _this.pool, generateRoundsUpdates));
     }
 
     // Handle Historical Transactions Updates
     const transactionsUpdates = _this.handleHistoricalTransactions(amounts, record, blockType);
     if (record !== null) {
-      transaction.push(_this.historical.transactions.insertHistoricalTransactionsMain(
+      transaction.push(_this.master.historical.transactions.insertHistoricalTransactionsMain(
         _this.pool, [transactionsUpdates]));
     }
 
     // Insert Work into Database
     transaction.push('COMMIT;');
-    _this.executor(transaction, () => callback());
+    _this.master.executor(transaction, () => callback());
   };
 
   // Handle Primary Updates
@@ -259,18 +260,18 @@ const Payments = function (logger, client, config, configMain) {
     const transaction = ['BEGIN;'];
 
     // Add User Payment Limits to Transaction 
-    transaction.push(_this.current.users.selectCurrentUsers(_this.pool, { payout_limit: 'gt' + _this.config.primary.payments.minPayment }));
+    transaction.push(_this.master.current.users.selectCurrentUsers(_this.pool, { payout_limit: 'gt' + _this.config.primary.payments.minPayment }));
 
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
       const parameters = { solo: block.solo, round: block.round, type: 'primary' };
-      transaction.push(_this.current.rounds.selectCurrentRoundsMain(
+      transaction.push(_this.master.current.rounds.selectCurrentRoundsMain(
         _this.pool, parameters));
     });
 
     // Determine Workers for Rounds
     transaction.push('COMMIT;');
-    _this.executor(transaction, (results) => {
+    _this.master.executor(transaction, (results) => {
       const users = _this.handleCurrentUsers(results[1].rows) || {};
       const rounds = results.slice(2, -1).map((round) => round.rows);
 
@@ -303,13 +304,13 @@ const Payments = function (logger, client, config, configMain) {
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
       const parameters = { solo: block.solo, round: block.round, type: 'auxiliary' };
-      transaction.push(_this.current.rounds.selectCurrentRoundsMain(
+      transaction.push(_this.master.current.rounds.selectCurrentRoundsMain(
         _this.pool, parameters));
     });
 
     // Determine Workers for Rounds
     transaction.push('COMMIT;');
-    _this.executor(transaction, (results) => {
+    _this.master.executor(transaction, (results) => {
       const rounds = results.slice(1, -1).map((round) => round.rows);
 
       // Collect Round/Worker Data and Amounts
@@ -357,7 +358,7 @@ const Payments = function (logger, client, config, configMain) {
 
     // Add Checks to Payments Table
     if (checks.length >= 1) {
-      transaction.push(_this.current.payments.insertCurrentPaymentsMain(_this.pool, checks));
+      transaction.push(_this.master.current.payments.insertCurrentPaymentsMain(_this.pool, checks));
     }
 
     // Establish Separate Behavior
@@ -366,7 +367,7 @@ const Payments = function (logger, client, config, configMain) {
 
     // Primary Behavior
     case 'primary':
-      _this.executor(transaction, (results) => {
+      _this.master.executor(transaction, (results) => {
         results = results[1].rows.map((block) => block.round);
         const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
 
@@ -391,7 +392,7 @@ const Payments = function (logger, client, config, configMain) {
 
     // Auxiliary Behavior
     case 'auxiliary':
-      _this.executor(transaction, (results) => {
+      _this.master.executor(transaction, (results) => {
         results = results[1].rows.map((block) => block.round);
         const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
 
@@ -434,13 +435,13 @@ const Payments = function (logger, client, config, configMain) {
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
-      _this.current.blocks.selectCurrentBlocksMain(_this.pool, { category: 'generate', type: blockType }),
-      _this.current.miners.selectCurrentMinersMain(_this.pool, { balance: 'gt0', type: blockType }),
-      _this.current.rounds.deleteCurrentRoundsInactive(_this.pool, roundsWindow),
+      _this.master.current.blocks.selectCurrentBlocksMain(_this.pool, { category: 'generate', type: blockType }),
+      _this.master.current.miners.selectCurrentMinersMain(_this.pool, { balance: 'gt0', type: blockType }),
+      _this.master.current.rounds.deleteCurrentRoundsInactive(_this.pool, roundsWindow),
       'COMMIT;'];
 
     // Establish Separate Behavior
-    _this.executor(transaction, (lookups) => {
+    _this.master.executor(transaction, (lookups) => {
       _this.handleRounds(lookups, blockType, callback);
     });
   };
