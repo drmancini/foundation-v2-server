@@ -123,31 +123,14 @@ const CurrentMetadata = function (logger, configMain) {
         workers = EXCLUDED.workers;`;
   };
 
-  // Build Metadata Values String
-  this.buildCurrentMetadataRoundsReset = function(updates) {
-    let values = '';
-    updates.forEach((metadata, idx) => {
-      values += `(
-        ${ metadata.timestamp }, 0, 0, 0,
-        ${ metadata.solo }, 0, '${ metadata.type }', 0, 0)`;
-      if (idx < updates.length - 1) values += ', ';
-    });
-    return values;
-  };
-
   // Insert Rows Using Reset
-  this.insertCurrentMetadataRoundsReset = function(pool, updates) {
+  this.insertCurrentMetadataRoundsReset = function(pool, timestamp, solo, blockType) {
     return `
-      INSERT INTO "${ pool }".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
-      VALUES ${ _this.buildCurrentMetadataRoundsReset(updates) }
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        efficiency = 0, effort = 0, invalid = 0,
-        stale = 0, valid = 0, work = 0;`;
+      UPDATE "${ pool }".current_metadata
+      SET timestamp = ${ timestamp }, efficiency = 0,
+        effort = 0, invalid = 0, stale = 0,
+        valid = 0, work = 0
+      WHERE solo = ${ solo } AND type = '${ blockType }';`;
   };
 
   // Build Metadata Values String

@@ -205,42 +205,13 @@ describe('Test database metadata functionality', () => {
   test('Test metadata command handling [8]', () => {
     const metadata = new CurrentMetadata(logger, configMainCopy);
     const updates = { timestamp: 1, identifier: 'master', solo: true, type: 'primary' };
-    const response = metadata.insertCurrentMetadataRoundsReset('Pool-Main', [updates]);
+    const response = metadata.insertCurrentMetadataRoundsReset('Pool-Main', 1, true, 'primary');
     const expected = `
-      INSERT INTO "Pool-Main".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
-      VALUES (
-        1, 0, 0, 0,
-        true, 0, 'primary', 0, 0)
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        efficiency = 0, effort = 0, invalid = 0,
-        stale = 0, valid = 0, work = 0;`;
-    expect(response).toBe(expected);
-  });
-
-  test('Test metadata command handling [9]', () => {
-    const metadata = new CurrentMetadata(logger, configMainCopy);
-    const updates = { timestamp: 1, identifier: 'master', solo: true, type: 'primary' };
-    const response = metadata.insertCurrentMetadataRoundsReset('Pool-Main', [updates, updates]);
-    const expected = `
-      INSERT INTO "Pool-Main".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, solo, stale, type,
-        valid, work)
-      VALUES (
-        1, 0, 0, 0,
-        true, 0, 'primary', 0, 0), (
-        1, 0, 0, 0,
-        true, 0, 'primary', 0, 0)
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        efficiency = 0, effort = 0, invalid = 0,
-        stale = 0, valid = 0, work = 0;`;
+      UPDATE "Pool-Main".current_metadata
+      SET timestamp = 1, efficiency = 0,
+        effort = 0, invalid = 0, stale = 0,
+        valid = 0, work = 0
+      WHERE solo = true AND type = 'primary';`;
     expect(response).toBe(expected);
   });
 

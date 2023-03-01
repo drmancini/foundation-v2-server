@@ -352,7 +352,6 @@ const Shares = function (logger, client, config, configMain) {
 
     // Build Round Update Transactions
     const metadataBlocks = _this.handleMetadataBlocks(shareData, minerType, 'primary');
-    const metadataReset = { timestamp: Date.now(), solo: minerType, type: 'primary' };
     const workersReset = (minerType) ? (
     _this.master.current.workers.updateCurrentSoloWorkersRoundsReset(_this.pool, Date.now(), miner, 'primary')) : (
     _this.master.current.workers.updateCurrentSharedWorkersRoundsReset(_this.pool, Date.now(), 'primary'));
@@ -371,7 +370,7 @@ const Shares = function (logger, client, config, configMain) {
     if (minerType) {
       transaction.push(_this.master.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'primary')); // new
     } else {
-      transaction.push(_this.master.current.metadata.insertCurrentMetadataRoundsReset(_this.pool, [metadataReset]));
+      transaction.push(_this.master.current.metadata.insertCurrentMetadataRoundsReset(_this.pool, Date.now(), minerType, 'primary'));
     }
 
     transaction.push('COMMIT;');
@@ -399,7 +398,6 @@ const Shares = function (logger, client, config, configMain) {
 
     // Build Round Update Transactions
     const metadataBlocks = _this.handleMetadataBlocks(shareData, minerType, 'auxiliary');
-    const metadataReset = { timestamp: Date.now(), solo: minerType, type: 'auxiliary' };
     const workersReset = (minerType) ? (
     _this.master.current.workers.updateCurrentSoloWorkersRoundsReset(_this.pool, Date.now(), miner, 'auxiliary')) : (
     _this.master.current.workers.updateCurrentSharedWorkersRoundsReset(_this.pool, Date.now(), 'auxiliary'));
@@ -418,7 +416,7 @@ const Shares = function (logger, client, config, configMain) {
     if (minerType) {
       transaction.push(_this.master.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'auxiliary'));
     } else {
-      transaction.push(_this.master.current.metadata.insertCurrentMetadataRoundsReset(_this.pool, [metadataReset]));
+      transaction.push(_this.master.current.metadata.insertCurrentMetadataRoundsReset(_this.pool, Date.now(), minerType, 'auxiliary'));
     }
 
     transaction.push('COMMIT;');
