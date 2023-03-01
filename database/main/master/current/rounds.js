@@ -46,6 +46,24 @@ const CurrentRounds = function (logger, configMain) {
     return output;
   };
 
+  // Select Round Times/Work Using Parameters
+  this.selectCurrentRoundsAggregates = function(pool, parameters) {
+    let output = `
+      SELECT worker, sum(times_increment) AS times,
+        SUM(work) AS work
+      FROM "${ pool }".current_rounds`;
+    const filtered = Object.keys(parameters).filter((key) => _this.parameters.includes(key));
+    filtered.forEach((parameter, idx) => {
+      if (idx === 0) output += `
+      WHERE `;
+      else output += ' AND ';
+      output += `${ parameter }`;
+      output += _this.handleQueries(parameters, parameter);
+    });
+    return output + `
+      GROUP BY worker;`;
+  };
+
   // Select Current Rounds Using Parameters
   this.selectCurrentRoundsMain = function(pool, parameters) {
     let output = `SELECT * FROM "${ pool }".current_rounds`;

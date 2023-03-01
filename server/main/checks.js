@@ -202,7 +202,7 @@ const Checks = function (logger, client, config, configMain) {
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
       const parameters = { solo: block.solo, round: block.round, type: 'primary' };
-      transaction.push(_this.master.current.rounds.selectCurrentRoundsMain(
+      transaction.push(_this.master.current.rounds.selectCurrentRoundsAggregates(
         _this.pool, parameters));
     });
 
@@ -231,7 +231,7 @@ const Checks = function (logger, client, config, configMain) {
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
       const parameters = { solo: block.solo, round: block.round, type: 'auxiliary' };
-      transaction.push(_this.master.current.rounds.selectCurrentRoundsMain(
+      transaction.push(_this.master.current.rounds.selectCurrentRoundsAggregates(
         _this.pool, parameters));
     });
 

@@ -48,6 +48,19 @@ describe('Test database rounds functionality', () => {
 
   test('Test rounds command handling [1]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
+    const parameters = { round: 'current', solo: false, type: 'primary' };
+    const response = rounds.selectCurrentRoundsAggregates('Pool-Main', parameters);
+    const expected = `
+      SELECT worker, sum(times_increment) AS times,
+        SUM(work) AS work
+      FROM "Pool-Main".current_rounds
+      WHERE round = 'current' AND solo = false AND type = 'primary'
+      GROUP BY worker;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test rounds command handling [1]', () => {
+    const rounds = new CurrentRounds(logger, configMainCopy);
     const parameters = { miner: 'miner1', type: 'primary' };
     const response = rounds.selectCurrentRoundsMain('Pool-Main', parameters);
     const expected = 'SELECT * FROM "Pool-Main".current_rounds WHERE miner = \'miner1\' AND type = \'primary\';';
