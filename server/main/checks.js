@@ -65,7 +65,7 @@ const Checks = function (logger, client, config, configMain) {
 
     // Calculate Features of Rounds
     const timestamp = Date.now();
-    const interval = _this.config.settings.interval.rounds;
+    const interval = _this.config.settings.interval.segments;
     const recent = Math.round(timestamp / interval) * interval;
 
     // Flatten Nested Round Array
