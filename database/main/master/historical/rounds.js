@@ -87,8 +87,8 @@ const HistoricalRounds = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".historical_rounds (
         timestamp, miner, worker,
-        block_reward, max_times, 
-        round, solo, times, 
+        block_reward, max_times,
+        round, solo, times,
         total_work, type, work)
       VALUES ${ _this.buildHistoricalRoundsMain(updates) }
       ON CONFLICT DO NOTHING;`;

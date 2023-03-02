@@ -64,9 +64,9 @@ describe('Test database rounds functionality', () => {
 
   test('Test rounds command handling [3]', () => {
     const rounds = new HistoricalRounds(logger, configMainCopy);
-    const parameters = { identifier: 'master', type: 'primary' };
+    const parameters = { round: 'round1', type: 'primary' };
     const response = rounds.selectHistoricalRoundsMain('Pool-Main', parameters);
-    const expected = 'SELECT * FROM "Pool-Main".historical_rounds WHERE identifier = \'master\' AND type = \'primary\';';
+    const expected = 'SELECT * FROM "Pool-Main".historical_rounds WHERE round = \'round1\' AND type = \'primary\';';
     expect(response).toBe(expected);
   });
 
@@ -108,35 +108,33 @@ describe('Test database rounds functionality', () => {
       timestamp: 1,
       miner: 'miner1',
       worker: 'worker1',
+      blockReward: 2,
+      maxTimes: 3,
       round: 'round1',
-      identifier: 'master',
-      invalid: 0,
       solo: true,
-      stale: 0,
-      times: 100,
+      times: 4,
+      totalWork: 5,
       type: 'primary',
-      valid: 1,
-      work: 8
+      work: 8,
     };
     const response = rounds.insertHistoricalRoundsMain('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_rounds (
         timestamp, miner, worker,
-        identifier, invalid, round,
-        solo, stale, times, type,
-        valid, work)
+        block_reward, max_times,
+        round, solo, times,
+        total_work, type, work)
       VALUES (
         1,
         'miner1',
         'worker1',
-        'master',
-        0,
+        2,
+        3,
         'round1',
         true,
-        0,
-        100,
+        4,
+        5,
         'primary',
-        1,
         8)
       ON CONFLICT DO NOTHING;`;
     expect(response).toBe(expected);
@@ -148,47 +146,44 @@ describe('Test database rounds functionality', () => {
       timestamp: 1,
       miner: 'miner1',
       worker: 'worker1',
+      blockReward: 2,
+      maxTimes: 3,
       round: 'round1',
-      identifier: 'master',
-      invalid: 0,
       solo: true,
-      stale: 0,
-      times: 100,
+      times: 4,
+      totalWork: 5,
       type: 'primary',
-      valid: 1,
-      work: 8
+      work: 8,
     };
     const response = rounds.insertHistoricalRoundsMain('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_rounds (
         timestamp, miner, worker,
-        identifier, invalid, round,
-        solo, stale, times, type,
-        valid, work)
+        block_reward, max_times,
+        round, solo, times,
+        total_work, type, work)
       VALUES (
         1,
         'miner1',
         'worker1',
-        'master',
-        0,
+        2,
+        3,
         'round1',
         true,
-        0,
-        100,
+        4,
+        5,
         'primary',
-        1,
         8), (
         1,
         'miner1',
         'worker1',
-        'master',
-        0,
+        2,
+        3,
         'round1',
         true,
-        0,
-        100,
+        4,
+        5,
         'primary',
-        1,
         8)
       ON CONFLICT DO NOTHING;`;
     expect(response).toBe(expected);
