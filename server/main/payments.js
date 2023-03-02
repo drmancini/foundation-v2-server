@@ -117,45 +117,49 @@ const Payments = function (logger, client, config, configMain) {
   };
 
   // Handle Historical Rounds Updates
-  this.handleHistoricalRounds = function(rounds) {
+  this.handleHistoricalRounds = function(blocks, rounds, blockType) {
+
+    // Record Maximum Times and Total Work
+    rounds.forEach(round => {
+      const maxTimes = Math.max(...round.map(worker => worker.times));
+      const totalWork = round.reduce((a, b) => (a + b.work), 0);
+      round.forEach(worker => {
+        worker.maxTimes = maxTimes;
+        worker.totalWork = totalWork;
+      })
+    })
 
     // Flatten Nested Round Array
-    const combined = {};
     if (rounds.length >= 1) {
       rounds = rounds.reduce((a, b) => a.concat(b));
     }
 
-    // Collect All Round Data
-    rounds.forEach((round) => {
-      const identifier = `${ round.worker }_${ round.solo }_${ round.round }_${ round.type }`;
-      if (identifier in combined) {
-        const current = combined[identifier];
-        current.invalid += round.invalid || 0;
-        current.stale += round.stale || 0;
-        current.times += round.times || 0;
-        current.valid += round.valid || 0;
-        current.work += round.work || 0;
-      } else combined[identifier] = round;
+    // Return Round Updates
+    rounds = rounds
+      .map(round => ({
+        timestamp: Date.now(),
+        miner: round.worker.split('.')[0],
+        worker: round.worker,
+        maxTimes: round.maxTimes,
+        round: round.round,
+        solo: round.solo,
+        times: round.times,
+        totalWork: round.totalWork,
+        type: blockType,
+        work: round.work,
+      }));
+
+    // Update Rounds with Block Reward
+    const transactionFee = _this.config.primary.payments ?
+      _this.config.primary.payments.transactionFee : 0;
+    rounds.forEach(round => {
+      const reward = blocks
+        .filter(block => block.round == round.round)
+        .map(block => block.reward);
+      round.blockReward = reward[0] - transactionFee;
     });
 
-    // Return Round Updates
-    return Object.keys(combined).map((identifier) => {
-      const current = combined[identifier];
-      return {
-        timestamp: Date.now(),
-        miner: current.miner,
-        worker: current.worker,
-        identifier: current.identifier,
-        invalid: current.invalid,
-        round: current.round,
-        solo: current.solo,
-        stale: current.stale,
-        times: current.times,
-        type: current.type,
-        valid: current.valid,
-        work: current.work,
-      };
-    });
+    return rounds;
   };
 
   // Handle Historical Transactions Updates
@@ -235,7 +239,7 @@ const Payments = function (logger, client, config, configMain) {
     }
 
     // Handle Historical Generate Round Updates
-    const generateRoundsUpdates = _this.handleHistoricalRounds(rounds);
+    const generateRoundsUpdates = _this.handleHistoricalRounds(blocks, rounds, blockType);
     if (generateRoundsUpdates.length >= 1) {
       transaction.push(_this.master.historical.rounds.insertHistoricalRoundsMain(
         _this.pool, generateRoundsUpdates));
