@@ -48,6 +48,7 @@ const Workers = function (logger, client) {
   this.setupWorkers = function(callback) {
     const keys = Object.keys(_this.configs);
     const promises = keys.map((pool) => _this.handlePromises(pool));
+    console.log(promises)
     Promise.all(promises).then((stratums) => {
       stratums.forEach((stratum) => _this.stratums[stratum.config.name] = stratum);
       callback();

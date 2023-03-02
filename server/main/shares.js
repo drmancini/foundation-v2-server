@@ -144,7 +144,7 @@ const Shares = function (logger, client, config, configMain) {
 
     // Calculate Features of Rounds
     const timestamp = Date.now();
-    const interval = _this.config.settings.interval.rounds;
+    const interval = _this.config.settings.interval.segments;
     const recent = Math.ceil(timestamp / interval) * interval;
 
     // Calculate Features of Round Share [1]
