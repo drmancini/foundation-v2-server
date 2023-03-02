@@ -49,7 +49,8 @@ const CurrentRounds = function (logger, configMain) {
   // Select Round Times/Work Using Parameters
   this.selectCurrentRoundsAggregates = function(pool, parameters) {
     let output = `
-      SELECT worker, sum(times_increment) AS times,
+      SELECT worker, round, solo,
+        SUM(times_increment) AS times,
         SUM(work) AS work
       FROM "${ pool }".current_rounds`;
     const filtered = Object.keys(parameters).filter((key) => _this.parameters.includes(key));
@@ -61,7 +62,7 @@ const CurrentRounds = function (logger, configMain) {
       output += _this.handleQueries(parameters, parameter);
     });
     return output + `
-      GROUP BY worker;`;
+      GROUP BY worker, round, solo;`;
   };
 
   // Select Current Rounds Using Parameters

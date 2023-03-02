@@ -6,10 +6,11 @@ const HistoricalRounds = function (logger, configMain) {
   this.configMain = configMain;
 
   // Handle Historical Parameters
-  this.numbers = ['timestamp', 'invalid', 'stale', 'times', 'valid', 'work'];
-  this.strings = ['miner', 'worker', 'identifier', 'round', 'type'];
-  this.parameters = ['timestamp', 'miner', 'worker', 'identifier', 'invalid', 'round', 'solo',
-    'stale', 'times', 'type', 'valid', 'work'];
+  this.numbers = ['timestamp', 'block_reward', 'max_times', 'times', 
+    'total_work', 'work'];
+  this.strings = ['miner', 'worker', 'round', 'type'];
+  this.parameters = ['timestamp', 'miner', 'worker', 'block_reward', 'max_times', 
+    'round', 'solo', 'times', 'total_work', 'type', 'work'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -68,14 +69,13 @@ const HistoricalRounds = function (logger, configMain) {
         ${ round.timestamp },
         '${ round.miner }',
         '${ round.worker }',
-        '${ round.identifier }',
-        ${ round.invalid },
+        ${ round.blockReward },
+        ${ round.maxTimes },
         '${ round.round }',
         ${ round.solo },
-        ${ round.stale },
         ${ round.times },
+        ${ round.totalWork },
         '${ round.type }',
-        ${ round.valid },
         ${ round.work })`;
       if (idx < updates.length - 1) values += ', ';
     });
@@ -87,9 +87,9 @@ const HistoricalRounds = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".historical_rounds (
         timestamp, miner, worker,
-        identifier, invalid, round,
-        solo, stale, times, type,
-        valid, work)
+        block_reward, max_times, 
+        round, solo, times, 
+        total_work, type, work)
       VALUES ${ _this.buildHistoricalRoundsMain(updates) }
       ON CONFLICT DO NOTHING;`;
   };
