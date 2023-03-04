@@ -999,7 +999,7 @@ const Rounds = function (logger, client, config, configMain) {
     const interval = _this.config.settings.interval.rounds;
     const numForks = utils.countProcessForks(_this.configMain);
     const timing = parseFloat(_this.forkId) * interval / numForks;
-    // setTimeout(() => _this.handleInterval(), timing);
+    setTimeout(() => _this.handleInterval(), timing);
     callback();
   };
 };
