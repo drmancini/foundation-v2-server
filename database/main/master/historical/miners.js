@@ -69,7 +69,6 @@ const HistoricalMiners = function (logger, configMain) {
         ${ miner.recent },
         '${ miner.miner }',
         ${ miner.hashrate },
-        ${ miner.solo },
         '${ miner.type }')`;
       if (idx < updates.length - 1) values += ', ';
     });
@@ -81,7 +80,7 @@ const HistoricalMiners = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".historical_miners (
         timestamp, recent, miner,
-        hashrate, solo, type)
+        hashrate, type)
       VALUES ${ _this.buildHistoricalMinersHashrate(updates) }
       ON CONFLICT ON CONSTRAINT historical_miners_unique
       DO UPDATE SET
@@ -98,7 +97,6 @@ const HistoricalMiners = function (logger, configMain) {
         ${ miner.recent },
         '${ miner.miner }',
         ${ miner.invalid },
-        ${ miner.solo },
         ${ miner.stale },
         '${ miner.type }',
         ${ miner.valid },
@@ -113,7 +111,7 @@ const HistoricalMiners = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".historical_miners (
         timestamp, recent, miner,
-        invalid, solo, stale, type,
+        invalid, stale, type,
         valid, work)
       VALUES ${ _this.buildHistoricalMinersMain(updates) }
       ON CONFLICT ON CONSTRAINT historical_miners_unique

@@ -6,12 +6,11 @@ const CurrentUsers = function (logger, configMain) {
   this.configMain = configMain;
 
   // Handle Current Parameters
-  this.numbers = ['joined', 'payout_limit', 'activity_limit'];
-  this.strings = ['miner', 'email', 'token', 'locale'];
-  this.parameters = ['payout_limit', 'payout_notifications',
-    'activity_limit', 'activity_notifications', 'joined', 
-    'miner', 'payment_notifications', 'subscribed', 'email',
-    'locale', 'token'];
+  this.numbers = [ 'activity_limit', 'joined', 'payout_limit' ];
+  this.strings = [ 'miner', 'email', 'locale', 'token', 'type' ];
+  this.parameters = [ 'miner', 'activity_limit', 'activity_notifications', 'email', 'joined', 
+    'locale', 'payment_notifications', 'payout_limit', 'payout_notifications', 'subscribed', 
+    'token', 'type' ];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -68,46 +67,35 @@ const CurrentUsers = function (logger, configMain) {
     return output + ';';
   };
   
-  this.buildCreateCurrentUser = function(updates) {
+  // Select Current Users Using Parameters
+  this.selectCurrentUsersBatchAddresses = function(pool, addresses, type) {
+    return addresses.length >= 1 ? `
+      SELECT DISTINCT ON (miner) * FROM "${ pool }".current_users
+      WHERE miner IN (${ addresses.join(', ') }) AND type = '${ type }'
+      ORDER BY miner;` : `
+      SELECT * FROM "${ pool }".current_users LIMIT 0;`;
+  };
+
+  this.buildcreateCurrentUsers = function(updates) {
     let values = '';
     updates.forEach((user, idx) => {
       values += `(
         '${ user.miner }',
         ${ user.joined },
-        '${ user.email }',
-        '${ user.token }',
-        ${ user.subscribed },
-        '${ user.locale }',
         ${ user.payout_limit },
-        ${ user.payment_notifications },
-        ${ user.activity_limit },
-        ${ user.activity_notifications })`;
+        '${ user.type }')`;
       if (idx < updates.length - 1) values += ', ';
     });
     return values;
   };
 
-  // Update User Data
-  this.insertCurrentUsersMain = function(pool, updates) {
-    return `
-      INSERT INTO "${ pool }".current_users (
-        miner, joined, email, token, subscribed,
-        locale, payout_limit, payment_notifications,
-        activity_limit, activity_notifications)
-      VALUES ${ _this.buildCreateCurrentUser(updates) }
-      ON CONFLICT ON CONSTRAINT current_users_unique
-      DO NOTHING;`; 
-  };
-
   // Create New User
-  this.createCurrentUser = function(pool, updates) {
+  this.createCurrentUsers = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_users (
-        miner, joined, payout_limit)
-      VALUES (
-        '${ updates.miner }',
-        ${ updates.joined },
-        ${ updates.payout_limit })
+        miner, joined, payout_limit
+        type)
+      VALUES ${ _this.buildcreateCurrentUsers(updates) }
       ON CONFLICT ON CONSTRAINT current_users_unique
       DO NOTHING;`; 
   };

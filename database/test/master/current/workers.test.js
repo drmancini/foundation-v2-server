@@ -391,7 +391,7 @@ describe('Test database workers functionality', () => {
     const response = workers.deleteCurrentWorkersInactive('Pool-Main', 1);
     const expected = `
       DELETE FROM "Pool-Main".current_workers
-      WHERE timestamp < 1;`;
+      WHERE last_share < 1;`;
     expect(response).toBe(expected);
   });
 });

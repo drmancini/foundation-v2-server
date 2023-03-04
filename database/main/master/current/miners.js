@@ -61,6 +61,15 @@ const CurrentMiners = function (logger, configMain) {
     return output + ';';
   };
 
+  // Select Current Rounds Using Parameters
+  this.selectCurrentMinersBatchAddresses = function(pool, addresses, type) {
+    return addresses.length >= 1 ? `
+      SELECT DISTINCT ON (miner) * FROM "${ pool }".current_miners
+      WHERE miner IN (${ addresses.join(', ') }) AND type = '${ type }'
+      ORDER BY miner, timestamp DESC;` : `
+      SELECT * FROM "${ pool }".current_miners LIMIT 0;`;
+  };
+
   // Build Miners Values String
   this.buildCurrentMinersHashrate = function(updates) {
     let values = '';
@@ -101,7 +110,7 @@ const CurrentMiners = function (logger, configMain) {
   };
 
   // Build Miners Values String
-  this.buildCurrentMinersSoloRounds = function(updates) {
+  this.buildCurrentMinersRounds = function(updates) {
     let values = '';
     updates.forEach((miner, idx) => {
       values += `(
@@ -115,39 +124,16 @@ const CurrentMiners = function (logger, configMain) {
   };
 
   // Insert Rows Using Round Data
-  this.insertCurrentMinersSoloRounds = function(pool, updates) {
+  this.insertCurrentMinersRounds = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_miners (
         timestamp, miner, solo_effort,
         type)
-      VALUES ${ _this.buildCurrentMinersSoloRounds(updates) }
+      VALUES ${ _this.buildCurrentMinersRounds(updates) }
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         solo_effort = "${ pool }".current_miners.solo_effort + EXCLUDED.solo_effort;`;
-  };
-
-  // Build Miners Values String
-  this.buildCurrentMinersSharedRounds = function(updates) {
-    let values = '';
-    updates.forEach((miner, idx) => {
-      values += `(
-        ${ miner.timestamp },
-        '${ miner.miner }',
-        '${ miner.type }')`;
-      if (idx < updates.length - 1) values += ', ';
-    });
-    return values;
-  };
-
-  // Insert Rows Using Round Data
-  this.insertCurrentMinersSharedRounds = function(pool, updates) {
-    return `
-      INSERT INTO "${ pool }".current_miners (
-        timestamp, miner, type)
-      VALUES ${ _this.buildCurrentMinersSharedRounds(updates) }
-      ON CONFLICT ON CONSTRAINT current_miners_unique
-      DO NOTHING;`;
   };
 
   // Build Miners Values String

@@ -285,6 +285,7 @@ const Schema = function (logger, executor, configMain) {
         id BIGSERIAL PRIMARY KEY,
         timestamp BIGINT NOT NULL DEFAULT -1,
         recent BIGINT NOT NULL DEFAULT -1,
+        submitted BIGINT NOT NULL DEFAULT -1,
         miner VARCHAR NOT NULL DEFAULT 'unknown',
         worker VARCHAR NOT NULL DEFAULT 'unknown',
         identifier VARCHAR NOT NULL DEFAULT 'master',
@@ -494,12 +495,11 @@ const Schema = function (logger, executor, configMain) {
         miner VARCHAR NOT NULL DEFAULT 'unknown',
         hashrate FLOAT NOT NULL DEFAULT 0,
         invalid INT NOT NULL DEFAULT 0,
-        solo BOOLEAN NOT NULL DEFAULT false,
         stale INT NOT NULL DEFAULT 0,
         type VARCHAR NOT NULL DEFAULT 'primary',
         valid INT NOT NULL DEFAULT 0,
         work FLOAT NOT NULL DEFAULT 0,
-        CONSTRAINT historical_miners_unique UNIQUE (recent, miner, solo, type));
+        CONSTRAINT historical_miners_unique UNIQUE (recent, miner, type));
       CREATE INDEX historical_miners_miner ON "${ pool }".historical_miners(miner, type);
       CREATE INDEX historical_miners_type ON "${ pool }".historical_miners(type);`;
     _this.executor([command], () => callback());
@@ -673,7 +673,7 @@ const Schema = function (logger, executor, configMain) {
         _this.handleDeployment(pool).then(() => {
           const lastIdx = idx === keys.length - 1;
           const lines = [_this.text.databaseSchemaText1(pool)];
-          _this.logger.log('Database', 'Master', lines);
+          _this.logger.log('Database', 'Database', lines);
           if (lastIdx) callback();
         });
       });

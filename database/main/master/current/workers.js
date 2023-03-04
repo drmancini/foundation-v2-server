@@ -75,6 +75,15 @@ const CurrentWorkers = function (logger, configMain) {
       GROUP BY miner;`;
   };
   
+  // Select Current Workers Using Parameters
+  this.selectCurrentWorkersBatchAddresses = function(pool, addresses, type) {
+    return addresses.length >= 1 ? `
+      SELECT DISTINCT ON (worker) * FROM "${ pool }".current_workers
+      WHERE worker IN (${ addresses.join(', ') }) AND type = '${ type }'
+      ORDER BY worker, timestamp DESC;` : `
+      SELECT * FROM "${ pool }".current_workers LIMIT 0;`;
+  };
+
   // Build Workers Values String
   this.buildCurrentWorkersHashrate = function(updates) {
     let values = '';
@@ -210,7 +219,7 @@ const CurrentWorkers = function (logger, configMain) {
   this.deleteCurrentWorkersInactive = function(pool, timestamp) {
     return `
       DELETE FROM "${ pool }".current_workers
-      WHERE timestamp < ${ timestamp };`;
+      WHERE last_share < ${ timestamp };`;
   };
 };
 

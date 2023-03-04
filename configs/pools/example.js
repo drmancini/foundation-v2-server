@@ -136,13 +136,11 @@ config.settings.timeout.rebroadcast = 60000; // ms
 
 // Interval Configuration
 config.settings.interval = {};
-config.settings.interval.blocks = 1000; // ms
 config.settings.interval.checks = 90000; // ms
 config.settings.interval.historical = 600000; // ms
-config.settings.interval.orphans = 60000; // ms
 config.settings.interval.payments = 7200000; // ms
+config.settings.interval.recent = 60000; // ms
 config.settings.interval.rounds = 15000; // ms
-config.settings.interval.segments = 60000; // ms
 config.settings.interval.statistics = 90000; // ms
 
 // Window Configuration
