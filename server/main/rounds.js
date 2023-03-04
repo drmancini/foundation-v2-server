@@ -223,7 +223,7 @@ const Rounds = function (logger, client, config, configMain) {
     const submitted = share.submitted || Date.now();
     const identifier = share.identifier || 'master';
     const times = (Object.keys(updates).length >= 1 && shareType === 'valid') ?
-      _this.handleTimes(updates, submitted) : 0;
+      _this.handleTimes(updates, submitted) : handleTimesIncrement(initial, submitted);
 
     // Return Round Updates
     return {
