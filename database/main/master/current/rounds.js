@@ -6,10 +6,10 @@ const CurrentRounds = function (logger, configMain) {
   this.configMain = configMain;
 
   // Handle Current Parameters
-  this.numbers = ['timestamp', 'invalid', 'stale', 'times', 'valid', 'work'];
+  this.numbers = ['timestamp', 'submitted', 'invalid', 'stale', 'times', 'valid', 'work'];
   this.strings = ['miner', 'worker', 'identifier', 'round', 'type'];
-  this.parameters = ['timestamp', 'miner', 'worker', 'identifier', 'invalid', 'round', 'solo',
-    'stale', 'times', 'type', 'valid', 'work'];
+  this.parameters = ['timestamp', 'submitted', 'miner', 'worker', 'identifier', 'invalid', 'round',
+    'solo', 'stale', 'times', 'type', 'valid', 'work'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -79,6 +79,15 @@ const CurrentRounds = function (logger, configMain) {
     return output + ';';
   };
 
+  // Select Current Rounds Using Parameters
+  this.selectCurrentRoundsBatchAddresses = function(pool, addresses, type) {
+    return addresses.length >= 1 ? `
+      SELECT DISTINCT ON (worker) * FROM "${ pool }".current_rounds
+      WHERE worker IN (${ addresses.join(', ') }) AND type = '${ type }'
+      ORDER BY worker, timestamp DESC;` : `
+      SELECT * FROM "${ pool }".current_rounds LIMIT 0;`;
+  };
+
   // Build Rounds Values String
   this.buildCurrentRoundsMain = function(updates) {
     let values = '';
@@ -86,6 +95,7 @@ const CurrentRounds = function (logger, configMain) {
       values += `(
         ${ round.timestamp },
         ${ round.recent },
+        ${ round.submitted },
         '${ round.miner }',
         '${ round.worker }',
         '${ round.identifier }',
@@ -103,39 +113,20 @@ const CurrentRounds = function (logger, configMain) {
     return values;
   };
 
-  // Select Current Rounds Using Parameters
-  this.selectCurrentRoundsBatchAddressesSolo = function(pool, addresses, type) {
-    return addresses.length >= 1 ? `
-      SELECT DISTINCT ON (worker) * FROM "${ pool }".current_rounds
-      WHERE worker IN (${ addresses.join(', ') })
-      AND solo = true AND type = '${ type }'
-      ORDER BY worker, timestamp DESC;` : `
-      SELECT * FROM "${ pool }".current_rounds LIMIT 0;`;
-  };
-
-  // Select Current Rounds Using Parameters
-  this.selectCurrentRoundsBatchAddressesShared = function(pool, addresses, type) {
-    return addresses.length >= 1 ? `
-      SELECT DISTINCT ON (worker) * FROM "${ pool }".current_rounds
-      WHERE worker IN (${ addresses.join(', ') })
-      AND solo = false AND type = '${ type }'
-      ORDER BY worker, timestamp DESC;` : `
-      SELECT * FROM "${ pool }".current_rounds LIMIT 0;`;
-  };
-
   // Insert Rows Using Round Data
   this.insertCurrentRoundsMain = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_rounds (
-        timestamp, recent, miner,
-        worker, identifier, invalid,
-        round, solo, stale, times,
-        times_increment, type,
+        timestamp, recent, submitted,
+        miner, worker, identifier,
+        invalid, round, solo, stale,
+        times, times_increment, type,
         valid, work)
       VALUES ${ _this.buildCurrentRoundsMain(updates) }
       ON CONFLICT ON CONSTRAINT current_rounds_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
+        submitted = EXCLUDED.submitted,
         invalid = "${ pool }".current_rounds.invalid + EXCLUDED.invalid,
         stale = "${ pool }".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("${ pool }".current_rounds.times, EXCLUDED.times),
@@ -163,10 +154,10 @@ const CurrentRounds = function (logger, configMain) {
   };
 
   // Delete Rows From Current Round
-  this.deleteCurrentRoundsInactive = function(pool, timestamp) {
+  this.deleteCurrentRoundsInactive = function(pool, submitted) {
     return `
       DELETE FROM "${ pool }".current_rounds
-      WHERE round = 'current' AND timestamp < ${ timestamp };`;
+      WHERE round = 'current' AND submitted < ${ submitted };`;
   };
 
   // Delete Rows From Current Round

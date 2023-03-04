@@ -1,4 +1,5 @@
 const Text = require('../../locales/index');
+const utils = require('./utils');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -13,6 +14,10 @@ const Payments = function (logger, client, config, configMain) {
   this.pool = config.name;
   this.text = Text[configMain.language];
 
+  // Stratum Variables
+  process.setMaxListeners(0);
+  this.forkId = process.env.forkId;
+  
   // Client Handlers
   this.master = {
     executor: _this.client.master.commands.executor,
@@ -184,15 +189,14 @@ const Payments = function (logger, client, config, configMain) {
   this.handleFailures = function(blocks, callback) {
 
     // Build Combined Transaction
-    const transaction = ['BEGIN;'];
-
-    // Remove Finished Payments from Table
     const paymentsDelete = blocks.map((block) => `'${ block.round }'`);
-    transaction.push(_this.master.current.payments.deleteCurrentPaymentsMain(
-      _this.pool, paymentsDelete));
+    
+    const transaction = [
+      'BEGIN;',
+      _this.master.current.payments.deleteCurrentPaymentsMain(_this.pool, paymentsDelete),
+      'COMMIT;'];
 
     // Insert Work into Database
-    transaction.push('COMMIT;');
     _this.master.executor(transaction, () => callback());
   };
 
@@ -264,7 +268,8 @@ const Payments = function (logger, client, config, configMain) {
     const transaction = ['BEGIN;'];
 
     // Add User Payment Limits to Transaction 
-    transaction.push(_this.master.current.users.selectCurrentUsers(_this.pool, { payout_limit: 'gt' + _this.config.primary.payments.minPayment }));
+    const parameters = { payout_limit: 'gt' + _this.config.primary.payments.minPayment, type: 'primary' }
+    transaction.push(_this.master.current.users.selectCurrentUsers(_this.pool, parameters));
 
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
@@ -305,6 +310,10 @@ const Payments = function (logger, client, config, configMain) {
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
 
+    // Add User Payment Limits to Transaction 
+    const parameters = { payout_limit: 'gt' + _this.config.primary.payments.minPayment, type: 'auxiliary' }
+    transaction.push(_this.master.current.users.selectCurrentUsers(_this.pool, parameters));
+
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
       const parameters = { solo: block.solo, round: block.round, type: 'auxiliary' };
@@ -315,7 +324,8 @@ const Payments = function (logger, client, config, configMain) {
     // Determine Workers for Rounds
     transaction.push('COMMIT;');
     _this.master.executor(transaction, (results) => {
-      const rounds = results.slice(1, -1).map((round) => round.rows);
+      const users = _this.handleCurrentUsers(results[1].rows) || {};
+      const rounds = results.slice(2, -1).map((round) => round.rows);
 
       // Collect Round/Worker Data and Amounts
       const sending = true;
@@ -327,7 +337,7 @@ const Payments = function (logger, client, config, configMain) {
           // Validate and Send Out Auxiliary Payments
           _this.stratum.stratum.handleAuxiliaryBalances(payments, (error) => {
             if (error) _this.handleFailures(updates, () => callback(error));
-            else _this.stratum.stratum.handleAuxiliaryPayments(payments, (error, amounts, balances, transaction) => {
+            else _this.stratum.stratum.handleAuxiliaryPayments(payments, users, (error, amounts, balances, transaction) => {
               if (error) _this.handleFailures(updates, () => callback(error));
               else _this.handleUpdates(updates, rounds, amounts, balances, transaction, 'auxiliary', () => callback(null));
             });
@@ -441,7 +451,7 @@ const Payments = function (logger, client, config, configMain) {
       'BEGIN;',
       _this.master.current.blocks.selectCurrentBlocksMain(_this.pool, { category: 'generate', type: blockType }),
       _this.master.current.miners.selectCurrentMinersMain(_this.pool, { balance: 'gt0', type: blockType }),
-      _this.master.current.rounds.deleteCurrentRoundsInactive(_this.pool, roundsWindow),
+      // _this.master.current.rounds.deleteCurrentRoundsInactive(_this.pool, roundsWindow),
       'COMMIT;'];
 
     // Establish Separate Behavior
@@ -453,23 +463,24 @@ const Payments = function (logger, client, config, configMain) {
   // Start Payments Interval Management
   /* istanbul ignore next */
   this.handleInterval = function() {
-    const minInterval = _this.config.settings.interval.payments * 0.75;
-    const maxInterval = _this.config.settings.interval.payments * 1.25;
-    const random = Math.floor(Math.random() * (maxInterval - minInterval) + minInterval);
+    const interval = _this.config.settings.interval.payments;
     setTimeout(() => {
       _this.handleInterval();
       if (_this.config.primary.payments.enabled) _this.handlePayments('primary', () => {});
       if (_this.config.auxiliary && _this.config.auxiliary.enabled && _this.config.auxiliary.payments.enabled) {
         _this.handlePayments('auxiliary', () => {});
       }
-    }, random);
+    }, interval);
   };
 
   // Start Payments Capabilities
   /* istanbul ignore next */
   this.setupPayments = function(stratum, callback) {
     _this.stratum = stratum;
-    _this.handleInterval();
+    const interval = _this.config.settings.interval.payments;
+    const numForks = utils.countProcessForks(_this.configMain);
+    const timing = parseFloat(_this.forkId) * interval / numForks;
+    setTimeout(() => _this.handleInterval(), timing);
     callback();
   };
 };

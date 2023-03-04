@@ -1,9 +1,14 @@
+const Text = require('../../../../locales/index');
+
+////////////////////////////////////////////////////////////////////////////////
+
 // Main Schema Function
 const LocalShares = function (logger, configMain) {
 
   const _this = this;
   this.logger = logger;
   this.configMain = configMain;
+  this.text = Text[configMain.language];
 
   // Handle Local Parameters
   this.numbers = ['timestamp', 'submitted', 'blockdiff', 'clientdiff', 'headerdiff', 'height', 'reward', 'sharediff'];

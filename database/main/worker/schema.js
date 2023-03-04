@@ -46,7 +46,7 @@ const Schema = function (logger, executor, configMain) {
         timestamp BIGINT NOT NULL DEFAULT -1,
         submitted BIGINT NOT NULL DEFAULT -1,
         ip VARCHAR NOT NULL DEFAULT '0.0.0.0',
-        port VARCHAR NOT NULL DEFAULT '0000',
+        port INT NOT NULL DEFAULT -1,
         addrprimary VARCHAR NOT NULL DEFAULT 'unknown',
         addrauxiliary VARCHAR NOT NULL DEFAULT 'unknown',
         blockdiffprimary FLOAT NOT NULL DEFAULT -1,
@@ -119,7 +119,7 @@ const Schema = function (logger, executor, configMain) {
         _this.handleDeployment(pool).then(() => {
           const lastIdx = idx === keys.length - 1;
           const lines = [_this.text.databaseSchemaText2(pool)];
-          _this.logger.log('Database', 'Worker', lines);
+          _this.logger.log('Database', 'Database', lines);
           if (lastIdx) callback();
         });
       });

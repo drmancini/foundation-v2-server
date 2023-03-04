@@ -15,11 +15,18 @@ const Statistics = function (logger, client, config, configMain, template) {
   this.template = template;
   this.text = Text[configMain.language];
 
+  // Stratum Variables
+  process.setMaxListeners(0);
+  this.forkId = process.env.forkId;
+  
   // Client Handlers
   this.master = {
     executor: _this.client.master.commands.executor,
     current: _this.client.master.commands.current,
     historical: _this.client.master.commands.historical };
+  this.worker = {
+    executor: _this.client.worker.commands.executor,
+    local: _this.client.worker.commands.local };
 
   // Handle Efficiency Updates
   this.handleEfficiency = function(data) {
@@ -295,7 +302,8 @@ const Statistics = function (logger, client, config, configMain, template) {
     if (lookups[16].rows.length >= 1) {
       const hashrate = lookups[8].rows;
       const sharedWorkers = lookups[16].rows;
-      const temp = lookups[21].rows;
+      // console.log(sharedWorkers)
+      // const temp = lookups[21].rows;
       const sharedWorkersUpdates = _this.handleCurrentWorkers(hashrate, sharedWorkers, 'primary');
       transaction.push(_this.master.current.workers.insertCurrentWorkersHashrate(
         _this.pool, sharedWorkersUpdates));
@@ -431,7 +439,7 @@ const Statistics = function (logger, client, config, configMain, template) {
       _this.master.current.miners.deleteCurrentMinersInactive(_this.pool, purgeWindow), //ok
       _this.master.current.miners.selectCurrentMinersMain(_this.pool, { type: blockType }), //ok
       _this.master.current.transactions.deleteCurrentTransactionsInactive(_this.pool, updateWindow), //ok
-      _this.master.current.workers.deleteCurrentWorkersInactive(_this.pool, purgeWindow),
+      _this.master.current.workers.deleteCurrentWorkersInactive(_this.pool, purgeWindow), // ok
       _this.master.current.workers.selectCurrentWorkersMain(_this.pool, { solo: true, type: blockType }), //ok
       _this.master.current.workers.selectCurrentWorkersMain(_this.pool, { solo: false, type: blockType }), //ok
       _this.master.historical.miners.selectHistoricalMinersMain(_this.pool, { recent: recentSnapshot, type: blockType }),
