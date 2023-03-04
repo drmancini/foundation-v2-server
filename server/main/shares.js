@@ -38,7 +38,7 @@ const Shares = function (logger, client, config, configMain) {
       port: shareData.port,
       addrprimary: shareData.addrPrimary,
       addrauxiliary: shareData.addrAuxiliary,
-      blockdiffprimary: shareData.blockDiffPrimary,
+      blockdiffprimary: shareData.blockDiffPrimary || -1,
       blockdiffauxiliary: shareData.blockDiffAuxiliary || -1,
       blockvalid: blockValid || false,
       blocktype: shareData.blockType,
