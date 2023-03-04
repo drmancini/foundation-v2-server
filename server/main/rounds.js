@@ -880,26 +880,26 @@ const Rounds = function (logger, client, config, configMain) {
     case 'primary':
       _this.master.executor(transaction, (lookups) => {
         _this.handleUpdates(lookups, segment, () => {
-          // if (segment[0].blockvalid) _this.handlePrimary(lookups, segment, () => {
-          //   _this.handleCleanup(segment, () => callback());
-          // });
-          // else _this.handleCleanup(segment, () => callback());
+          if (segment[0].blockvalid) _this.handlePrimary(lookups, segment, () => {
+            _this.handleCleanup(segment, () => callback());
+          });
+          else _this.handleCleanup(segment, () => callback());
           _this.handleCleanup(segment, () => callback());
         });
       });
       break;
 
     // Auxiliary Behavior
-    // case 'auxiliary':
-    //   _this.master.executor(transaction, (lookups) => {
-    //     _this.handleUpdates(lookups, segment, () => {
-    //       if (segment[0].blockvalid) _this.handleAuxiliary(lookups, segment, () => {
-    //         _this.handleCleanup(segment, () => callback());
-    //       });
-    //       else _this.handleCleanup(segment, () => callback());
-    //     });
-    //   });
-    //   break;
+    case 'auxiliary':
+      _this.master.executor(transaction, (lookups) => {
+        _this.handleUpdates(lookups, segment, () => {
+          if (segment[0].blockvalid) _this.handleAuxiliary(lookups, segment, () => {
+            _this.handleCleanup(segment, () => callback());
+          });
+          else _this.handleCleanup(segment, () => callback());
+        });
+      });
+      break;
 
     // Share Behavior
     case 'share':
