@@ -77,20 +77,18 @@ describe('Test database miners functionality', () => {
       recent: 1,
       miner: 'miner1',
       hashrate: 1,
-      solo: false,
       type: 'primary',
     };
     const response = miners.insertHistoricalMinersHashrate('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_miners (
         timestamp, recent, miner,
-        hashrate, solo, type)
+        hashrate, type)
       VALUES (
         1,
         1,
         'miner1',
         1,
-        false,
         'primary')
       ON CONFLICT ON CONSTRAINT historical_miners_unique
       DO UPDATE SET
@@ -106,26 +104,23 @@ describe('Test database miners functionality', () => {
       recent: 1,
       miner: 'miner1',
       hashrate: 1,
-      solo: false,
       type: 'primary',
     };
     const response = miners.insertHistoricalMinersHashrate('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_miners (
         timestamp, recent, miner,
-        hashrate, solo, type)
+        hashrate, type)
       VALUES (
         1,
         1,
         'miner1',
         1,
-        false,
         'primary'), (
         1,
         1,
         'miner1',
         1,
-        false,
         'primary')
       ON CONFLICT ON CONSTRAINT historical_miners_unique
       DO UPDATE SET
@@ -141,7 +136,6 @@ describe('Test database miners functionality', () => {
       recent: 1,
       miner: 'miner1',
       invalid: 0,
-      solo: false,
       stale: 0,
       type: 'primary',
       valid: 1,
@@ -151,14 +145,13 @@ describe('Test database miners functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".historical_miners (
         timestamp, recent, miner,
-        invalid, solo, stale, type,
+        invalid, stale, type,
         valid, work)
       VALUES (
         1,
         1,
         'miner1',
         0,
-        false,
         0,
         'primary',
         1,
@@ -180,7 +173,6 @@ describe('Test database miners functionality', () => {
       recent: 1,
       miner: 'miner1',
       invalid: 0,
-      solo: false,
       stale: 0,
       type: 'primary',
       valid: 1,
@@ -190,14 +182,13 @@ describe('Test database miners functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".historical_miners (
         timestamp, recent, miner,
-        invalid, solo, stale, type,
+        invalid, stale, type,
         valid, work)
       VALUES (
         1,
         1,
         'miner1',
         0,
-        false,
         0,
         'primary',
         1,
@@ -206,7 +197,6 @@ describe('Test database miners functionality', () => {
         1,
         'miner1',
         0,
-        false,
         0,
         'primary',
         1,

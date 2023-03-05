@@ -93,7 +93,7 @@ const CurrentUsers = function (logger, configMain) {
   this.createCurrentUsers = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_users (
-        miner, joined, payout_limit
+        miner, joined, payout_limit,
         type)
       VALUES ${ _this.buildcreateCurrentUsers(updates) }
       ON CONFLICT ON CONSTRAINT current_users_unique

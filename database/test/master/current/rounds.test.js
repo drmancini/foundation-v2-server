@@ -51,12 +51,12 @@ describe('Test database rounds functionality', () => {
     const parameters = { round: 'current', solo: false, type: 'primary' };
     const response = rounds.selectCurrentRoundsAggregates('Pool-Main', parameters);
     const expected = `
-      SELECT worker, round, solo,
+      SELECT miner, worker, round, solo,
         SUM(times_increment) AS times,
         SUM(work) AS work
       FROM "Pool-Main".current_rounds
       WHERE round = 'current' AND solo = false AND type = 'primary'
-      GROUP BY worker, round, solo;`;
+      GROUP BY worker, miner, round, solo;`;
     expect(response).toBe(expected);
   });
 
@@ -119,11 +119,10 @@ describe('Test database rounds functionality', () => {
   test('Test rounds command handling [9]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const addresses = [ 'address1', 'address2' ];
-    const response = rounds.selectCurrentRoundsBatchAddressesSolo('Pool-Main', addresses, 'primary');
+    const response = rounds.selectCurrentRoundsBatchAddresses('Pool-Main', addresses, 'primary');
     const expected = `
       SELECT DISTINCT ON (worker) * FROM "Pool-Main".current_rounds
-      WHERE worker IN (address1, address2)
-      AND solo = true AND type = 'primary'
+      WHERE worker IN (address1, address2) AND type = 'primary'
       ORDER BY worker, timestamp DESC;`;
     expect(response).toBe(expected);
   });
@@ -131,30 +130,38 @@ describe('Test database rounds functionality', () => {
   test('Test rounds command handling [10]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const addresses = [];
-    const response = rounds.selectCurrentRoundsBatchAddressesSolo('Pool-Main', addresses, 'primary');
+    const response = rounds.selectCurrentRoundsBatchAddresses('Pool-Main', addresses, 'primary');
     const expected = `
       SELECT * FROM "Pool-Main".current_rounds LIMIT 0;`;
     expect(response).toBe(expected);
   });
 
-  test('Test rounds command handling [11]', () => {
+  test('Test rounds command handling [10]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
-    const addresses = [ 'address1', 'address2' ];
-    const response = rounds.selectCurrentRoundsBatchAddressesShared('Pool-Main', addresses, 'primary');
+    const response = rounds.selectCurrentRoundsPayments('Pool-Main', 'round1', false, 'primary');
     const expected = `
-      SELECT DISTINCT ON (worker) * FROM "Pool-Main".current_rounds
-      WHERE worker IN (address1, address2)
-      AND solo = false AND type = 'primary'
-      ORDER BY worker, timestamp DESC;`;
+      SELECT DISTINCT ON (m.worker, m.round, m.solo, m.type)
+        t.timestamp, t.submitted, t.recent, m.miner, m.worker,
+        m.identifier, t.invalid, m.round, m.solo, t.stale, t.times, m.type,
+        t.valid, t.work FROM (
+      SELECT worker, round, solo, type, MAX(timestamp) as timestamp,
+        MAX(submitted) as submitted, MAX(recent) as recent,
+        SUM(invalid) as invalid, SUM(stale) as stale, SUM(times) as times,
+        SUM(valid) as valid, SUM(work) as work
+      FROM "Pool-Main".current_rounds
+      GROUP BY worker, round, solo, type
+        ) t JOIN "Pool-Main".current_rounds m ON m.worker = t.worker
+        AND m.round = t.round AND m.solo = t.solo AND m.type = t.type
+      WHERE m.round = 'round1' AND m.solo = false
+      AND m.type = 'primary';`;
     expect(response).toBe(expected);
   });
 
-  test('Test rounds command handling [12]', () => {
+  test('Test rounds command handling [9]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
-    const addresses = [];
-    const response = rounds.selectCurrentRoundsBatchAddressesShared('Pool-Main', addresses, 'primary');
-    const expected = `
-      SELECT * FROM "Pool-Main".current_rounds LIMIT 0;`;
+    const parameters = { identifier: 'master', timestamp: 'gt0', type: 'primary' };
+    const response = rounds.selectCurrentRoundsSumWork('Pool-Main', parameters);
+    const expected = `SELECT worker, SUM(work) AS work FROM "Pool-Main".current_rounds WHERE identifier = 'master' AND timestamp > 0 AND type = 'primary'GROUP BY worker;`;
     expect(response).toBe(expected);
   });
 
@@ -163,6 +170,7 @@ describe('Test database rounds functionality', () => {
     const updates = {
       timestamp: 1,
       recent: 1,
+      submitted: 1,
       miner: 'miner1',
       worker: 'worker1',
       round: 'round1',
@@ -179,12 +187,13 @@ describe('Test database rounds functionality', () => {
     const response = rounds.insertCurrentRoundsMain('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_rounds (
-        timestamp, recent, miner,
-        worker, identifier, invalid,
-        round, solo, stale, times,
-        times_increment, type,
+        timestamp, recent, submitted,
+        miner, worker, identifier,
+        invalid, round, solo, stale,
+        times, times_increment, type,
         valid, work)
       VALUES (
+        1,
         1,
         1,
         'miner1',
@@ -202,6 +211,7 @@ describe('Test database rounds functionality', () => {
       ON CONFLICT ON CONSTRAINT current_rounds_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
+        submitted = EXCLUDED.submitted,
         invalid = "Pool-Main".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Main".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Main".current_rounds.times, EXCLUDED.times),
@@ -216,6 +226,7 @@ describe('Test database rounds functionality', () => {
     const updates = {
       timestamp: 1,
       recent: 1,
+      submitted: 1,
       miner: 'miner1',
       worker: 'worker1',
       round: 'round1',
@@ -232,12 +243,13 @@ describe('Test database rounds functionality', () => {
     const response = rounds.insertCurrentRoundsMain('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_rounds (
-        timestamp, recent, miner,
-        worker, identifier, invalid,
-        round, solo, stale, times,
-        times_increment, type,
+        timestamp, recent, submitted,
+        miner, worker, identifier,
+        invalid, round, solo, stale,
+        times, times_increment, type,
         valid, work)
       VALUES (
+        1,
         1,
         1,
         'miner1',
@@ -252,6 +264,7 @@ describe('Test database rounds functionality', () => {
         'primary',
         1,
         8), (
+        1,
         1,
         1,
         'miner1',
@@ -269,6 +282,7 @@ describe('Test database rounds functionality', () => {
       ON CONFLICT ON CONSTRAINT current_rounds_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
+        submitted = EXCLUDED.submitted,
         invalid = "Pool-Main".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Main".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Main".current_rounds.times, EXCLUDED.times),
@@ -305,7 +319,7 @@ describe('Test database rounds functionality', () => {
     const response = rounds.deleteCurrentRoundsInactive('Pool-Main', 1);
     const expected = `
       DELETE FROM "Pool-Main".current_rounds
-      WHERE round = 'current' AND timestamp < 1;`;
+      WHERE round = 'current' AND submitted < 1;`;
     expect(response).toBe(expected);
   });
 

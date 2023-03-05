@@ -16,8 +16,7 @@ describe('Test database users functionality', () => {
     const users = new Users(logger, configMainCopy);
     expect(typeof users.configMain).toBe('object');
     expect(typeof users.selectCurrentUsers).toBe('function');
-    expect(typeof users.insertCurrentUsersMain).toBe('function');
-    expect(typeof users.createCurrentUser).toBe('function');
+    expect(typeof users.createCurrentUsers).toBe('function');
   });
 
   test('Test query handling [1]', () => {
@@ -75,99 +74,59 @@ describe('Test database users functionality', () => {
 
   test('Test users command handling [4]', () => {
     const users = new Users(logger, configMainCopy);
-    const updates = {
-      miner: 'miner1',
-      type: 'primary',
-      joined: 1234,
-      email: 'email@email.xx',
-      token: '123asd',
-      subscribed: true,
-      locale: 'en-US',
-      payout_limit: 100,
-      payment_notifications: true,
-      activity_limit: 10,
-      activity_notifications: true,
-    };
-    const response = users.insertCurrentUsersMain('Pool-Main', [updates]);
+    const addresses = ['miner1'];
+    const response = users.selectCurrentUsersBatchAddresses('Pool-Main', addresses, 'primary');
     const expected = `
-      INSERT INTO "Pool-Main".current_users (
-        miner, joined, email, token, subscribed,
-        locale, payout_limit, payment_notifications,
-        activity_limit, activity_notifications)
-      VALUES (
-        'miner1',
-        1234,
-        'email@email.xx',
-        '123asd',
-        true,
-        'en-US',
-        100,
-        true,
-        10,
-        true)
-      ON CONFLICT ON CONSTRAINT current_users_unique
-      DO NOTHING;`;
+      SELECT DISTINCT ON (miner) * FROM "Pool-Main".current_users
+      WHERE miner IN (miner1) AND type = 'primary'
+      ORDER BY miner;`;
     expect(response).toBe(expected);
   });
 
   test('Test users command handling [5]', () => {
     const users = new Users(logger, configMainCopy);
-    const updates = {
-      miner: 'miner1',
-      type: 'primary',
-      joined: 1234,
-      email: 'email@email.xx',
-      token: '123asd',
-      subscribed: true,
-      locale: 'en-US',
-      payout_limit: 100,
-      payment_notifications: true,
-      activity_limit: 10,
-      activity_notifications: true,
-    };
-    const response = users.insertCurrentUsersMain('Pool-Main', [updates, updates]);
+    const addresses = [];
+    const response = users.selectCurrentUsersBatchAddresses('Pool-Main', addresses, 'primary');
     const expected = `
-      INSERT INTO "Pool-Main".current_users (
-        miner, joined, email, token, subscribed,
-        locale, payout_limit, payment_notifications,
-        activity_limit, activity_notifications)
-      VALUES (
-        'miner1',
-        1234,
-        'email@email.xx',
-        '123asd',
-        true,
-        'en-US',
-        100,
-        true,
-        10,
-        true), (
-        'miner1',
-        1234,
-        'email@email.xx',
-        '123asd',
-        true,
-        'en-US',
-        100,
-        true,
-        10,
-        true)
-      ON CONFLICT ON CONSTRAINT current_users_unique
-      DO NOTHING;`;
+      SELECT * FROM "Pool-Main".current_users LIMIT 0;`;
     expect(response).toBe(expected);
   });
 
   test('Test users command handling [6]', () => {
     const users = new Users(logger, configMainCopy);
-    const parameters = { miner: 'miner1', joined: 1, payout_limit: 2 };
-    const response = users.createCurrentUser('Pool-Main', parameters);
+    const parameters = { miner: 'miner1', joined: 1, payout_limit: 2, type: 'primary' };
+    const response = users.createCurrentUsers('Pool-Main', [parameters]);
     const expected = `
       INSERT INTO "Pool-Main".current_users (
-        miner, joined, payout_limit)
+        miner, joined, payout_limit,
+        type)
       VALUES (
         'miner1',
         1,
-        2)
+        2,
+        'primary')
+      ON CONFLICT ON CONSTRAINT current_users_unique
+      DO NOTHING;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test users command handling [7]', () => {
+    const users = new Users(logger, configMainCopy);
+    const parameters = { miner: 'miner1', joined: 1, payout_limit: 2, type: 'primary' };
+    const response = users.createCurrentUsers('Pool-Main', [parameters, parameters]);
+    const expected = `
+      INSERT INTO "Pool-Main".current_users (
+        miner, joined, payout_limit,
+        type)
+      VALUES (
+        'miner1',
+        1,
+        2,
+        'primary'), (
+        'miner1',
+        1,
+        2,
+        'primary')
       ON CONFLICT ON CONSTRAINT current_users_unique
       DO NOTHING;`;
     expect(response).toBe(expected);

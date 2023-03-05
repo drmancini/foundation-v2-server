@@ -75,7 +75,7 @@ const CurrentWorkers = function (logger, configMain) {
       GROUP BY miner;`;
   };
   
-  // Select Current Workers Using Parameters
+  // Select Current Workers for Batching
   this.selectCurrentWorkersBatchAddresses = function(pool, addresses, type) {
     return addresses.length >= 1 ? `
       SELECT DISTINCT ON (worker) * FROM "${ pool }".current_workers
