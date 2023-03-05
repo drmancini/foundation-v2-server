@@ -71,7 +71,7 @@ describe('Test schema functionality', () => {
         timestamp BIGINT NOT NULL DEFAULT -1,
         submitted BIGINT NOT NULL DEFAULT -1,
         ip VARCHAR NOT NULL DEFAULT '0.0.0.0',
-        port VARCHAR NOT NULL DEFAULT '0000',
+        port INT NOT NULL DEFAULT -1,
         addrprimary VARCHAR NOT NULL DEFAULT 'unknown',
         addrauxiliary VARCHAR NOT NULL DEFAULT 'unknown',
         blockdiffprimary FLOAT NOT NULL DEFAULT -1,
