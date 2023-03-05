@@ -213,7 +213,7 @@ const Schema = function (logger, executor, configMain) {
         type VARCHAR NOT NULL DEFAULT 'primary',
         valid INT NOT NULL DEFAULT 0,
         CONSTRAINT current_miners_unique UNIQUE (miner, type));
-      CREATE INDEX current_miners_active ON "${ pool }".current_miners(active_shared, hashrate, solo, type);
+      CREATE INDEX current_miners_active ON "${ pool }".current_miners(active_shared, hashrate, type);
       CREATE INDEX current_miners_balance ON "${ pool }".current_miners(balance, type);
       CREATE INDEX current_miners_miner ON "${ pool }".current_miners(miner, type);
       CREATE INDEX current_miners_type ON "${ pool }".current_miners(type);`;
