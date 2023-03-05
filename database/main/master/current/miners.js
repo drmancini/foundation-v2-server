@@ -61,15 +61,6 @@ const CurrentMiners = function (logger, configMain) {
     return output + ';';
   };
 
-  // Select Current Rounds Using Parameters
-  this.selectCurrentMinersBatchAddresses = function(pool, addresses, type) {
-    return addresses.length >= 1 ? `
-      SELECT DISTINCT ON (miner) * FROM "${ pool }".current_miners
-      WHERE miner IN (${ addresses.join(', ') }) AND type = '${ type }'
-      ORDER BY miner, timestamp DESC;` : `
-      SELECT * FROM "${ pool }".current_miners LIMIT 0;`;
-  };
-
   // Build Miners Values String
   this.buildCurrentMinersHashrate = function(updates) {
     let values = '';

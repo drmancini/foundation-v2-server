@@ -80,6 +80,25 @@ describe('Test database workers functionality', () => {
 
   test('Test workers command handling [5]', () => {
     const workers = new CurrentWorkers(logger, configMainCopy);
+    const addresses = ['address1', 'address2', 'address3'];
+    const response = workers.selectCurrentWorkersBatchAddresses('Pool-Main', addresses, 'primary');
+    const expected = `
+      SELECT DISTINCT ON (worker) * FROM "Pool-Main".current_workers
+      WHERE worker IN (address1, address2, address3) AND type = 'primary'
+      ORDER BY worker, timestamp DESC;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test workers command handling [6]', () => {
+    const workers = new CurrentWorkers(logger, configMainCopy);
+    const response = workers.selectCurrentWorkersBatchAddresses('Pool-Main', [], 'primary');
+    const expected = `
+      SELECT * FROM "Pool-Main".current_workers LIMIT 0;`
+    expect(response).toBe(expected);
+  });
+
+  test('Test workers command handling [7]', () => {
+    const workers = new CurrentWorkers(logger, configMainCopy);
     const updates = {
       timestamp: 1,
       worker: 'worker1',
@@ -111,7 +130,7 @@ describe('Test database workers functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test workers command handling [6]', () => {
+  test('Test workers command handling [8]', () => {
     const workers = new CurrentWorkers(logger, configMainCopy);
     const updates = {
       timestamp: 1,
@@ -151,7 +170,7 @@ describe('Test database workers functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test workers command handling [7]', () => {
+  test('Test workers command handling [9]', () => {
     const workers = new CurrentWorkers(logger, configMainCopy);
     const updates = {
       worker: 'worker1',
@@ -198,7 +217,7 @@ describe('Test database workers functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test workers command handling [8]', () => {
+  test('Test workers command handling [10]', () => {
     const workers = new CurrentWorkers(logger, configMainCopy);
     const updates = {
       worker: 'worker1',
@@ -256,7 +275,7 @@ describe('Test database workers functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test workers command handling [7]', () => {
+  test('Test workers command handling [11]', () => {
     const workers = new CurrentWorkers(logger, configMainCopy);
     const updates = {
       timestamp: 1,
@@ -295,7 +314,7 @@ describe('Test database workers functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test workers command handling [8]', () => {
+  test('Test workers command handling [12]', () => {
     const workers = new CurrentWorkers(logger, configMainCopy);
     const updates = {
       timestamp: 1,
@@ -344,7 +363,7 @@ describe('Test database workers functionality', () => {
   });
 
 
-  test('Test workers command handling [9]', () => {
+  test('Test workers command handling [13]', () => {
     const workers = new CurrentWorkers(logger, configMainCopy);
     const response = workers.updateCurrentSharedWorkersRoundsReset('Pool-Main', 1, 'primary');
     const expected = `
@@ -356,7 +375,7 @@ describe('Test database workers functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test workers command handling [10]', () => {
+  test('Test workers command handling [14]', () => {
     const workers = new CurrentWorkers(logger, configMainCopy);
     const response = workers.updateCurrentSoloWorkersRoundsReset('Pool-Main', 1, 'miner1', 'primary');
     const expected = `
@@ -369,7 +388,7 @@ describe('Test database workers functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test workers command handling [11]', () => {
+  test('Test workers command handling [15]', () => {
     const workers = new CurrentWorkers(logger, configMainCopy);
     const response = workers.selectCurrentWorkersLastShare('Pool-Main', 100, 50, false, 'primary');
     const expected = `
@@ -386,7 +405,7 @@ describe('Test database workers functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test workers command handling [12]', () => {
+  test('Test workers command handling [16]', () => {
     const workers = new CurrentWorkers(logger, configMainCopy);
     const response = workers.deleteCurrentWorkersInactive('Pool-Main', 1);
     const expected = `

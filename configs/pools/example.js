@@ -136,19 +136,20 @@ config.settings.timeout.rebroadcast = 60000; // ms
 
 // Interval Configuration
 config.settings.interval = {};
+config.settings.interval.blocks = 1000; // Block Polling
 config.settings.interval.checks = 90000; // ms
 config.settings.interval.historical = 600000; // ms
 config.settings.interval.payments = 7200000; // ms
-config.settings.interval.recent = 60000; // ms
-config.settings.interval.rounds = 15000; // ms
+config.settings.interval.recent = 600000; // ms
+config.settings.interval.rounds = 60000; // ms
 config.settings.interval.statistics = 90000; // ms
 
 // Window Configuration
 config.settings.window = {};
-config.settings.window.hashrate = 300000; // ms
-config.settings.window.inactive = 600000; // ms
+config.settings.window.hashrate = 300000; // 
+config.settings.window.inactive = 600000; // Worker Flag
 config.settings.window.purge = 604800000; // ms
-config.settings.window.snapshots = 720000; // ms
+config.settings.window.snapshots = 720000; // Historical Snapshots
 config.settings.window.rounds = 21600000; // ms
 config.settings.window.updates = 300000; // ms
 

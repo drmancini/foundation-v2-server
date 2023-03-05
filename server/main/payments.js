@@ -273,9 +273,8 @@ const Payments = function (logger, client, config, configMain) {
 
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
-      const parameters = { solo: block.solo, round: block.round, type: 'primary' };
-      transaction.push(_this.master.current.rounds.selectCurrentRoundsAggregates(
-        _this.pool, parameters));
+      transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
+        _this.pool, block.round, block.solo, 'primary'));
     });
 
     // Determine Workers for Rounds
@@ -316,9 +315,8 @@ const Payments = function (logger, client, config, configMain) {
 
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
-      const parameters = { solo: block.solo, round: block.round, type: 'auxiliary' };
-      transaction.push(_this.master.current.rounds.selectCurrentRoundsAggregates(
-        _this.pool, parameters));
+      transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
+        _this.pool, block.round, block.solo, 'auxiliary'));
     });
 
     // Determine Workers for Rounds
