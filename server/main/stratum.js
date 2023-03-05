@@ -28,15 +28,16 @@ const Stratum = function (logger, client, config, configMain, template) {
   // Geenerate Difficulty Cache From Rounds Data
   this.parseDifficultyCache = function(callback) {
     const timestamp = Date.now();
-    const cutoff = timestamp - 6 * 3600 * 1000;
+    const cutoff = timestamp - 12 * 3600 * 1000;
     const parameters = {
       identifier: _this.configMain.identifier,
       timestamp: 'gt' + cutoff,
+      type: 'primary',
     };
 
     const transaction = [
       'BEGIN;',
-      _this.master.current.rounds.selectCurrentRoundsMain(_this.pool, parameters),
+      _this.master.current.rounds.selectCurrentRoundsSumWork(_this.pool, parameters),
       'COMMIT;'];
 
       _this.master.executor(transaction, (lookups) => {

@@ -88,6 +88,20 @@ const CurrentRounds = function (logger, configMain) {
       SELECT * FROM "${ pool }".current_rounds LIMIT 0;`;
   };
 
+  // Sum Work in Current Rounds Using Parameters
+  this.selectCurrentRoundsSumWork = function(pool, parameters) {
+    let output = `SELECT worker, SUM(work) AS work FROM "${ pool }".current_rounds`;
+    const filtered = Object.keys(parameters).filter((key) => _this.parameters.includes(key));
+    filtered.forEach((parameter, idx) => {
+      if (idx === 0) output += ' WHERE ';
+      else output += ' AND ';
+      output += `${ parameter }`;
+      output += _this.handleQueries(parameters, parameter);
+    });
+    output += `GROUP BY worker;`;
+    return output;
+  };
+
   // Build Rounds Values String
   this.buildCurrentRoundsMain = function(updates) {
     let values = '';
