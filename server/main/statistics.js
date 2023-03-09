@@ -226,6 +226,7 @@ const Statistics = function (logger, client, config, configMain, template) {
     const algorithm = _this.config.primary.coin.algorithm || 'sha256d';
     const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
 
+    // console.log(_this.config.settings.window.hashrate)
     // Return Workers Updates
     return workers.map((worker) => {
       const section = worker.recent == snapshot ? tenMinutes : timestamp - snapshot;
