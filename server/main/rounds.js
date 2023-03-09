@@ -620,7 +620,7 @@ const Rounds = function (logger, client, config, configMain) {
       'COMMIT;'];
 
     // Insert Work into Database
-    _this.master.executor(transaction, () => callback());
+    _this.worker.executor(transaction, () => callback());
   };
 
   // Handle Round Updates
