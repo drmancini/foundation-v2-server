@@ -105,7 +105,7 @@ const Rounds = function (logger, client, config, configMain) {
     // Calculate Features of Blocks
     const identifier = share.identifier || 'master';
     const difficulty = blockType === 'primary' ? share.blockdiffprimary : share.blockdiffauxiliary;
-    const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary
+    const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
     const work = minerType ? (round.work || 0) : (metadata.work || 0);
 
     // Calculate Luck for Block
@@ -138,7 +138,7 @@ const Rounds = function (logger, client, config, configMain) {
     // Calculate Features of Hashrate
     const current = shareType === 'valid' ? share.clientdiff : 0;
     const identifier = share.identifier || 'master';
-    const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary
+    const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
 
     // Return Hashrate Updates
     return {
@@ -164,7 +164,7 @@ const Rounds = function (logger, client, config, configMain) {
     const valid = (updates.valid || 0) + (shareType === 'valid' ? 1 : 0);
     const current = (updates.work || 0) + (shareType === 'valid' ? share.clientdiff : 0);
     const difficulty = blockType === 'primary' ? share.blockdiffprimary : share.blockdiffauxiliary;
-    const work = (initial.work || 0) + (updates.work || 0)
+    const work = (initial.work || 0) + (updates.work || 0);
 
     // Calculate Efficiency/Effort Metadata
     const efficiency = _this.handleEfficiency(initial, shareType);
@@ -191,7 +191,7 @@ const Rounds = function (logger, client, config, configMain) {
     // Calculate Miner Features
     const minerType = utils.checkSoloMining(_this.config, share);
     const difficulty = blockType === 'primary' ? share.blockdiffprimary : share.blockdiffauxiliary;
-    const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary
+    const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
 
     // Calculate Effort Increment for Solo Miners
     const effortIncrement = minerType ? _this.handleEffortIncrement(share, difficulty, shareType) : 0;
@@ -217,7 +217,7 @@ const Rounds = function (logger, client, config, configMain) {
     const stale = (updates.stale || 0) + (shareType === 'stale' ? 1 : 0);
     const valid = (updates.valid || 0) + (shareType === 'valid' ? 1 : 0);
     const current = (updates.work || 0) + (shareType === 'valid' ? share.clientdiff : 0);
-    const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary
+    const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
 
     // Calculate Features of Rounds [2]
     const submitted = share.submitted || Date.now();
@@ -251,7 +251,7 @@ const Rounds = function (logger, client, config, configMain) {
     // Calculate Features of Worker
     const difficulty = blockType === 'primary' ? share.blockdiffprimary : share.blockdiffauxiliary;
     const identifier = share.identifier || 'master';
-    const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary
+    const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
 
     // Calculate Worker Effort
     const effortIncrement = _this.handleEffortIncrement(share, difficulty, shareType);
@@ -288,7 +288,7 @@ const Rounds = function (logger, client, config, configMain) {
   this.handleHistoricalMetadataBlocks = function(share, minerType, blockType) {
 
     // Set Time Values
-    const timestamp = share.submitTime || Date.now();
+    const timestamp = share.submitted || Date.now();
     const tenMinutes = 600000;
     const recent = Math.ceil(timestamp / tenMinutes) * tenMinutes;
 
@@ -369,7 +369,7 @@ const Rounds = function (logger, client, config, configMain) {
 
       // Calculate Share Features
       let shareType = 'valid';
-      const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary
+      const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
       if (share.error && share.error === 'job not found') shareType = 'stale';
       else if (!share.sharevalid || share.error) shareType = 'invalid';
 
@@ -394,7 +394,7 @@ const Rounds = function (logger, client, config, configMain) {
       // Calculate Share Features
       let shareType = 'valid';
       const minerType = utils.checkSoloMining(_this.config, share);
-      const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary
+      const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
       if (share.error && share.error === 'job not found') shareType = 'stale';
       else if (!share.sharevalid || share.error) shareType = 'invalid';
 
@@ -422,12 +422,12 @@ const Rounds = function (logger, client, config, configMain) {
       // Calculate Share Features
       const minerType = utils.checkSoloMining(_this.config, share);
       let shareType = 'valid';
-      const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary
+      const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
       if (share.error && share.error === 'job not found') shareType = 'stale';
       else if (!share.sharevalid || share.error) shareType = 'invalid';
 
       // Determine Updates for Worker
-      updates[worker] = _this.handleCurrentWorkers(share, shareType, minerType, blockType)
+      updates[worker] = _this.handleCurrentWorkers(share, shareType, minerType, blockType);
     });
 
     // Return Worker Updates
@@ -567,7 +567,7 @@ const Rounds = function (logger, client, config, configMain) {
           timestamp: Date.now(),
           recent: recent,
           miner: (worker || '').split('.')[0],
-          worker: worker,
+          worker: worker || '',
           identifier: identifier,
           invalid: invalid,
           solo: minerType,
@@ -621,7 +621,7 @@ const Rounds = function (logger, client, config, configMain) {
 
     // Insert Work into Database
     _this.master.executor(transaction, () => callback());
-  }
+  };
 
   // Handle Round Updates
   this.handleUpdates = function(lookups, shares, callback) {
@@ -631,7 +631,7 @@ const Rounds = function (logger, client, config, configMain) {
 
     // Handle Metadata Lookups
     const metadata = lookups[1].rows || [];
-    const auxMetadata = lookups[2].rows[0] || {};
+    const auxMetadata = lookups[2].rows || [];
 
     // Handle Individual Lookups
     const rounds = _this.handleWorkersLookups(lookups[3].rows);
@@ -695,7 +695,7 @@ const Rounds = function (logger, client, config, configMain) {
       transaction.push(_this.master.historical.metadata.insertHistoricalMetadataRounds(
         _this.pool, historicalMetadataUpdates));
       if (_this.config.auxiliary && _this.config.auxiliary.enabled) {
-        const auxHistoricalMetadataUpdates = _this.handleHistoricalMetadata(auxMetadata, shares, 'auxiliary');
+        const auxHistoricalMetadataUpdates = _this.handleHistoricalMetadata(shares, 'auxiliary');
         transaction.push(_this.master.historical.metadata.insertHistoricalMetadataRounds(
           _this.pool, auxHistoricalMetadataUpdates));
       }
@@ -774,7 +774,7 @@ const Rounds = function (logger, client, config, configMain) {
     const workersReset = (minerType) ? (
       _this.master.current.workers.updateCurrentSoloWorkersRoundsReset(_this.pool, Date.now(), miner, 'primary')) : (
       _this.master.current.workers.updateCurrentSharedWorkersRoundsReset(_this.pool, Date.now(), 'primary'));
-    const historicalMetadataBlocks = _this.handleHistoricalMetadataBlocks = (block, minerType, 'primary');
+    const historicalMetadataBlocks = _this.handleHistoricalMetadataBlocks(block, minerType, 'primary');
 
     // Build Combined Transaction
     const transaction = [
@@ -795,7 +795,7 @@ const Rounds = function (logger, client, config, configMain) {
   this.handleAuxiliary = function(lookups, shares, callback) {
 
     // Calculate Block Features
-    const block = shares[0];
+    const block = shares[0] || {};
     const identifier = block.identifier || 'master';
     const minerType = utils.checkSoloMining(_this.config, block);
     const miner = (block.addrauxiliary || '').split('.')[0];
@@ -806,7 +806,7 @@ const Rounds = function (logger, client, config, configMain) {
     const round = rounds[block.addrauxiliary] || {};
 
     // Determine Updates for Block
-    const blockUpdates = _this.handleCurrentBlocks(metadata, block, round, shareType, minerType, 'auxiliary');
+    const blockUpdates = _this.handleCurrentBlocks(metadata, round, block, 'valid', minerType, 'auxiliary');
     const metadataBlocks = { timestamp: Date.now(), blocks: 1, identifier: identifier, solo: minerType, 
       type: 'auxiliary' };
     const roundUpdates = (minerType) ? (
@@ -819,7 +819,7 @@ const Rounds = function (logger, client, config, configMain) {
     const workersReset = (minerType) ? (
       _this.master.current.workers.updateCurrentSoloWorkersRoundsReset(_this.pool, Date.now(), miner, 'auxiliary')) : (
       _this.master.current.workers.updateCurrentSharedWorkersRoundsReset(_this.pool, Date.now(), 'auxiliary'));
-    const historicalMetadataBlocks = _this.handleHistoricalMetadataBlocks = (block, minerType, 'auxiliary');
+    const historicalMetadataBlocks = _this.handleHistoricalMetadataBlocks(block, minerType, 'auxiliary');
 
     // Build Combined Transaction
     const transaction = [
@@ -881,7 +881,6 @@ const Rounds = function (logger, client, config, configMain) {
             _this.handleCleanup(segment, () => callback());
           });
           else _this.handleCleanup(segment, () => callback());
-          _this.handleCleanup(segment, () => callback());
         });
       });
       break;
@@ -944,8 +943,8 @@ const Rounds = function (logger, client, config, configMain) {
       // Segments Exist to Validate
       if (segments.length >= 1) {
         async.series(segments.map((segment) => {
-          return (cb) => _this.handleSegments(segment, cb)
-        }), (error, results) => {
+          return (cb) => _this.handleSegments(segment, cb);
+        }), (error) => {
           const updates = [(error) ?
             _this.text.databaseCommandsText2(JSON.stringify(error)) :
             _this.text.databaseUpdatesText6(shares.length)];

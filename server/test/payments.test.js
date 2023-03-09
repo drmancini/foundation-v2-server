@@ -177,6 +177,7 @@ describe('Test payments functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const payments = new Payments(logger, client, configCopy, configMainCopy);
+    const blocks = [ { round: 'round1', reward: 1000 } ];
     const miner1 = {
       timestamp: 1,
       miner: 'miner1',
@@ -195,21 +196,16 @@ describe('Test payments functionality', () => {
     const miner3 = { ...miner1, miner: 'miner3', worker: 'miner3' };
     const rounds = [[miner1, miner2, miner3], [miner1, miner2, miner3]];
     const expected = [
-      {'identifier': 'master', 'invalid': 0, 'miner': 'miner1', 'round': 'round1', 'solo': false, 'stale': 0, 'times': 200, 'timestamp': 1634742080841, 'type': 'primary', 'valid': 200, 'work': 200, 'worker': 'miner1'},
-      {'identifier': 'master', 'invalid': 0, 'miner': 'miner2', 'round': 'round1', 'solo': false, 'stale': 0, 'times': 200, 'timestamp': 1634742080841, 'type': 'primary', 'valid': 200, 'work': 200, 'worker': 'miner2'},
-      {'identifier': 'master', 'invalid': 0, 'miner': 'miner3', 'round': 'round1', 'solo': false, 'stale': 0, 'times': 200, 'timestamp': 1634742080841, 'type': 'primary', 'valid': 200, 'work': 200, 'worker': 'miner3'}];
-    expect(payments.handleHistoricalRounds(rounds)).toStrictEqual(expected);
+      {'blockReward': 999.996, 'maxTimes': 100, 'miner': 'miner1', 'round': 'round1', 'solo': false, 'times': 100, 'timestamp': 1634742080841, 'totalWork': 300, 'type': 'primary', 'work': 100, 'worker': 'miner1'},
+      {'blockReward': 999.996, 'maxTimes': 100, 'miner': 'miner2', 'round': 'round1', 'solo': false, 'times': 100, 'timestamp': 1634742080841, 'totalWork': 300, 'type': 'primary', 'work': 100, 'worker': 'miner2'},
+      {'blockReward': 999.996, 'maxTimes': 100, 'miner': 'miner3', 'round': 'round1', 'solo': false, 'times': 100, 'timestamp': 1634742080841, 'totalWork': 300, 'type': 'primary', 'work': 100, 'worker': 'miner3'},
+      {'blockReward': 999.996, 'maxTimes': 100, 'miner': 'miner1', 'round': 'round1', 'solo': false, 'times': 100, 'timestamp': 1634742080841, 'totalWork': 300, 'type': 'primary', 'work': 100, 'worker': 'miner1'},
+      {'blockReward': 999.996, 'maxTimes': 100, 'miner': 'miner2', 'round': 'round1', 'solo': false, 'times': 100, 'timestamp': 1634742080841, 'totalWork': 300, 'type': 'primary', 'work': 100, 'worker': 'miner2'},
+      {'blockReward': 999.996, 'maxTimes': 100, 'miner': 'miner3', 'round': 'round1', 'solo': false, 'times': 100, 'timestamp': 1634742080841, 'totalWork': 300, 'type': 'primary', 'work': 100, 'worker': 'miner3'}];
+    expect(payments.handleHistoricalRounds(blocks, rounds, 'primary')).toStrictEqual(expected);
   });
 
   test('Test payments database updates [8]', () => {
-    MockDate.set(1634742080841);
-    const client = mockClient(configMainCopy, { rows: [] });
-    const logger = new Logger(configMainCopy);
-    const payments = new Payments(logger, client, configCopy, configMainCopy);
-    expect(payments.handleHistoricalRounds([])).toStrictEqual([]);
-  });
-
-  test('Test payments database updates [9]', () => {
     MockDate.set(1634742080841);
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
@@ -455,34 +451,76 @@ describe('Test payments functionality', () => {
     const expectedGenerateRoundsUpdates = `
       INSERT INTO "Pool-Bitcoin".historical_rounds (
         timestamp, miner, worker,
-        identifier, invalid, round,
-        solo, stale, times, type,
-        valid, work)
+        block_reward, max_times,
+        round, solo, times,
+        total_work, type, work)
       VALUES (
         1634742080841,
         'miner1',
         'miner1',
-        'master',
-        0,
+        -0.004,
+        100,
         'round1',
         false,
-        0,
-        200,
+        100,
+        300,
         'primary',
-        200,
-        200), (
+        100), (
         1634742080841,
         'miner2',
         'miner2',
-        'master',
-        0,
+        -0.004,
+        100,
         'round1',
         false,
-        0,
-        400,
+        100,
+        300,
         'primary',
-        400,
-        400)
+        100), (
+        1634742080841,
+        'miner2',
+        'miner2',
+        -0.004,
+        100,
+        'round1',
+        false,
+        100,
+        300,
+        'primary',
+        100), (
+        1634742080841,
+        'miner1',
+        'miner1',
+        -0.004,
+        100,
+        'round1',
+        false,
+        100,
+        300,
+        'primary',
+        100), (
+        1634742080841,
+        'miner2',
+        'miner2',
+        -0.004,
+        100,
+        'round1',
+        false,
+        100,
+        300,
+        'primary',
+        100), (
+        1634742080841,
+        'miner2',
+        'miner2',
+        -0.004,
+        100,
+        'round1',
+        false,
+        100,
+        300,
+        'primary',
+        100)
       ON CONFLICT DO NOTHING;`;
     const expectedTransactions = `
       INSERT INTO "Pool-Bitcoin".historical_transactions (
@@ -686,58 +724,76 @@ describe('Test payments functionality', () => {
     const expectedGenerateRoundsUpdates = `
       INSERT INTO "Pool-Bitcoin".historical_rounds (
         timestamp, miner, worker,
-        identifier, invalid, round,
-        solo, stale, times, type,
-        valid, work)
+        block_reward, max_times,
+        round, solo, times,
+        total_work, type, work)
       VALUES (
         1634742080841,
         'miner1',
         'miner1',
-        'master',
-        0,
+        -0.004,
+        100,
         'round1',
         false,
-        0,
         100,
+        300,
         'primary',
-        100,
         100), (
         1634742080841,
         'miner2',
         'miner2',
-        'master',
-        0,
+        -0.004,
+        100,
         'round1',
         false,
-        0,
-        200,
-        'primary',
-        200,
-        200), (
-        1634742080841,
-        'miner1',
-        'miner1',
-        'master',
-        0,
-        'round2',
-        false,
-        0,
         100,
+        300,
         'primary',
-        100,
         100), (
         1634742080841,
         'miner2',
         'miner2',
-        'master',
-        0,
+        -0.004,
+        100,
+        'round1',
+        false,
+        100,
+        300,
+        'primary',
+        100), (
+        1634742080841,
+        'miner1',
+        'miner1',
+        -0.004,
+        100,
         'round2',
         false,
-        0,
-        200,
+        100,
+        300,
         'primary',
-        200,
-        200)
+        100), (
+        1634742080841,
+        'miner2',
+        'miner2',
+        -0.004,
+        100,
+        'round2',
+        false,
+        100,
+        300,
+        'primary',
+        100), (
+        1634742080841,
+        'miner2',
+        'miner2',
+        -0.004,
+        100,
+        'round2',
+        false,
+        100,
+        300,
+        'primary',
+        100)
       ON CONFLICT DO NOTHING;`;
     const expectedTransactions = `
       INSERT INTO "Pool-Bitcoin".historical_transactions (
@@ -822,7 +878,7 @@ describe('Test payments functionality', () => {
       handlePrimaryRounds: (blocks, callback) => callback(true, blocks),
       handlePrimaryWorkers: (blocks, rounds, sending, callback) => callback(current),
       handlePrimaryBalances: (current, callback) => callback(null),
-      handlePrimaryPayments: (current, callback) => callback(null, amounts, {}, 'transaction1'),
+      handlePrimaryPayments: (current, users, callback) => callback(null, amounts, {}, 'transaction1'),
     }};
     let currentIdx = 0;
     const expected = `
@@ -893,7 +949,7 @@ describe('Test payments functionality', () => {
       handlePrimaryRounds: (blocks, callback) => callback(null, blocks),
       handlePrimaryWorkers: (blocks, rounds, sending, callback) => callback(current),
       handlePrimaryBalances: (current, callback) => callback(true),
-      handlePrimaryPayments: (current, callback) => callback(null, amounts, {}, 'transaction1'),
+      handlePrimaryPayments: (current, users, callback) => callback(null, amounts, {}, 'transaction1'),
     }};
     let currentIdx = 0;
     const expected = `
@@ -1035,7 +1091,7 @@ describe('Test payments functionality', () => {
       handleAuxiliaryRounds: (blocks, callback) => callback(null, blocks),
       handleAuxiliaryWorkers: (blocks, rounds, sending, callback) => callback(current),
       handleAuxiliaryBalances: (current, callback) => callback(null),
-      handleAuxiliaryPayments: (current, callback) => callback(null, amounts, {}, 'transaction1'),
+      handleAuxiliaryPayments: (current, users, callback) => callback(null, amounts, {}, 'transaction1'),
     }};
     let currentIdx = 0;
     const expectedGenerateBlocksDeletes = `
@@ -1138,58 +1194,43 @@ describe('Test payments functionality', () => {
     const expectedGenerateRoundsUpdates = `
       INSERT INTO "Pool-Bitcoin".historical_rounds (
         timestamp, miner, worker,
-        identifier, invalid, round,
-        solo, stale, times, type,
-        valid, work)
+        block_reward, max_times,
+        round, solo, times,
+        total_work, type, work)
       VALUES (
         1634742080841,
         'miner1',
         'miner1',
-        'master',
-        0,
-        'round1',
+        -0.004,
+        100,
+        'round2',
         false,
-        0,
         100,
+        300,
         'auxiliary',
-        100,
         100), (
         1634742080841,
         'miner2',
         'miner2',
-        'master',
-        0,
-        'round1',
-        false,
-        0,
-        200,
-        'auxiliary',
-        200,
-        200), (
-        1634742080841,
-        'miner1',
-        'miner1',
-        'master',
-        0,
+        -0.004,
+        100,
         'round2',
         false,
-        0,
         100,
+        300,
         'auxiliary',
-        100,
         100), (
         1634742080841,
         'miner2',
         'miner2',
-        'master',
-        0,
+        -0.004,
+        100,
         'round2',
         false,
-        0,
-        200,
+        100,
+        300,
         'auxiliary',
-        200,
-        200)
+        100)
       ON CONFLICT DO NOTHING;`;
     const expectedTransactions = `
       INSERT INTO "Pool-Bitcoin".historical_transactions (
@@ -1414,7 +1455,7 @@ describe('Test payments functionality', () => {
       handleAuxiliaryRounds: (blocks, callback) => callback(null, blocks),
       handleAuxiliaryWorkers: (blocks, rounds, sending, callback) => callback(current),
       handleAuxiliaryBalances: (current, callback) => callback(null),
-      handleAuxiliaryPayments: (current, callback) => callback(true, {}, {}, null),
+      handleAuxiliaryPayments: (current, users, callback) => callback(true, {}, {}, null),
     }};
     let currentIdx = 0;
     const expected = `

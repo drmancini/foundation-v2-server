@@ -71,7 +71,7 @@ const Checks = function (logger, client, config, configMain) {
     // Calculate Features of Rounds
     const timestamp = Date.now();
     const interval = _this.config.settings.interval.recent;
-    const recent = Math.round(timestamp / interval) * interval;
+    const recent = Math.ceil(timestamp / interval) * interval;
 
     // Flatten Nested Round Array
     const combined = {};
@@ -99,6 +99,7 @@ const Checks = function (logger, client, config, configMain) {
       return {
         timestamp: timestamp,
         recent: recent,
+        submitted: timestamp,
         miner: current.miner,
         worker: current.worker,
         identifier: current.identifier,
@@ -204,9 +205,8 @@ const Checks = function (logger, client, config, configMain) {
 
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
-      const parameters = { solo: block.solo, round: block.round, type: 'primary' };
-      transaction.push(_this.master.current.rounds.selectCurrentRoundsAggregates(
-        _this.pool, parameters));
+      transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
+        _this.pool, block.round, block.solo, 'primary'));
     });
 
     // Determine Workers for Rounds
@@ -233,9 +233,8 @@ const Checks = function (logger, client, config, configMain) {
 
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
-      const parameters = { solo: block.solo, round: block.round, type: 'auxiliary' };
-      transaction.push(_this.master.current.rounds.selectCurrentRoundsAggregates(
-        _this.pool, parameters));
+      transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
+        _this.pool, block.round, block.solo, 'primary'));
     });
 
     // Determine Workers for Rounds
