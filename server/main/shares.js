@@ -43,7 +43,7 @@ const Shares = function (logger, client, config, configMain) {
       blockvalid: blockValid || false,
       blocktype: shareData.blockType,
       clientdiff: shareData.difficulty,
-      hash: shareData.hash,
+      hash: shareData.hash || '',
       height: shareData.height || -1,
       identifier: shareData.identifier || 'master',
       reward: shareData.reward || -1,

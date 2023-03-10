@@ -61,17 +61,21 @@ const HistoricalWorkers = function (logger, configMain) {
   };
 
   // Select Share Counts and Average Hashrate of Historical Workers
-  this.selectHistoricalWorkersAggregates = function(pool, timestamp, blockType) {
+  this.selectHistoricalWorkersAverages = function(pool, halfDay, oneDay, solo, type) {
     return `
-    SELECT miner, worker, solo,
-      AVG(hashrate) AS average_hashrate,
-      SUM(invalid) AS invalid, 
-      SUM(stale) AS stale,
-      SUM(valid) AS valid
-    FROM "${ pool }".historical_workers
-    WHERE recent > ${ timestamp }
-    AND type = '${ blockType }'
-    GROUP BY miner, worker, solo;`
+      SELECT miner, worker, solo,
+        AVG(CASE WHEN recent > ${ halfDay }
+          THEN hashrate ELSE null END) AS hashrate_12h,
+        AVG(CASE WHEN recent > ${ oneDay }
+          THEN hashrate ELSE null END) AS hashrate_24h,
+        SUM(invalid) AS invalid, 
+        SUM(stale) AS stale,
+        SUM(valid) AS valid
+      FROM "${ pool }".historical_workers
+      WHERE recent > ${ oneDay }
+      AND solo = ${ solo }
+      AND type = '${ type }'
+      GROUP BY miner, worker, solo;`;
   };
 
   // Build Workers Values String

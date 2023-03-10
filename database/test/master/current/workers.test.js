@@ -105,28 +105,45 @@ describe('Test database workers functionality', () => {
       miner: 'miner1',
       efficiency: 100,
       hashrate: 1,
+      hashrate_12h: 1,
+      hashrate_24h: 1,
+      invalid: 1,
       solo: false,
+      stale: 1,
       type: 'primary',
+      valid: 1,
     };
     const response = workers.insertCurrentWorkersHashrate('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_workers (
         timestamp, miner, worker,
-        efficiency, hashrate, solo,
-        type)
+        efficiency, hashrate,
+        hashrate_12h, hashrate_12h,
+        invalid, solo, stale, type,
+        valid)
       VALUES (
         1,
         'miner1',
         'worker1',
         100,
         1,
+        1,
+        1,
+        1,
         false,
-        'primary')
+        1,
+        'primary',
+        1)
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         efficiency = EXCLUDED.efficiency,
-        hashrate = EXCLUDED.hashrate;`;
+        hashrate = EXCLUDED.hashrate,
+        hashrate_12h = EXCLUDED.hashrate_12h,
+        hashrate_24h = EXCLUDED.hashrate_24h,
+        invalid = EXCLUDED.invalid,
+        stale = EXCLUDED.stale,
+        valid = EXCLUDED.valid;`;
     expect(response).toBe(expected);
   });
 
@@ -138,35 +155,57 @@ describe('Test database workers functionality', () => {
       miner: 'miner1',
       efficiency: 100,
       hashrate: 1,
+      hashrate_12h: 1,
+      hashrate_24h: 1,
+      invalid: 1,
       solo: false,
+      stale: 1,
       type: 'primary',
+      valid: 1,
     };
     const response = workers.insertCurrentWorkersHashrate('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_workers (
         timestamp, miner, worker,
-        efficiency, hashrate, solo,
-        type)
+        efficiency, hashrate,
+        hashrate_12h, hashrate_12h,
+        invalid, solo, stale, type,
+        valid)
       VALUES (
         1,
         'miner1',
         'worker1',
         100,
         1,
+        1,
+        1,
+        1,
         false,
-        'primary'), (
+        1,
+        'primary',
+        1), (
         1,
         'miner1',
         'worker1',
         100,
         1,
+        1,
+        1,
+        1,
         false,
-        'primary')
+        1,
+        'primary',
+        1)
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         efficiency = EXCLUDED.efficiency,
-        hashrate = EXCLUDED.hashrate;`;
+        hashrate = EXCLUDED.hashrate,
+        hashrate_12h = EXCLUDED.hashrate_12h,
+        hashrate_24h = EXCLUDED.hashrate_24h,
+        invalid = EXCLUDED.invalid,
+        stale = EXCLUDED.stale,
+        valid = EXCLUDED.valid;`;
     expect(response).toBe(expected);
   });
 
@@ -281,7 +320,8 @@ describe('Test database workers functionality', () => {
       timestamp: 1,
       worker: 'worker1',
       miner: 'miner1',
-      average_hashrate: 1,
+      hashrate_12h: 1,
+      hashrate_24h: 1,
       invalid: 1,
       solo: false,
       stale: 1,
@@ -292,12 +332,14 @@ describe('Test database workers functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".current_workers (
         timestamp, miner, worker,
-        average_hashrate, invalid,
-        solo, stale, type, valid)
+        hashrate_12h, hashrate_24h,
+        invalid, solo, stale,
+        type, valid)
       VALUES (
         1,
         'miner1',
         'worker1',
+        1,
         1,
         1,
         false,
@@ -307,7 +349,8 @@ describe('Test database workers functionality', () => {
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        average_hashrate = EXCLUDED.average_hashrate,
+        hashrate_12h = EXCLUDED.hashrate_12h,
+        hashrate_24h = EXCLUDED.hashrate_24h,
         invalid = EXCLUDED.invalid,
         stale = EXCLUDED.stale,
         valid = EXCLUDED.valid;`;
@@ -320,7 +363,8 @@ describe('Test database workers functionality', () => {
       timestamp: 1,
       worker: 'worker1',
       miner: 'miner1',
-      average_hashrate: 1,
+      hashrate_12h: 1,
+      hashrate_24h: 1,
       invalid: 1,
       solo: false,
       stale: 1,
@@ -331,12 +375,14 @@ describe('Test database workers functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".current_workers (
         timestamp, miner, worker,
-        average_hashrate, invalid,
-        solo, stale, type, valid)
+        hashrate_12h, hashrate_24h,
+        invalid, solo, stale,
+        type, valid)
       VALUES (
         1,
         'miner1',
         'worker1',
+        1,
         1,
         1,
         false,
@@ -348,6 +394,7 @@ describe('Test database workers functionality', () => {
         'worker1',
         1,
         1,
+        1,
         false,
         1,
         'primary',
@@ -355,7 +402,8 @@ describe('Test database workers functionality', () => {
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        average_hashrate = EXCLUDED.average_hashrate,
+        hashrate_12h = EXCLUDED.hashrate_12h,
+        hashrate_24h = EXCLUDED.hashrate_24h,
         invalid = EXCLUDED.invalid,
         stale = EXCLUDED.stale,
         valid = EXCLUDED.valid;`;
