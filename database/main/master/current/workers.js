@@ -94,8 +94,13 @@ const CurrentWorkers = function (logger, configMain) {
         '${ worker.worker }',
         ${ worker.efficiency },
         ${ worker.hashrate },
+        ${ worker.hashrate_12h },
+        ${ worker.hashrate_24h },
+        ${ worker.invalid },
         ${ worker.solo },
-        '${ worker.type }')`;
+        ${ worker.stale },
+        '${ worker.type }',
+        ${ worker.valid })`;
       if (idx < updates.length - 1) values += ', ';
     });
     return values;
@@ -106,14 +111,21 @@ const CurrentWorkers = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_workers (
         timestamp, miner, worker,
-        efficiency, hashrate, solo,
-        type)
+        efficiency, hashrate,
+        hashrate_12h, hashrate_12h,
+        invalid, solo, stale, type,
+        valid)
       VALUES ${ _this.buildCurrentWorkersHashrate(updates) }
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         efficiency = EXCLUDED.efficiency,
-        hashrate = EXCLUDED.hashrate;`;
+        hashrate = EXCLUDED.hashrate,
+        hashrate_12h = EXCLUDED.hashrate_12h,
+        hashrate_24h = EXCLUDED.hashrate_24h,
+        invalid = EXCLUDED.invalid,
+        stale = EXCLUDED.stale,
+        valid = EXCLUDED.valid;`;
   };
 
   // Build Workers Values String
@@ -166,7 +178,8 @@ const CurrentWorkers = function (logger, configMain) {
         ${ worker.timestamp },
         '${ worker.miner }',
         '${ worker.worker }',
-        ${ worker.average_hashrate },
+        ${ worker.hashrate_12h },
+        ${ worker.hashrate_24h },
         ${ worker.invalid },
         ${ worker.solo },
         ${ worker.stale },
@@ -182,13 +195,15 @@ const CurrentWorkers = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_workers (
         timestamp, miner, worker,
-        average_hashrate, invalid,
-        solo, stale, type, valid)
+        hashrate_12h, hashrate_24h,
+        invalid, solo, stale,
+        type, valid)
       VALUES ${ _this.buildCurrentWorkersShares(updates) }
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        average_hashrate = EXCLUDED.average_hashrate,
+        hashrate_12h = EXCLUDED.hashrate_12h,
+        hashrate_24h = EXCLUDED.hashrate_24h,
         invalid = EXCLUDED.invalid,
         stale = EXCLUDED.stale,
         valid = EXCLUDED.valid;`;

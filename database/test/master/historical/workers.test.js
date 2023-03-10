@@ -81,19 +81,22 @@ describe('Test database workers functionality', () => {
 
   test('Test workers command handling [4]', () => {
     const workers = new HistoricalWorkers(logger, configMainCopy);
-    const parameters = { type: 'primary', hmm: 'test' };
-    const response = workers.selectHistoricalWorkersAggregates('Pool-Main', 1, 'primary');
+    const response = workers.selectHistoricalWorkersAverages('Pool-Main', 1, 2, true, 'primary');
     const expected = `
       SELECT miner, worker, solo,
-        AVG(hashrate) AS average_hashrate,
+        AVG(CASE WHEN recent > 1
+          THEN hashrate ELSE null END) AS hashrate_12h,
+        AVG(CASE WHEN recent > 2
+          THEN hashrate ELSE null END) AS hashrate_24h,
         SUM(invalid) AS invalid, 
         SUM(stale) AS stale,
         SUM(valid) AS valid
       FROM "Pool-Main".historical_workers
-      WHERE recent > 1
+      WHERE recent > 2
+      AND solo = true
       AND type = 'primary'
-      GROUP BY miner, worker, solo;
-      expect(response).toBe(expected);`;
+      GROUP BY miner, worker, solo;`;
+      expect(response).toBe(expected);
   });
 
 
