@@ -625,6 +625,7 @@ const Rounds = function (logger, client, config, configMain) {
   // Handle Round Updates
   this.handleUpdates = function(lookups, shares, callback) {
 
+    console.log(shares)
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
 
