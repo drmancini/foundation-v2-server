@@ -58,24 +58,10 @@ const Rounds = function (logger, client, config, configMain) {
   };
 
   // Handle Times Updates
-  this.handleTimesIncrement = function(sharePrevious, timestamp) {
-    let times = 0;
-    const lastTime = parseFloat(sharePrevious.submitted) || Date.now();
-    const timeChange = utils.roundTo(Math.max(timestamp - lastTime, 0) / 1000, 4);
-    if (timeChange < 900) times += timeChange;
-    return Math.round(times * 10000) / 10000;
-  };
-
-  // Handle Times Updates
   this.handleTimesInitial = function(shareInitial, timestamp, interval) {
-    const lastRecent = Math.floor(timestamp / interval) * interval;
-    let lastTime = parseFloat(shareInitial.submitted) || Date.now();
-    let times = 0;
-    if (lastTime > lastRecent) {
-      times = shareInitial.times;
-    } else {
-      lastTime = lastRecent;
-    }
+    const lastTime = parseFloat(shareInitial.submitted) || Date.now();
+    const previousRecent = Math.floor(timestamp / interval) * interval;
+    let times = lastTime > previousRecent ? shareInitial.times : 0;
     const timeChange = utils.roundTo(Math.max(timestamp - lastTime, 0) / 1000, 4);
     if (timeChange < 900) times += timeChange;
     return Math.round(times * 10000) / 10000;
@@ -238,25 +224,12 @@ const Rounds = function (logger, client, config, configMain) {
     // Calculate Features of Rounds [2]
     const submitted = share.submitted || Date.now();
     const identifier = share.identifier || 'master';
-    let times = 0;
-    // const times = (Object.keys(updates).length >= 1 && shareType === 'valid') ?
-    //   _this.handleTimes(updates, submitted) : _this.handleTimesIncrement(initial, submitted);
-
-    // console.log('initial: ' + initial.times)
-    // console.log(initial)
-
-    if (Object.keys(updates).length >= 1 && shareType === 'valid') {
-      times = _this.handleTimes(updates, submitted);
-      
-    } else {
-      times = _this.handleTimesInitial(initial, submitted, interval);
-      console.log(_this.handleTimesInitial(initial, submitted, interval));
-      
-    }
+    let times = (Object.keys(updates).length >= 1 && shareType === 'valid') ?
+      _this.handleTimes(updates, submitted) : _this.handleTimesInitial(initial, submitted, interval);
 
     // Check Maximum Times
     times = Math.min(times, interval / 1000);
-    
+
     // Return Round Updates
     return {
       timestamp: Date.now(),
