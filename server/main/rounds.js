@@ -684,7 +684,6 @@ const Rounds = function (logger, client, config, configMain) {
     // Handle Round Updates
     const roundUpdates = _this.handleShares(rounds, shares, 'primary');
     if (roundUpdates.length >= 1) {
-      console.log(roundUpdates[0].times)
       transaction.push(_this.master.current.rounds.insertCurrentRoundsMain(_this.pool, roundUpdates));
       if (_this.config.auxiliary && _this.config.auxiliary.enabled) {
         const auxRoundUpdates = _this.handleShares(auxRounds, shares, 'auxiliary');
