@@ -108,8 +108,8 @@ const CurrentRounds = function (logger, configMain) {
     updates.forEach((round, idx) => {
       values += `(
         ${ round.timestamp },
-        ${ round.recent },
         ${ round.submitted },
+        ${ round.recent },
         '${ round.miner }',
         '${ round.worker }',
         '${ round.identifier }',
@@ -127,13 +127,33 @@ const CurrentRounds = function (logger, configMain) {
   };
 
   // Insert Rows Using Round Data
+  // this.insertCurrentRoundsMain = function(pool, updates) {
+  //   return `
+  //     INSERT INTO "${ pool }".current_rounds (
+  //       timestamp, submitted, recent,
+  //       miner, worker, identifier, invalid,
+  //       round, solo, stale, times, type,
+  //       valid, work)
+  //     VALUES ${ _this.buildCurrentRoundsMain(updates) }
+  //     ON CONFLICT ON CONSTRAINT current_rounds_unique
+  //     DO UPDATE SET
+  //       timestamp = EXCLUDED.timestamp,
+  //       submitted = EXCLUDED.submitted,
+  //       invalid = "${ pool }".current_rounds.invalid + EXCLUDED.invalid,
+  //       stale = "${ pool }".current_rounds.stale + EXCLUDED.stale,
+  //       times = GREATEST("${ pool }".current_rounds.times, EXCLUDED.times),
+  //       valid = "${ pool }".current_rounds.valid + EXCLUDED.valid,
+  //       work = "${ pool }".current_rounds.work + EXCLUDED.work;`;
+  // };
+
+  // Insert Rows Using Round Data
   this.insertCurrentRoundsMain = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_rounds (
-        timestamp, recent, submitted,
-        miner, worker, identifier,
-        invalid, round, solo, stale,
-        times, type, valid, work)
+        timestamp, submitted, recent,
+        miner, worker, identifier, invalid,
+        round, solo, stale, times, type,
+        valid, work)
       VALUES ${ _this.buildCurrentRoundsMain(updates) }
       ON CONFLICT ON CONSTRAINT current_rounds_unique
       DO UPDATE SET
@@ -141,7 +161,7 @@ const CurrentRounds = function (logger, configMain) {
         submitted = EXCLUDED.submitted,
         invalid = "${ pool }".current_rounds.invalid + EXCLUDED.invalid,
         stale = "${ pool }".current_rounds.stale + EXCLUDED.stale,
-        times = GREATEST("${ pool }".current_rounds.times, EXCLUDED.times),
+        times = "${ pool }".current_rounds.times + EXCLUDED.times,
         valid = "${ pool }".current_rounds.valid + EXCLUDED.valid,
         work = "${ pool }".current_rounds.work + EXCLUDED.work;`;
   };
