@@ -214,8 +214,20 @@ const Rounds = function (logger, client, config, configMain) {
     // Calculate Features of Rounds [2]
     const submitted = share.submitted || Date.now();
     const identifier = share.identifier || 'master';
-    const times = (Object.keys(updates).length >= 1 && shareType === 'valid') ?
-      _this.handleTimes(updates, submitted) : 0;
+    let times = 0;
+    // const times = (Object.keys(updates).length >= 1 && shareType === 'valid') ?
+    //   _this.handleTimes(updates, submitted) : 0;
+
+    // console.log('initial: ' + initial.times)
+    // console.log(initial)
+
+    if (Object.keys(updates).length >= 1 && shareType === 'valid') {
+      times = _this.handleTimes(updates, submitted);
+      // console.log('continue: ' + times )
+    } else {
+      times = _this.handleTimes(initial, submitted);
+      // console.log('first: ' + times)
+    }
 
     // Return Round Updates
     return {
@@ -663,6 +675,7 @@ const Rounds = function (logger, client, config, configMain) {
     // Handle Round Updates
     const roundUpdates = _this.handleShares(rounds, shares, 'primary');
     if (roundUpdates.length >= 1) {
+      console.log(roundUpdates[0].times)
       transaction.push(_this.master.current.rounds.insertCurrentRoundsMain(_this.pool, roundUpdates));
       if (_this.config.auxiliary && _this.config.auxiliary.enabled) {
         const auxRoundUpdates = _this.handleShares(auxRounds, shares, 'auxiliary');
