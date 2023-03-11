@@ -46,25 +46,6 @@ const CurrentRounds = function (logger, configMain) {
     return output;
   };
 
-  // Select Round Times/Work Using Parameters
-  this.selectCurrentRoundsAggregates = function(pool, parameters) {
-    let output = `
-      SELECT miner, worker, round, solo,
-        SUM(times_increment) AS times,
-        SUM(work) AS work
-      FROM "${ pool }".current_rounds`;
-    const filtered = Object.keys(parameters).filter((key) => _this.parameters.includes(key));
-    filtered.forEach((parameter, idx) => {
-      if (idx === 0) output += `
-      WHERE `;
-      else output += ' AND ';
-      output += `${ parameter }`;
-      output += _this.handleQueries(parameters, parameter);
-    });
-    return output + `
-      GROUP BY worker, miner, round, solo;`;
-  };
-
   // Select Current Rounds Using Parameters
   this.selectCurrentRoundsMain = function(pool, parameters) {
     let output = `SELECT * FROM "${ pool }".current_rounds`;
@@ -137,7 +118,6 @@ const CurrentRounds = function (logger, configMain) {
         ${ round.solo },
         ${ round.stale },
         ${ round.times },
-        ${ round.times_increment },
         '${ round.type }',
         ${ round.valid },
         ${ round.work })`;
@@ -153,8 +133,7 @@ const CurrentRounds = function (logger, configMain) {
         timestamp, recent, submitted,
         miner, worker, identifier,
         invalid, round, solo, stale,
-        times, times_increment, type,
-        valid, work)
+        times, type, valid, work)
       VALUES ${ _this.buildCurrentRoundsMain(updates) }
       ON CONFLICT ON CONSTRAINT current_rounds_unique
       DO UPDATE SET
@@ -163,7 +142,6 @@ const CurrentRounds = function (logger, configMain) {
         invalid = "${ pool }".current_rounds.invalid + EXCLUDED.invalid,
         stale = "${ pool }".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("${ pool }".current_rounds.times, EXCLUDED.times),
-        times_increment = "${ pool }".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "${ pool }".current_rounds.valid + EXCLUDED.valid,
         work = "${ pool }".current_rounds.work + EXCLUDED.work;`;
   };

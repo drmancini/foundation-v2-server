@@ -112,7 +112,7 @@ const CurrentWorkers = function (logger, configMain) {
       INSERT INTO "${ pool }".current_workers (
         timestamp, miner, worker,
         efficiency, hashrate,
-        hashrate_12h, hashrate_12h,
+        hashrate_12h, hashrate_24h,
         invalid, solo, stale, type,
         valid)
       VALUES ${ _this.buildCurrentWorkersHashrate(updates) }

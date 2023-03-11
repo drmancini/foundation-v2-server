@@ -349,7 +349,6 @@ describe('Test shares functionality', () => {
       solo: false,
       stale: 0,
       times: 0.841,
-      times_increment: 0.841,
       type: 'primary',
       valid: 1,
       work: 1,
@@ -2542,8 +2541,7 @@ describe('Test shares functionality', () => {
         timestamp, recent, miner,
         worker, identifier, invalid,
         round, solo, stale, times,
-        times_increment, type,
-        valid, work)
+        type, valid, work)
       VALUES (
         1634742080841,
         1634742120000,
@@ -2565,7 +2563,6 @@ describe('Test shares functionality', () => {
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
-        times_increment = "Pool-Bitcoin".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedAuxWorkers = `
