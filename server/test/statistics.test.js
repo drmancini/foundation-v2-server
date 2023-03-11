@@ -578,7 +578,7 @@ describe('Test statistics functionality', () => {
       INSERT INTO "Pool-Bitcoin".current_workers (
         timestamp, miner, worker,
         efficiency, hashrate,
-        hashrate_12h, hashrate_12h,
+        hashrate_12h, hashrate_24h,
         invalid, solo, stale, type,
         valid)
       VALUES (
@@ -620,7 +620,7 @@ describe('Test statistics functionality', () => {
       INSERT INTO "Pool-Bitcoin".current_workers (
         timestamp, miner, worker,
         efficiency, hashrate,
-        hashrate_12h, hashrate_12h,
+        hashrate_12h, hashrate_24h,
         invalid, solo, stale, type,
         valid)
       VALUES (
@@ -957,7 +957,7 @@ describe('Test statistics functionality', () => {
       INSERT INTO "Pool-Bitcoin".current_workers (
         timestamp, miner, worker,
         efficiency, hashrate,
-        hashrate_12h, hashrate_12h,
+        hashrate_12h, hashrate_24h,
         invalid, solo, stale, type,
         valid)
       VALUES (
@@ -999,7 +999,7 @@ describe('Test statistics functionality', () => {
       INSERT INTO "Pool-Bitcoin".current_workers (
         timestamp, miner, worker,
         efficiency, hashrate,
-        hashrate_12h, hashrate_12h,
+        hashrate_12h, hashrate_24h,
         invalid, solo, stale, type,
         valid)
       VALUES (

@@ -502,7 +502,6 @@ describe('Test rounds functionality', () => {
       solo: false,
       stale: 0,
       times: 0,
-      times_increment: 0,
       type: 'primary',
       valid: 1,
       work: 2,
@@ -537,7 +536,6 @@ describe('Test rounds functionality', () => {
       solo: false,
       stale: 0,
       times: 0,
-      times_increment: 0,
       type: 'primary',
       valid: 0,
       work: 1,
@@ -572,7 +570,6 @@ describe('Test rounds functionality', () => {
       solo: false,
       stale: 1,
       times: 0,
-      times_increment: 0,
       type: 'primary',
       valid: 0,
       work: 1,
@@ -604,7 +601,6 @@ describe('Test rounds functionality', () => {
       solo: true,
       stale: 0,
       times: 0,
-      times_increment: 0,
       type: 'auxiliary',
       valid: 1,
       work: 1,
@@ -1538,7 +1534,6 @@ describe('Test rounds functionality', () => {
       solo: false,
       stale: 0,
       times: 0,
-      times_increment: 0,
       type: 'primary',
       valid: 1,
       work: 1,
@@ -1573,7 +1568,6 @@ describe('Test rounds functionality', () => {
       solo: false,
       stale: 0,
       times: 0,
-      times_increment: 0,
       type: 'primary',
       valid: 0,
       work: 0,
@@ -1609,7 +1603,6 @@ describe('Test rounds functionality', () => {
       solo: false,
       stale: 0,
       times: 0,
-      times_increment: 0,
       type: 'primary',
       valid: 0,
       work: 0,
@@ -1645,7 +1638,6 @@ describe('Test rounds functionality', () => {
       solo: false,
       stale: 1,
       times: 0,
-      times_increment: 0,
       type: 'primary',
       valid: 0,
       work: 0,
@@ -1682,7 +1674,6 @@ describe('Test rounds functionality', () => {
       solo: true,
       stale: 0,
       times: 0,
-      times_increment: 0,
       type: 'auxiliary',
       valid: 1,
       work: 1,
@@ -1961,8 +1952,7 @@ describe('Test rounds functionality', () => {
         timestamp, recent, submitted,
         miner, worker, identifier,
         invalid, round, solo, stale,
-        times, times_increment, type,
-        valid, work)
+        times, type, valid, work)
       VALUES (
         1634742080841,
         1634742600000,
@@ -1975,7 +1965,6 @@ describe('Test rounds functionality', () => {
         false,
         0,
         0,
-        0,
         'primary',
         1,
         1)
@@ -1986,7 +1975,6 @@ describe('Test rounds functionality', () => {
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
-        times_increment = "Pool-Bitcoin".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedWorkers = `
@@ -2150,8 +2138,7 @@ describe('Test rounds functionality', () => {
         timestamp, recent, submitted,
         miner, worker, identifier,
         invalid, round, solo, stale,
-        times, times_increment, type,
-        valid, work)
+        times, type, valid, work)
       VALUES (
         1634742080841,
         0,
@@ -2164,7 +2151,6 @@ describe('Test rounds functionality', () => {
         true,
         0,
         0,
-        0,
         'primary',
         1,
         1)
@@ -2175,7 +2161,6 @@ describe('Test rounds functionality', () => {
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
-        times_increment = "Pool-Bitcoin".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedWorkers = `
@@ -2428,8 +2413,7 @@ describe('Test rounds functionality', () => {
         timestamp, recent, submitted,
         miner, worker, identifier,
         invalid, round, solo, stale,
-        times, times_increment, type,
-        valid, work)
+        times, type, valid, work)
       VALUES (
         1634742080841,
         1634742600000,
@@ -2440,7 +2424,6 @@ describe('Test rounds functionality', () => {
         0,
         'current',
         false,
-        0,
         0,
         0,
         'primary',
@@ -2453,7 +2436,6 @@ describe('Test rounds functionality', () => {
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
-        times_increment = "Pool-Bitcoin".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedAuxiliaryRounds = `
@@ -2461,8 +2443,7 @@ describe('Test rounds functionality', () => {
         timestamp, recent, submitted,
         miner, worker, identifier,
         invalid, round, solo, stale,
-        times, times_increment, type,
-        valid, work)
+        times, type, valid, work)
       VALUES (
         1634742080841,
         1634742600000,
@@ -2473,7 +2454,6 @@ describe('Test rounds functionality', () => {
         0,
         'current',
         false,
-        0,
         0,
         0,
         'auxiliary',
@@ -2486,7 +2466,6 @@ describe('Test rounds functionality', () => {
         invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
         times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
-        times_increment = "Pool-Bitcoin".current_rounds.times_increment + EXCLUDED.times_increment,
         valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedPrimaryWorkers = `

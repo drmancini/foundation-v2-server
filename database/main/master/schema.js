@@ -294,7 +294,6 @@ const Schema = function (logger, executor, configMain) {
         solo BOOLEAN NOT NULL DEFAULT false,
         stale INT NOT NULL DEFAULT 0,
         times FLOAT NOT NULL DEFAULT 0,
-        times_increment FLOAT NOT NULL DEFAULT 0,
         type VARCHAR NOT NULL DEFAULT 'primary',
         valid INT NOT NULL DEFAULT 0,
         work FLOAT NOT NULL DEFAULT 0,

@@ -223,7 +223,7 @@ const Rounds = function (logger, client, config, configMain) {
     const submitted = share.submitted || Date.now();
     const identifier = share.identifier || 'master';
     const times = (Object.keys(updates).length >= 1 && shareType === 'valid') ?
-      _this.handleTimes(updates, submitted) : _this.handleTimesIncrement(initial, submitted);
+      _this.handleTimes(updates, submitted) : 0;
 
     // Return Round Updates
     return {
@@ -238,7 +238,6 @@ const Rounds = function (logger, client, config, configMain) {
       solo: minerType,
       stale: stale,
       times: times,
-      times_increment: times,
       type: blockType,
       valid: valid,
       work: current,
