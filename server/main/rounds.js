@@ -57,6 +57,15 @@ const Rounds = function (logger, client, config, configMain) {
     return Math.round(times * 10000) / 10000;
   };
 
+  // Handle Times Updates
+  this.handleTimesIncrement = function(sharePrevious, timestamp) {
+    let times = 0;
+    const lastTime = parseFloat(sharePrevious.submitted) || Date.now();
+    const timeChange = utils.roundTo(Math.max(timestamp - lastTime, 0) / 1000, 4);
+    if (timeChange < 900) times += timeChange;
+    return Math.round(times * 10000) / 10000;
+  };
+
   // Process Segment Breakdown
   this.processSegments = function(shares) {
     let current = [];
@@ -225,7 +234,7 @@ const Rounds = function (logger, client, config, configMain) {
       times = _this.handleTimes(updates, submitted);
       // console.log('continue: ' + times )
     } else {
-      times = _this.handleTimes(initial, submitted);
+      times = _this.handleTimesIncrement(initial, submitted);
       // console.log('first: ' + times)
     }
 
