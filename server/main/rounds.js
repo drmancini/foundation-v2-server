@@ -625,7 +625,6 @@ const Rounds = function (logger, client, config, configMain) {
   // Handle Round Updates
   this.handleUpdates = function(lookups, shares, callback) {
 
-    console.log(shares)
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
 
@@ -671,6 +670,7 @@ const Rounds = function (logger, client, config, configMain) {
 
     // Handle Round Updates
     const roundUpdates = _this.handleShares(rounds, shares, 'primary');
+    console.log(roundUpdates)
     if (roundUpdates.length >= 1) {
       transaction.push(_this.master.current.rounds.insertCurrentRoundsMain(_this.pool, roundUpdates));
       if (_this.config.auxiliary && _this.config.auxiliary.enabled) {
