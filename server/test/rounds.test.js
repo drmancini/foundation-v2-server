@@ -87,6 +87,7 @@ describe('Test rounds functionality', () => {
     expect(rounds.handleTimes({ submitted: '1634742080841', times: 145 }, 1634742830841)).toBe(895);
     expect(rounds.handleTimes({ submitted: '1634742080841', times: 145 }, 1634742370841)).toBe(435);
     expect(rounds.handleTimes({ times: 145 }, 1634742530841)).toBe(595);
+    expect(rounds.handleTimes({}, 1634742090841)).toBe(10);
   });
 
   test('Test rounds database updates [5]', () => {
@@ -94,11 +95,12 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    expect(rounds.handleTimesIncrement({ submitted: '1634742080841', times: 0 }, 1634742290841)).toBe(210);
-    expect(rounds.handleTimesIncrement({ submitted: '1634742080841', times: 145 }, 1634743180841)).toBe(0);
-    expect(rounds.handleTimesIncrement({ submitted: '1634742080841', times: 145 }, 1634742830841)).toBe(750);
-    expect(rounds.handleTimesIncrement({ submitted: '1634742080841', times: 145 }, 1634742370841)).toBe(290);
-    expect(rounds.handleTimesIncrement({ times: 145 }, 1634742530841)).toBe(450);
+    expect(rounds.handleTimesInitial({ submitted: '1634742080841', times: 0, }, 1634742290841, 60000)).toBe(210);
+    expect(rounds.handleTimesInitial({ submitted: '1634742080841', times: 145 }, 1634743180841, 60000)).toBe(0);
+    expect(rounds.handleTimesInitial({ submitted: '1634742080841', times: 145 }, 1634742830841, 60000)).toBe(750);
+    expect(rounds.handleTimesInitial({ submitted: '1634742080841', times: 145 }, 1634742370841, 60000)).toBe(290);
+    expect(rounds.handleTimesInitial({ times: 145 }, 1634742530841, 60000)).toBe(450);
+    expect(rounds.handleTimesInitial({}, 1634742080841, 60000)).toBe(0);
   });
 
   test('Test rounds database updates [6]', () => {
@@ -480,7 +482,7 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const initial = { work: 1 };
+    const initial = { submitted: 1634742080841, times: 10, work: 1 };
     const updates = { work: 1 };
     const share = {
       timestamp: 1634742080841,
@@ -1949,14 +1951,14 @@ describe('Test rounds functionality', () => {
         solo_effort = "Pool-Bitcoin".current_miners.solo_effort + EXCLUDED.solo_effort;`;
     const expectedRounds = `
       INSERT INTO "Pool-Bitcoin".current_rounds (
-        timestamp, recent, submitted,
-        miner, worker, identifier,
-        invalid, round, solo, stale,
-        times, type, valid, work)
+        timestamp, submitted, recent,
+        miner, worker, identifier, invalid,
+        round, solo, stale, times, type,
+        valid, work)
       VALUES (
         1634742080841,
-        1634742600000,
         1,
+        1634742600000,
         'primary',
         'primary',
         'master',
@@ -2135,14 +2137,14 @@ describe('Test rounds functionality', () => {
         solo_effort = "Pool-Bitcoin".current_miners.solo_effort + EXCLUDED.solo_effort;`;
     const expectedRounds = `
       INSERT INTO "Pool-Bitcoin".current_rounds (
-        timestamp, recent, submitted,
-        miner, worker, identifier,
-        invalid, round, solo, stale,
-        times, type, valid, work)
+        timestamp, submitted, recent,
+        miner, worker, identifier, invalid,
+        round, solo, stale, times, type,
+        valid, work)
       VALUES (
         1634742080841,
-        0,
         1,
+        0,
         'primary',
         'primary',
         'master',
@@ -2410,14 +2412,14 @@ describe('Test rounds functionality', () => {
         solo_effort = "Pool-Bitcoin".current_miners.solo_effort + EXCLUDED.solo_effort;`;
     const expectedPrimaryRounds = `
       INSERT INTO "Pool-Bitcoin".current_rounds (
-        timestamp, recent, submitted,
-        miner, worker, identifier,
-        invalid, round, solo, stale,
-        times, type, valid, work)
+        timestamp, submitted, recent,
+        miner, worker, identifier, invalid,
+        round, solo, stale, times, type,
+        valid, work)
       VALUES (
         1634742080841,
-        1634742600000,
         1,
+        1634742600000,
         'primary',
         'primary',
         'master',
@@ -2440,14 +2442,14 @@ describe('Test rounds functionality', () => {
         work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedAuxiliaryRounds = `
       INSERT INTO "Pool-Bitcoin".current_rounds (
-        timestamp, recent, submitted,
-        miner, worker, identifier,
-        invalid, round, solo, stale,
-        times, type, valid, work)
+        timestamp, submitted, recent,
+        miner, worker, identifier, invalid,
+        round, solo, stale, times, type,
+        valid, work)
       VALUES (
         1634742080841,
-        1634742600000,
         1,
+        1634742600000,
         'primary',
         'primary',
         'master',

@@ -129,6 +129,12 @@ config.settings.banning.checkThreshold = 500;
 config.settings.banning.invalidPercent = 50;
 config.settings.banning.purgeInterval = 300000; // ms
 
+// Batch Processor Configuration
+config.settings.batch = {};
+config.settings.batch.interval = 10 * 1000; // ms
+config.settings.batch.limit = 200;
+config.settings.batch.purge = 60 * 1000;
+
 // Timeout Configuration
 config.settings.timeout = {};
 config.settings.timeout.connection = 600000; // ms
@@ -141,7 +147,6 @@ config.settings.interval.checks = 90000; // ms
 config.settings.interval.historical = 600000; // ms
 config.settings.interval.payments = 7200000; // ms
 config.settings.interval.recent = 600000; // ms
-config.settings.interval.rounds = 60000; // ms
 config.settings.interval.statistics = 90000; // ms
 
 // Window Configuration

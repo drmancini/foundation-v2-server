@@ -402,14 +402,14 @@ describe('Test checks functionality', () => {
       WHERE round IN ('round1', 'round5');`;
     const expectedOrphanRoundsUpdates = `
       INSERT INTO "Pool-Bitcoin".current_rounds (
-        timestamp, recent, submitted,
-        miner, worker, identifier,
-        invalid, round, solo, stale,
-        times, type, valid, work)
+        timestamp, submitted, recent,
+        miner, worker, identifier, invalid,
+        round, solo, stale, times, type,
+        valid, work)
       VALUES (
         1634742080841,
-        1634742600000,
         1634742080841,
+        1634742600000,
         'miner1',
         'miner1',
         'master',
@@ -422,8 +422,8 @@ describe('Test checks functionality', () => {
         100,
         100), (
         1634742080841,
-        1634742600000,
         1634742080841,
+        1634742600000,
         'miner2',
         'miner2',
         'master',
@@ -555,14 +555,14 @@ describe('Test checks functionality', () => {
       WHERE round IN ('round1', 'round2');`;
     const expectedOrphanRoundsUpdates = `
       INSERT INTO "Pool-Bitcoin".current_rounds (
-        timestamp, recent, submitted,
-        miner, worker, identifier,
-        invalid, round, solo, stale,
-        times, type, valid, work)
+        timestamp, submitted, recent,
+        miner, worker, identifier, invalid,
+        round, solo, stale, times, type,
+        valid, work)
       VALUES (
         1634742080841,
-        1634742600000,
         1634742080841,
+        1634742600000,
         'miner1',
         'miner1',
         'master',
@@ -575,8 +575,8 @@ describe('Test checks functionality', () => {
         200,
         200), (
         1634742080841,
-        1634742600000,
         1634742080841,
+        1634742600000,
         'miner2',
         'miner2',
         'master',

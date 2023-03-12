@@ -51,6 +51,20 @@ const LocalShares = function (logger, configMain) {
     return output;
   };
 
+  // Select Local Shares Count Using Parameters
+  this.selectLocalSharesCount = function(pool, parameters) {
+    let output = `SELECT COUNT(*) FROM "${ pool }".local_shares`;
+    const filtered = Object.keys(parameters).filter((key) => _this.parameters.includes(key));
+    filtered.forEach((parameter, idx) => {
+      if (idx === 0) output += ' WHERE ';
+      else output += ' AND ';
+      output += `${ parameter }`;
+      output += _this.handleQueries(parameters, parameter);
+    });
+    output = _this.handleSpecial(parameters, output);
+    return output + ';';
+  };
+
   // Select Local Shares Using Parameters
   this.selectLocalSharesMain = function(pool, parameters) {
     let output = `SELECT * FROM "${ pool }".local_shares`;
