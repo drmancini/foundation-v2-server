@@ -148,6 +148,13 @@ const HistoricalWorkers = function (logger, configMain) {
         valid = "${ pool }".historical_workers.valid + EXCLUDED.valid,
         work = "${ pool }".historical_workers.work + EXCLUDED.work;`;
   };
+
+  // Delete Rows From Historical Workers
+  this.deleteHistoricalWorkersCutoff = function(pool, timestamp) {
+    return `
+      DELETE FROM "${ pool }".historical_workers
+      WHERE recent < ${ timestamp };`;
+  };
 };
 
 module.exports = HistoricalWorkers;

@@ -152,6 +152,13 @@ const HistoricalMetadata = function (logger, configMain) {
         timestamp = EXCLUDED.timestamp,
         work = "${ pool }".historical_metadata.work + EXCLUDED.work;`;
   };
+
+  // Delete Rows From Historical Metadata
+  this.deleteHistoricalMetadataCutoff = function(pool, timestamp) {
+    return `
+      DELETE FROM "${ pool }".historical_metadata
+      WHERE recent < ${ timestamp };`;
+  };
 };
 
 module.exports = HistoricalMetadata;
