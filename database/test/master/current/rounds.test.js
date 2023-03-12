@@ -172,10 +172,10 @@ describe('Test database rounds functionality', () => {
     const response = rounds.insertCurrentRoundsMain('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_rounds (
-        timestamp, recent, submitted,
-        miner, worker, identifier,
-        invalid, round, solo, stale,
-        times, type, valid, work)
+        timestamp, submitted, recent,
+        miner, worker, identifier, invalid,
+        round, solo, stale, times, type,
+        valid, work)
       VALUES (
         1,
         1,
@@ -224,10 +224,10 @@ describe('Test database rounds functionality', () => {
     const response = rounds.insertCurrentRoundsMain('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_rounds (
-        timestamp, recent, submitted,
-        miner, worker, identifier,
-        invalid, round, solo, stale,
-        times, type, valid, work)
+        timestamp, submitted, recent,
+        miner, worker, identifier, invalid,
+        round, solo, stale, times, type,
+        valid, work)
       VALUES (
         1,
         1,

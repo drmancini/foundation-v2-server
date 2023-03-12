@@ -59,9 +59,10 @@ const Rounds = function (logger, client, config, configMain) {
 
   // Handle Times Updates
   this.handleTimesInitial = function(shareInitial, timestamp, interval) {
+    const initialTime = shareInitial.times || 0;
     const lastTime = parseFloat(shareInitial.submitted) || Date.now();
     const previousRecent = Math.floor(timestamp / interval) * interval;
-    let times = lastTime > previousRecent ? shareInitial.times : 0;
+    let times = lastTime > previousRecent ? initialTime : 0;
     const timeChange = utils.roundTo(Math.max(timestamp - lastTime, 0) / 1000, 4);
     if (timeChange < 900) times += timeChange;
     return Math.round(times * 10000) / 10000;
@@ -224,8 +225,11 @@ const Rounds = function (logger, client, config, configMain) {
     // Calculate Features of Rounds [2]
     const submitted = share.submitted || Date.now();
     const identifier = share.identifier || 'master';
-    let times = (Object.keys(updates).length >= 1 && shareType === 'valid') ?
-      _this.handleTimes(updates, submitted) : _this.handleTimesInitial(initial, submitted, interval);
+    let times = 0;
+    if (shareType === 'valid') {
+      times = Object.keys(updates).length >= 1 ? _this.handleTimes(updates, submitted) : 
+        _this.handleTimesInitial(initial, submitted, interval);
+    }
 
     // Check Maximum Times
     times = Math.min(times, interval / 1000);
@@ -974,14 +978,25 @@ const Rounds = function (logger, client, config, configMain) {
     _this.logger.debug('Rounds', _this.config.name, starting);
 
     // Build Combined Transaction
-    const parameters = { order: 'submitted', direction: 'ascending', limit: 100 };
+    const parameters = { order: 'submitted', direction: 'ascending', limit: _this.config.settings.batch.limit };
+    const purgeWindow = Date.now() - _this.config.settings.batch.purge;
     const transaction = [
       'BEGIN;',
       _this.worker.local.shares.selectLocalSharesMain(_this.pool, parameters),
+      _this.worker.local.shares.selectLocalSharesCount(_this.pool, {}),
+      _this.worker.local.transactions.deleteLocalTransactionsInactive(_this.pool, purgeWindow),
       'COMMIT;'];
 
     // Establish Separate Behavior
     _this.worker.executor(transaction, (lookups) => {
+      const shareCount = lookups[2].rows[0].count || 0;
+      const batchCapacity = Math.round(shareCount / _this.config.settings.batch.limit * 1000) / 10;
+      const lines = `Share processor uses ${ batchCapacity }% of the batch limit.`;
+      if (shareCount > _this.config.settings.batch.limit) {
+        _this.logger.error('Rounds', _this.config.name, [lines]);
+      } else {
+        _this.logger.debug('Rounds', _this.config.name, [lines]);
+      }
       _this.handleBatches(lookups, callback);
     });
   };
@@ -989,7 +1004,7 @@ const Rounds = function (logger, client, config, configMain) {
   // Start Rounds Interval Management
   /* istanbul ignore next */
   this.handleInterval = function() {
-    const interval = _this.config.settings.interval.rounds;
+    const interval = _this.config.settings.batch.interval;
     setTimeout(() => {
       _this.handleInterval();
       _this.handleRounds(() => {});
@@ -999,7 +1014,7 @@ const Rounds = function (logger, client, config, configMain) {
   // Start Rounds Capabilities
   /* istanbul ignore next */
   this.setupRounds = function(callback) {
-    const interval = _this.config.settings.interval.rounds;
+    const interval = _this.config.settings.batch.interval;
     const numForks = utils.countProcessForks(_this.configMain);
     const timing = parseFloat(_this.forkId) * interval / numForks;
     setTimeout(() => _this.handleInterval(), timing);
