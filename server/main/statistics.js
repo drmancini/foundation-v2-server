@@ -424,6 +424,7 @@ const Statistics = function (logger, client, config, configMain, template) {
     const updateWindow = timestamp - _this.config.settings.window.updates;
     const halfDayWindow = timestamp - halfDay;
     const oneDayWindow = timestamp - oneDay;
+    const twoDayWindow = timestamp - 2 * oneDay;
 
     // Build Combined Transaction
     const transaction = [
@@ -450,6 +451,9 @@ const Statistics = function (logger, client, config, configMain, template) {
       _this.master.historical.workers.selectHistoricalWorkersMain(_this.pool, { recent: recentSnapshot, type: blockType }),
       _this.master.historical.workers.selectHistoricalWorkersAverages(_this.pool, halfDayWindow, oneDayWindow, true, blockType),
       _this.master.historical.workers.selectHistoricalWorkersAverages(_this.pool, halfDayWindow, oneDayWindow, false, blockType),
+      _this.master.historical.miners.deleteHistoricalMinersCutoff(_this.pool, twoDayWindow),
+      _this.master.historical.workers.deleteHistoricalWorkersCutoff(_this.pool, twoDayWindow),
+      _this.master.historical.metadata.deleteHistoricalMetadataCutoff(_this.pool, twoDayWindow),
       'COMMIT;'];
 
     // Establish Separate Behavior

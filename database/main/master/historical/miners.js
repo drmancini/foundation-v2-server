@@ -122,6 +122,13 @@ const HistoricalMiners = function (logger, configMain) {
         valid = "${ pool }".historical_miners.valid + EXCLUDED.valid,
         work = "${ pool }".historical_miners.work + EXCLUDED.work;`;
   };
+
+  // Delete Rows From Historical Miners
+  this.deleteHistoricalMinersCutoff = function(pool, timestamp) {
+    return `
+      DELETE FROM "${ pool }".historical_miners
+      WHERE recent < ${ timestamp };`;
+  };
 };
 
 module.exports = HistoricalMiners;
