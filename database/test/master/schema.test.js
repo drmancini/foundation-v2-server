@@ -590,12 +590,13 @@ describe('Test schema functionality', () => {
         miner VARCHAR NOT NULL DEFAULT 'unknown',
         hashrate FLOAT NOT NULL DEFAULT 0,
         invalid INT NOT NULL DEFAULT 0,
+        solo BOOLEAN NOT NULL DEFAULT false,
         stale INT NOT NULL DEFAULT 0,
         type VARCHAR NOT NULL DEFAULT 'primary',
         valid INT NOT NULL DEFAULT 0,
         work FLOAT NOT NULL DEFAULT 0,
-        CONSTRAINT historical_miners_unique UNIQUE (recent, miner, type));
-      CREATE INDEX historical_miners_miner ON "Pool-Main".historical_miners(miner, type);
+        CONSTRAINT historical_miners_unique UNIQUE (recent, miner, solo, type));
+      CREATE INDEX historical_miners_miner ON "Pool-Main".historical_miners(miner, solo, type);
       CREATE INDEX historical_miners_type ON "Pool-Main".historical_miners(type);`;
     const executor = mockExecutor(null, expected);
     const schema = new Schema(logger, executor, configMainCopy);
@@ -653,21 +654,16 @@ describe('Test schema functionality', () => {
         id BIGSERIAL PRIMARY KEY,
         timestamp BIGINT NOT NULL DEFAULT -1,
         miner VARCHAR NOT NULL DEFAULT 'unknown',
-        worker VARCHAR NOT NULL DEFAULT 'unknown',
-        block_reward FLOAT NOT NULL DEFAULT 0,
-        max_times FLOAT NOT NULL DEFAULT 0,
+        reward FLOAT NOT NULL DEFAULT 0,
         round VARCHAR NOT NULL DEFAULT 'unknown',
+        share FLOAT NOT NULL DEFAULT 0,
         solo BOOLEAN NOT NULL DEFAULT false,
-        times FLOAT NOT NULL DEFAULT 0,
-        total_work FLOAT NOT NULL DEFAULT 0,
         type VARCHAR NOT NULL DEFAULT 'primary',
         work FLOAT NOT NULL DEFAULT 0,
-        CONSTRAINT historical_rounds_unique UNIQUE (worker, solo, round, type));
+        CONSTRAINT historical_rounds_unique UNIQUE (miner, solo, round, type));
       CREATE INDEX historical_rounds_miner ON "Pool-Main".historical_rounds(miner, type);
-      CREATE INDEX historical_rounds_worker ON "Pool-Main".historical_rounds(worker, type);
       CREATE INDEX historical_rounds_round ON "Pool-Main".historical_rounds(solo, round, type);
-      CREATE INDEX historical_rounds_historical ON "Pool-Main".historical_rounds(worker, solo, type);
-      CREATE INDEX historical_rounds_combined ON "Pool-Main".historical_rounds(worker, solo, round, type);`;
+      CREATE INDEX historical_rounds_timestamp ON "Pool-Main".historical_rounds(timestamp, solo, type);`;
     const executor = mockExecutor(null, expected);
     const schema = new Schema(logger, executor, configMainCopy);
     schema.createHistoricalRounds('Pool-Main', () => {});

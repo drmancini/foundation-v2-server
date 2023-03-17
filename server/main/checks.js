@@ -114,6 +114,44 @@ const Checks = function (logger, client, config, configMain) {
     });
   };
 
+  // Handle Historical Rounds Updates
+  this.handleHistoricalRounds = function(blocks, rewards, rounds, blockType) {
+    const output = [];
+    
+    // Flatten Nested Round Array
+    if (rounds.length >= 1) {
+      rounds = rounds.reduce((a, b) => a.concat(b));
+    }
+
+    // Process Rounds Data
+    rounds.forEach(round => {
+      const miner = round.miner;
+
+      if (miner in output) {
+        output[miner].work += round.work || 0;
+      } else {
+        const block = blocks.filter(block => block.round === round.round)[0] || {};
+        let reward = 0;
+        if (miner in rewards)
+          reward = rewards[miner].immature || 0;
+        const share = Math.round(reward / block.reward * 10000) / 10000 || 0;
+
+        output[miner] = {
+          timestamp: block.submitted || Date.now(),
+          miner: miner,
+          reward: reward,
+          round: round.round,
+          share: share,
+          solo: round.solo,
+          type: blockType,
+          work: round.work || 0,
+        };
+      }
+    });
+
+    return [...Object.keys(output).map(miner => output[miner])];
+  };
+
   // Handle Round Failure Updates
   this.handleFailures = function(blocks, callback) {
 
@@ -190,6 +228,13 @@ const Checks = function (logger, client, config, configMain) {
         _this.pool, orphanBlocksUpdates));
     }
 
+    // Handle Historical Generate Round Updates
+    const immatureRoundsUpdates = _this.handleHistoricalRounds(blocks, payments, rounds, blockType);
+    if (immatureRoundsUpdates.length >= 1) {
+      transaction.push(_this.master.historical.rounds.insertHistoricalRoundsMain(
+        _this.pool, immatureRoundsUpdates));
+    }
+    
     // Insert Work into Database
     transaction.push('COMMIT;');
     _this.master.executor(transaction, () => callback());

@@ -121,52 +121,6 @@ const Payments = function (logger, client, config, configMain) {
     });
   };
 
-  // Handle Historical Rounds Updates
-  this.handleHistoricalRounds = function(blocks, rounds, blockType) {
-
-    // Record Maximum Times and Total Work
-    rounds.forEach(round => {
-      const maxTimes = Math.max(...round.map(worker => worker.times));
-      const totalWork = round.reduce((a, b) => (a + b.work), 0);
-      round.forEach(worker => {
-        worker.maxTimes = maxTimes;
-        worker.totalWork = totalWork;
-      })
-    })
-
-    // Flatten Nested Round Array
-    if (rounds.length >= 1) {
-      rounds = rounds.reduce((a, b) => a.concat(b));
-    }
-
-    // Return Round Updates
-    rounds = rounds
-      .map(round => ({
-        timestamp: Date.now(),
-        miner: round.worker.split('.')[0],
-        worker: round.worker,
-        maxTimes: round.maxTimes,
-        round: round.round,
-        solo: round.solo,
-        times: round.times,
-        totalWork: round.totalWork,
-        type: blockType,
-        work: round.work,
-      }));
-
-    // Update Rounds with Block Reward
-    const transactionFee = _this.config.primary.payments ?
-      _this.config.primary.payments.transactionFee : 0;
-    rounds.forEach(round => {
-      const reward = blocks
-        .filter(block => block.round == round.round)
-        .map(block => block.reward);
-      round.blockReward = reward[0] - transactionFee;
-    });
-
-    return rounds;
-  };
-
   // Handle Historical Transactions Updates
   this.handleHistoricalTransactions = function(amounts, record, blockType) {
 
@@ -201,7 +155,7 @@ const Payments = function (logger, client, config, configMain) {
   };
 
   // Handle Round Success Updates
-  this.handleUpdates = function(blocks, rounds, amounts, balances, record, blockType, callback) {
+  this.handleUpdates = function(blocks, amounts, balances, record, blockType, callback) {
 
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
@@ -240,13 +194,6 @@ const Payments = function (logger, client, config, configMain) {
     if (paymentsUpdates.length >= 1) {
       transaction.push(_this.master.historical.payments.insertHistoricalPaymentsMain(
         _this.pool, paymentsUpdates));
-    }
-
-    // Handle Historical Generate Round Updates
-    const generateRoundsUpdates = _this.handleHistoricalRounds(blocks, rounds, blockType);
-    if (generateRoundsUpdates.length >= 1) {
-      transaction.push(_this.master.historical.rounds.insertHistoricalRoundsMain(
-        _this.pool, generateRoundsUpdates));
     }
 
     // Handle Historical Transactions Updates
@@ -295,7 +242,7 @@ const Payments = function (logger, client, config, configMain) {
             if (error) _this.handleFailures(updates, () => callback(error));
             else _this.stratum.stratum.handlePrimaryPayments(payments, users, (error, amounts, balances, transaction) => {
               if (error) _this.handleFailures(updates, () => callback(error));
-              else _this.handleUpdates(updates, rounds, amounts, balances, transaction, 'primary', () => callback(null));
+              else _this.handleUpdates(updates, amounts, balances, transaction, 'primary', () => callback(null));
             });
           });
         });
@@ -337,7 +284,7 @@ const Payments = function (logger, client, config, configMain) {
             if (error) _this.handleFailures(updates, () => callback(error));
             else _this.stratum.stratum.handleAuxiliaryPayments(payments, users, (error, amounts, balances, transaction) => {
               if (error) _this.handleFailures(updates, () => callback(error));
-              else _this.handleUpdates(updates, rounds, amounts, balances, transaction, 'auxiliary', () => callback(null));
+              else _this.handleUpdates(updates, amounts, balances, transaction, 'auxiliary', () => callback(null));
             });
           });
         });

@@ -77,22 +77,22 @@ describe('Test database miners functionality', () => {
       recent: 1,
       miner: 'miner1',
       hashrate: 1,
+      solo: false,
       type: 'primary',
     };
     const response = miners.insertHistoricalMinersHashrate('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_miners (
-        timestamp, recent, miner,
-        hashrate, type)
+        recent, miner, hashrate,
+        solo, type)
       VALUES (
-        1,
         1,
         'miner1',
         1,
+        false,
         'primary')
       ON CONFLICT ON CONSTRAINT historical_miners_unique
       DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
         hashrate = EXCLUDED.hashrate;`;
     expect(response).toBe(expected);
   });
@@ -104,27 +104,27 @@ describe('Test database miners functionality', () => {
       recent: 1,
       miner: 'miner1',
       hashrate: 1,
+      solo: false,
       type: 'primary',
     };
     const response = miners.insertHistoricalMinersHashrate('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_miners (
-        timestamp, recent, miner,
-        hashrate, type)
+        recent, miner, hashrate,
+        solo, type)
       VALUES (
         1,
-        1,
         'miner1',
         1,
+        false,
         'primary'), (
         1,
-        1,
         'miner1',
         1,
+        false,
         'primary')
       ON CONFLICT ON CONSTRAINT historical_miners_unique
       DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
         hashrate = EXCLUDED.hashrate;`;
     expect(response).toBe(expected);
   });
@@ -208,6 +208,15 @@ describe('Test database miners functionality', () => {
         stale = "Pool-Main".historical_miners.stale + EXCLUDED.stale,
         valid = "Pool-Main".historical_miners.valid + EXCLUDED.valid,
         work = "Pool-Main".historical_miners.work + EXCLUDED.work;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test miners command handling [8]', () => {
+    const miners = new HistoricalMiners(logger, configMainCopy);
+    const response = miners.deleteHistoricalMinersCutoff('Pool-Main', 1);
+    const expected = `
+      DELETE FROM "Pool-Main".historical_miners
+      WHERE recent < 1;`;
     expect(response).toBe(expected);
   });
 });

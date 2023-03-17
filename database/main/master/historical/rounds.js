@@ -6,11 +6,10 @@ const HistoricalRounds = function (logger, configMain) {
   this.configMain = configMain;
 
   // Handle Historical Parameters
-  this.numbers = ['timestamp', 'block_reward', 'max_times', 'times', 
-    'total_work', 'work'];
-  this.strings = ['miner', 'worker', 'round', 'type'];
-  this.parameters = ['timestamp', 'miner', 'worker', 'block_reward', 'max_times', 
-    'round', 'solo', 'times', 'total_work', 'type', 'work'];
+  this.numbers = ['timestamp', 'reward', 'share', 'work'];
+  this.strings = ['miner', 'round', 'type'];
+  this.parameters = ['timestamp', 'miner', 'reward', 'round', 'share',
+    'solo', 'type', 'work'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -68,13 +67,10 @@ const HistoricalRounds = function (logger, configMain) {
       values += `(
         ${ round.timestamp },
         '${ round.miner }',
-        '${ round.worker }',
-        ${ round.blockReward },
-        ${ round.maxTimes },
+        ${ round.reward },
         '${ round.round }',
+        ${ round.share },
         ${ round.solo },
-        ${ round.times },
-        ${ round.totalWork },
         '${ round.type }',
         ${ round.work })`;
       if (idx < updates.length - 1) values += ', ';
@@ -86,12 +82,21 @@ const HistoricalRounds = function (logger, configMain) {
   this.insertHistoricalRoundsMain = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".historical_rounds (
-        timestamp, miner, worker,
-        block_reward, max_times,
-        round, solo, times,
-        total_work, type, work)
+        timestamp, miner, reward,
+        round, share, solo, type,
+        work)
       VALUES ${ _this.buildHistoricalRoundsMain(updates) }
-      ON CONFLICT DO NOTHING;`;
+      ON CONFLICT ON CONSTRAINT historical_rounds_unique
+      DO UPDATE SET
+        reward = EXCLUDED.reward,
+        share = EXCLUDED.share;`;
+  };
+
+  // Delete Rows From Historical Rounds
+  this.deleteHistoricalRoundsCutoff = function(pool, timestamp) {
+    return `
+      DELETE FROM "${ pool }".historical_rounds
+      WHERE timestamp < ${ timestamp };`;
   };
 };
 

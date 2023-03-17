@@ -56,9 +56,9 @@ describe('Test database rounds functionality', () => {
 
   test('Test rounds command handling [2]', () => {
     const rounds = new HistoricalRounds(logger, configMainCopy);
-    const parameters = { worker: 'worker1', type: 'primary' };
+    const parameters = { miner: 'miner1', type: 'primary' };
     const response = rounds.selectHistoricalRoundsMain('Pool-Main', parameters);
-    const expected = 'SELECT * FROM "Pool-Main".historical_rounds WHERE worker = \'worker1\' AND type = \'primary\';';
+    const expected = 'SELECT * FROM "Pool-Main".historical_rounds WHERE miner = \'miner1\' AND type = \'primary\';';
     expect(response).toBe(expected);
   });
 
@@ -80,17 +80,17 @@ describe('Test database rounds functionality', () => {
 
   test('Test rounds command handling [5]', () => {
     const rounds = new HistoricalRounds(logger, configMainCopy);
-    const parameters = { worker: 'worker1', solo: true, type: 'primary' };
+    const parameters = { miner: 'miner1', solo: true, type: 'primary' };
     const response = rounds.selectHistoricalRoundsMain('Pool-Main', parameters);
-    const expected = 'SELECT * FROM "Pool-Main".historical_rounds WHERE worker = \'worker1\' AND solo = true AND type = \'primary\';';
+    const expected = 'SELECT * FROM "Pool-Main".historical_rounds WHERE miner = \'miner1\' AND solo = true AND type = \'primary\';';
     expect(response).toBe(expected);
   });
 
   test('Test rounds command handling [6]', () => {
     const rounds = new HistoricalRounds(logger, configMainCopy);
-    const parameters = { worker: 'worker1', solo: true, round: 'round1', type: 'primary' };
+    const parameters = { miner: 'miner1', solo: true, round: 'round1', type: 'primary' };
     const response = rounds.selectHistoricalRoundsMain('Pool-Main', parameters);
-    const expected = 'SELECT * FROM "Pool-Main".historical_rounds WHERE worker = \'worker1\' AND solo = true AND round = \'round1\' AND type = \'primary\';';
+    const expected = 'SELECT * FROM "Pool-Main".historical_rounds WHERE miner = \'miner1\' AND solo = true AND round = \'round1\' AND type = \'primary\';';
     expect(response).toBe(expected);
   });
 
@@ -107,36 +107,32 @@ describe('Test database rounds functionality', () => {
     const updates = {
       timestamp: 1,
       miner: 'miner1',
-      worker: 'worker1',
-      blockReward: 2,
-      maxTimes: 3,
+      reward: 2,
       round: 'round1',
+      share: 3,
       solo: true,
-      times: 4,
-      totalWork: 5,
       type: 'primary',
-      work: 8,
+      work: 4,
     };
     const response = rounds.insertHistoricalRoundsMain('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_rounds (
-        timestamp, miner, worker,
-        block_reward, max_times,
-        round, solo, times,
-        total_work, type, work)
+        timestamp, miner, reward,
+        round, share, solo, type,
+        work)
       VALUES (
         1,
         'miner1',
-        'worker1',
         2,
-        3,
         'round1',
+        3,
         true,
-        4,
-        5,
         'primary',
-        8)
-      ON CONFLICT DO NOTHING;`;
+        4)
+      ON CONFLICT ON CONSTRAINT historical_rounds_unique
+      DO UPDATE SET
+        reward = EXCLUDED.reward,
+        share = EXCLUDED.share;`;
     expect(response).toBe(expected);
   });
 
@@ -145,47 +141,49 @@ describe('Test database rounds functionality', () => {
     const updates = {
       timestamp: 1,
       miner: 'miner1',
-      worker: 'worker1',
-      blockReward: 2,
-      maxTimes: 3,
+      reward: 2,
       round: 'round1',
+      share: 3,
       solo: true,
-      times: 4,
-      totalWork: 5,
       type: 'primary',
-      work: 8,
+      work: 4,
     };
     const response = rounds.insertHistoricalRoundsMain('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_rounds (
-        timestamp, miner, worker,
-        block_reward, max_times,
-        round, solo, times,
-        total_work, type, work)
+        timestamp, miner, reward,
+        round, share, solo, type,
+        work)
       VALUES (
         1,
         'miner1',
-        'worker1',
         2,
-        3,
         'round1',
+        3,
         true,
-        4,
-        5,
         'primary',
-        8), (
+        4), (
         1,
         'miner1',
-        'worker1',
         2,
-        3,
         'round1',
+        3,
         true,
-        4,
-        5,
         'primary',
-        8)
-      ON CONFLICT DO NOTHING;`;
+        4)
+      ON CONFLICT ON CONSTRAINT historical_rounds_unique
+      DO UPDATE SET
+        reward = EXCLUDED.reward,
+        share = EXCLUDED.share;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test rounds command handling [10]', () => {
+    const miners = new HistoricalRounds(logger, configMainCopy);
+    const response = miners.deleteHistoricalRoundsCutoff('Pool-Main', 1);
+    const expected = `
+      DELETE FROM "Pool-Main".historical_rounds
+      WHERE timestamp < 1;`;
     expect(response).toBe(expected);
   });
 });

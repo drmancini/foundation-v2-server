@@ -277,4 +277,13 @@ describe('Test database metadata functionality', () => {
         work = "Pool-Main".historical_metadata.work + EXCLUDED.work;`;
     expect(response).toBe(expected);
   });
+
+  test('Test metadata command handling [12]', () => {
+    const miners = new HistoricalMetadata(logger, configMainCopy);
+    const response = miners.deleteHistoricalMetadataCutoff('Pool-Main', 1);
+    const expected = `
+      DELETE FROM "Pool-Main".historical_metadata
+      WHERE recent < 1;`;
+    expect(response).toBe(expected);
+  });
 });

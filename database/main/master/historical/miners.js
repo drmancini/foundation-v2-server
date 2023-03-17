@@ -65,10 +65,10 @@ const HistoricalMiners = function (logger, configMain) {
     let values = '';
     updates.forEach((miner, idx) => {
       values += `(
-        ${ miner.timestamp },
         ${ miner.recent },
         '${ miner.miner }',
         ${ miner.hashrate },
+        ${ miner.solo },
         '${ miner.type }')`;
       if (idx < updates.length - 1) values += ', ';
     });
@@ -79,12 +79,11 @@ const HistoricalMiners = function (logger, configMain) {
   this.insertHistoricalMinersHashrate = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".historical_miners (
-        timestamp, recent, miner,
-        hashrate, type)
+        recent, miner, hashrate,
+        solo, type)
       VALUES ${ _this.buildHistoricalMinersHashrate(updates) }
       ON CONFLICT ON CONSTRAINT historical_miners_unique
       DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
         hashrate = EXCLUDED.hashrate;`;
   };
 
