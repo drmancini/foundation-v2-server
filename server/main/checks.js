@@ -322,8 +322,8 @@ const Checks = function (logger, client, config, configMain) {
     // Primary Behavior
     case 'primary':
       _this.master.executor(transaction, (results) => {
-        results = results[1].rows.map((block) => block.round);
-        const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
+        results = results[1].rows.map(block => block.round);
+        const blocks = lookups[1].rows.filter(block => results.includes((block || {}).round));
 
         // Blocks Exist to Validate
         if (blocks.length >= 1) {
