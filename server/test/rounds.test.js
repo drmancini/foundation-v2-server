@@ -178,7 +178,7 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const metadata = { work: 0 };
+    const metadata = [{ work: 1 }, { work: 1 }];
     const round = { work: 0 };
     const share = {
       error: '',
@@ -213,7 +213,7 @@ describe('Test rounds functionality', () => {
       hash: 'hash1',
       height: 1,
       identifier: 'master',
-      luck: 100,
+      luck: 300,
       reward: 0,
       round: '123456789',
       solo: false,
@@ -228,7 +228,7 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const metadata = { work: 0 };
+    const metadata = [{ work: 0 }, { work: 0 }];
     const round = { work: 0 };
     const share = {
       error: '',

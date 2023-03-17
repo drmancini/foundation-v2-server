@@ -130,9 +130,7 @@ describe('Test database rounds functionality', () => {
         'primary',
         4)
       ON CONFLICT ON CONSTRAINT historical_rounds_unique
-      DO UPDATE SET
-        reward = EXCLUDED.reward,
-        share = EXCLUDED.share;`;
+      DO NOTHING;`;
     expect(response).toBe(expected);
   });
 
@@ -172,9 +170,7 @@ describe('Test database rounds functionality', () => {
         'primary',
         4)
       ON CONFLICT ON CONSTRAINT historical_rounds_unique
-      DO UPDATE SET
-        reward = EXCLUDED.reward,
-        share = EXCLUDED.share;`;
+      DO NOTHING;`;
     expect(response).toBe(expected);
   });
 
