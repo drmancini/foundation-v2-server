@@ -64,6 +64,14 @@ describe('Test database shares functionality', () => {
 
   test('Test shares command handling [3]', () => {
     const shares = new LocalShares(logger, configMainCopy);
+    const parameters = { miner: 'miner1', type: 'primary' };
+    const response = shares.selectLocalSharesCount('Pool-Main', parameters);
+    const expected = 'SELECT COUNT(*) FROM "Pool-Main".local_shares WHERE miner = \'miner1\' AND type = \'primary\';';
+    expect(response).toBe(expected);
+  });
+
+  test('Test shares command handling [4]', () => {
+    const shares = new LocalShares(logger, configMainCopy);
     const updates = {
       error: 'error1',
       uuid: 'uuid',
@@ -122,7 +130,7 @@ describe('Test database shares functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test shares command handling [4]', () => {
+  test('Test shares command handling [5]', () => {
     const shares = new LocalShares(logger, configMainCopy);
     const updates = {
       error: 'error1',
@@ -202,7 +210,7 @@ describe('Test database shares functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test shares command handling [5]', () => {
+  test('Test shares command handling [6]', () => {
     const shares = new LocalShares(logger, configMainCopy);
     const response = shares.deleteLocalSharesMain('Pool-Main', ['round1']);
     const expected = `

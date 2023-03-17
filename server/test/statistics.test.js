@@ -209,15 +209,19 @@ describe('Test statistics functionality', () => {
       type: 'primary',
       work: 0.1,
     }];
-    const expected = [{
-      timestamp: 1634742080841,
+    const workers = [{
       recent: 1,
       miner: 'miner1',
-      hashrate: 5312857.7034,
+      hashrate: 10,
+    }];
+    const expected = [{
+      recent: 1,
+      miner: 'miner1',
+      hashrate: 10,
       solo: false,
       type: 'primary',
     }];
-    expect(statistics.handleHistoricalMinersHashrate(miners, 'primary')).toStrictEqual(expected);
+    expect(statistics.handleHistoricalMinersHashrate(miners, workers, 'primary')).toStrictEqual(expected);
   });
 
   test('Test statistics handleHistoricalMetadata updates [1]', () => {
@@ -561,7 +565,7 @@ describe('Test statistics functionality', () => {
         1,
         1,
         100,
-        1431655765.3333,
+        0,
         1,
         1,
         'primary')
@@ -648,17 +652,16 @@ describe('Test statistics functionality', () => {
         valid = EXCLUDED.valid;`;
     const expectedHistoricalMiners = `
       INSERT INTO "Pool-Bitcoin".historical_miners (
-        timestamp, recent, miner,
-        hashrate, type)
+        recent, miner, hashrate,
+        solo, type)
       VALUES (
-        1634742080841,
         1,
         'miner1',
-        53128577.0339,
+        1,
+        false,
         'primary')
       ON CONFLICT ON CONSTRAINT historical_miners_unique
       DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
         hashrate = EXCLUDED.hashrate;`;
     const expectedHistoricalWorkers = `
       INSERT INTO "Pool-Bitcoin".historical_workers (
@@ -940,7 +943,7 @@ describe('Test statistics functionality', () => {
         1,
         1,
         100,
-        1431655765.3333,
+        0,
         1,
         1,
         'auxiliary')
@@ -1027,17 +1030,16 @@ describe('Test statistics functionality', () => {
         valid = EXCLUDED.valid;`;
     const expectedHistoricalMiners = `
       INSERT INTO "Pool-Bitcoin".historical_miners (
-        timestamp, recent, miner,
-        hashrate, type)
+        recent, miner, hashrate,
+        solo, type)
       VALUES (
-        1634742080841,
         1,
         'miner1',
-        53128577.0339,
+        1,
+        false,
         'auxiliary')
       ON CONFLICT ON CONSTRAINT historical_miners_unique
       DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
         hashrate = EXCLUDED.hashrate;`;
     const expectedHistoricalWorkers = `
       INSERT INTO "Pool-Bitcoin".historical_workers (
@@ -1233,6 +1235,10 @@ describe('Test statistics functionality', () => {
         valid: 1,
         type: 'primary'
       }]},
+      null,
+      null,
+      null,
+      null,
       null];
     MockDate.set(1634742080841);
     const client = mockClient(configMainCopy, lookups);
@@ -1366,6 +1372,10 @@ describe('Test statistics functionality', () => {
         valid: 1,
         type: 'auxiliary'
       }]},
+      null,
+      null,
+      null,
+      null,
       null];
     MockDate.set(1634742080841);
     const client = mockClient(configMainCopy, lookups);
@@ -1375,131 +1385,7 @@ describe('Test statistics functionality', () => {
     statistics.handleStatistics('auxiliary', () => done());
   });
 
-  // test('Test statistics submission handling [3]', (done) => {
-  //   const lookups = [
-  //     null,
-  //     null,
-  //     { rows: [{ count: 1 }] },
-  //     { rows: [{ count: 1 }] },
-  //     { rows: [{ count: 1 }] },
-  //     { rows: [{ count: 2 }] },
-  //     { rows: [
-  //       { miner: 'miner1', current_work: 100 },
-  //       { miner: 'miner2', current_work: 10 },
-  //       { miner: 'miner3', current_work: 140 }]},
-  //     { rows: [
-  //       { worker: 'miner1', current_work: 100 },
-  //       { worker: 'miner2', current_work: 10 },
-  //       { worker: 'miner3', current_work: 140 }]},
-  //     { rows: [
-  //       { worker: 'miner1', current_work: 100 },
-  //       { worker: 'miner2', current_work: 10 },
-  //       { worker: 'miner3', current_work: 140 }]},
-  //     { rows: [{ current_work: 100 }] },
-  //     { rows: [{ current_work: 100 }] },
-  //     null,
-  //     { rows: [{
-  //       timestamp: 1,
-  //       miner: 'miner1',
-  //       efficiency: 100,
-  //       effort: 100,
-  //       hashrate: 100,
-  //       type: 'auxiliary',
-  //     }]},
-  //     null,
-  //     null,
-  //     { rows: [{
-  //       timestamp: 1,
-  //       miner: 'miner1',
-  //       worker: 'worker1',
-  //       efficiency: 100,
-  //       effort: 100,
-  //       hashrate: 100,
-  //       solo: true,
-  //       type: 'auxiliary',
-  //     }]},
-  //     { rows: [{
-  //       timestamp: 1,
-  //       miner: 'miner1',
-  //       worker: 'worker1',
-  //       efficiency: 100,
-  //       effort: 100,
-  //       hashrate: 100,
-  //       solo: false,
-  //       type: 'auxiliary',
-  //     }]},
-  //     null];
-  //   MockDate.set(1634742080841);
-  //   const client = mockClient(configMainCopy, lookups);
-  //   const logger = new Logger(configMainCopy);
-  //   const template = { algorithms: { sha256d: { multiplier: 1 }}};
-  //   const statistics = new Statistics(logger, client, configCopy, configMainCopy, template);
-  //   statistics.handleStatistics('auxiliary', () => done());
-  // });
-
-  // test('Test statistics submission handling [4]', (done) => {
-  //   const lookups = [
-  //     null,
-  //     null,
-  //     { rows: [{ count: 1 }] },
-  //     { rows: [{ count: 1 }] },
-  //     { rows: [{ count: 1 }] },
-  //     { rows: [{ count: 2 }] },
-  //     { rows: [
-  //       { miner: 'miner1', current_work: 100 },
-  //       { miner: 'miner2', current_work: 10 },
-  //       { miner: 'miner3', current_work: 140 }]},
-  //     { rows: [
-  //       { worker: 'miner1', current_work: 100 },
-  //       { worker: 'miner2', current_work: 10 },
-  //       { worker: 'miner3', current_work: 140 }]},
-  //     { rows: [
-  //       { worker: 'miner1', current_work: 100 },
-  //       { worker: 'miner2', current_work: 10 },
-  //       { worker: 'miner3', current_work: 140 }]},
-  //     { rows: [{ current_work: 100 }] },
-  //     { rows: [{ current_work: 100 }] },
-  //     null,
-  //     { rows: [{
-  //       timestamp: 1,
-  //       miner: 'miner1',
-  //       efficiency: 100,
-  //       effort: 100,
-  //       hashrate: 100,
-  //       type: 'auxiliary',
-  //     }]},
-  //     null,
-  //     null,
-  //     { rows: [{
-  //       timestamp: 1,
-  //       miner: 'miner1',
-  //       worker: 'worker1',
-  //       efficiency: 100,
-  //       effort: 100,
-  //       hashrate: 100,
-  //       solo: true,
-  //       type: 'auxiliary',
-  //     }]},
-  //     { rows: [{
-  //       timestamp: 1,
-  //       miner: 'miner1',
-  //       worker: 'worker1',
-  //       efficiency: 100,
-  //       effort: 100,
-  //       hashrate: 100,
-  //       solo: false,
-  //       type: 'auxiliary',
-  //     }]},
-  //     null];
-  //   MockDate.set(1634742080841);
-  //   const client = mockClient(configMainCopy, lookups);
-  //   const logger = new Logger(configMainCopy);
-  //   const template = { algorithms: { sha256d: { multiplier: 1 }}};
-  //   const statistics = new Statistics(logger, client, configCopy, configMainCopy, template);
-  //   statistics.handleStatistics('auxiliary', () => done());
-  // });
-
-  test('Test statistics submission handling [5]', (done) => {
+  test('Test statistics submission handling [3]', (done) => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const template = { algorithms: { sha256d: { multiplier: 1 }}};

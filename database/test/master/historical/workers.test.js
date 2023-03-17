@@ -291,4 +291,13 @@ describe('Test database workers functionality', () => {
         work = "Pool-Main".historical_workers.work + EXCLUDED.work;`;
     expect(response).toBe(expected);
   });
+
+  test('Test workers command handling [10]', () => {
+    const miners = new HistoricalWorkers(logger, configMainCopy);
+    const response = miners.deleteHistoricalWorkersCutoff('Pool-Main', 1);
+    const expected = `
+      DELETE FROM "Pool-Main".historical_workers
+      WHERE recent < 1;`;
+    expect(response).toBe(expected);
+  });
 });
