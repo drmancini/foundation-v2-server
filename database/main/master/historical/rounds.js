@@ -87,9 +87,7 @@ const HistoricalRounds = function (logger, configMain) {
         work)
       VALUES ${ _this.buildHistoricalRoundsMain(updates) }
       ON CONFLICT ON CONSTRAINT historical_rounds_unique
-      DO UPDATE SET
-        reward = EXCLUDED.reward,
-        share = EXCLUDED.share;`;
+      DO NOTHING;`;
   };
 
   // Delete Rows From Historical Rounds
