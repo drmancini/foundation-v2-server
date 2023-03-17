@@ -103,10 +103,10 @@ describe('Test statistics functionality', () => {
     const template = { algorithms: { sha256d: { multiplier: 1 }}};
     const statistics = new Statistics(logger, client, configCopy, configMainCopy, template);
     const hashrate = [
-      { miner: 'miner1', current_work: 100 },
-      { miner: 'miner2', current_work: 10 },
-      { miner: 'miner3', current_work: 140 },
-      { miner: 'miner4', current_work: 140 }];
+      { miner: 'miner1', worker: 'miner1', current_work: 100 },
+      { miner: 'miner2', worker: 'miner2', current_work: 10 },
+      { miner: 'miner3', worker: 'miner3', current_work: 140 },
+      { miner: 'miner4', worker: 'miner4', current_work: 140 }];
     const miners = [{ miner: 'miner1'}, { miner: 'miner2'}, { miner: 'miner3'}, { miner: 'miner4'}];
     const sharedWorkers = [
       { miner: 'miner1', active_workers: 1, inactive_workers: 0 },
@@ -135,8 +135,8 @@ describe('Test statistics functionality', () => {
     delete configCopy.primary.coin.algorithm;
     const statistics = new Statistics(logger, client, configCopy, configMainCopy, template);
     const hashrate = [
-      { miner: 'miner1', current_work: 100 },
-      { miner: 'miner4', current_work: 140 }];
+      { miner: 'miner1', worker: 'miner1', current_work: 100 },
+      { miner: 'miner4', worker: 'miner4', current_work: 140 }];
     const miners = [{ miner: 'miner1'}, { miner: 'miner2'}, { miner: 'miner3'}, { miner: 'miner4'}];
     const sharedWorkers = [
       { miner: 'miner1', active_workers: 1, inactive_workers: 1 },
@@ -565,7 +565,7 @@ describe('Test statistics functionality', () => {
         1,
         1,
         100,
-        0,
+        1431655765.3333,
         1,
         1,
         'primary')
@@ -943,7 +943,7 @@ describe('Test statistics functionality', () => {
         1,
         1,
         100,
-        0,
+        1431655765.3333,
         1,
         1,
         'auxiliary')
