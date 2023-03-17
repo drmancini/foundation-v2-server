@@ -103,13 +103,14 @@ const Rounds = function (logger, client, config, configMain) {
   }
 
   // Handle Blocks Updates
-  this.handleCurrentBlocks = function(metadataWork, round, share, shareType, minerType, blockType) {
+  this.handleCurrentBlocks = function(metadata, round, share, shareType, minerType, blockType) {
 
     // Calculate Features of Blocks
     const identifier = share.identifier || 'master';
     const difficulty = blockType === 'primary' ? share.blockdiffprimary : share.blockdiffauxiliary;
     const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
-    const work = minerType ? (round.work || 0) : (metadataWork || 0);
+    const metadataWork = metadata.reduce((a, b) => a + b.work, 0);
+    const work = minerType ? (round.work || 0) : (metadataWork);
 
     // Calculate Luck for Block
     const luck = _this.handleEffort(share, difficulty, work, shareType);
@@ -764,12 +765,12 @@ const Rounds = function (logger, client, config, configMain) {
     else if (!block.sharevalid || block.error) shareType = 'invalid';
 
     // Handle Individual Lookups
-    const metadataWork = lookups[1].rows.map(region => region.work).reduce((a, b) => a + b, 0);
+    const metadata = lookups[1].rows || {};
     const rounds = _this.handleWorkersLookups(lookups[3].rows);
     const round = rounds[block.addrprimary] || {};
 
     // Determine Updates for Block
-    const blockUpdates = _this.handleCurrentBlocks(metadataWork, round, block, 'valid', minerType, 'primary');
+    const blockUpdates = _this.handleCurrentBlocks(metadata, round, block, 'valid', minerType, 'primary');
     const metadataBlocks = { timestamp: Date.now(), blocks: 1, identifier: identifier, solo: minerType,
       type: 'primary' };
     const roundUpdates = (minerType) ? (
@@ -809,7 +810,7 @@ const Rounds = function (logger, client, config, configMain) {
     const miner = (block.addrauxiliary || '').split('.')[0];
 
     // Handle Individual Lookups
-    const metadata = lookups[2].rows.filter(region => region.identifier === identifier)[0] || {};
+    const metadata = lookups[2].rows || {};
     const rounds = _this.handleWorkersLookups(lookups[4].rows);
     const round = rounds[block.addrauxiliary] || {};
 

@@ -549,9 +549,7 @@ describe('Test checks functionality', () => {
         'primary',
         200)
       ON CONFLICT ON CONSTRAINT historical_rounds_unique
-      DO UPDATE SET
-        reward = EXCLUDED.reward,
-        share = EXCLUDED.share;`;
+      DO NOTHING;`;
     client.on('transaction', (transaction) => {
       expect(transaction.length).toBe(10);
       expect(transaction[1]).toBe(expectedOrphanBlocksDeletes);
