@@ -112,8 +112,8 @@ const Statistics = function (logger, client, config, configMain, template) {
       const filtered = work.filter((share) => share.worker === worker.worker);
       const workerHash = filtered[0] || { current_work: 0 };
       const hashrate = utils.roundTo((multiplier * workerHash.current_work * 1000) / section, 4);
-      const hashrate_12h = Math.round(filteredStats.hashrate_12h * 10000) / 10000;
-      const hashrate_24h = Math.round(filteredStats.hashrate_24h * 10000) / 10000;
+      const hashrate_12h = Math.round(filteredStats.sum_hashrate_12h / (12 * 6) * 10000) / 10000;
+      const hashrate_24h = Math.round(filteredStats.sum_hashrate_24h / (24 * 6) * 10000) / 10000;
 
       return {
         timestamp: timestamp,
