@@ -68,6 +68,10 @@ const HistoricalWorkers = function (logger, configMain) {
           THEN hashrate ELSE null END) AS hashrate_12h,
         AVG(CASE WHEN recent > ${ oneDay }
           THEN hashrate ELSE null END) AS hashrate_24h,
+        SUM(CASE WHEN recent > 1679045905245
+          THEN hashrate ELSE null END) AS sum_hashrate_12h,
+        SUM(CASE WHEN recent > 1679002705245
+          THEN hashrate ELSE null END) AS sum_hashrate_24h,
         SUM(invalid) AS invalid, 
         SUM(stale) AS stale,
         SUM(valid) AS valid
