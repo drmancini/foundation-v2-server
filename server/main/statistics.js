@@ -76,7 +76,7 @@ const Statistics = function (logger, client, config, configMain, template) {
     // Return Miners Updates
     return miners.map(miner => {
       const efficiency = _this.handleEfficiency(miner);
-      const filteredWorkers = workWorkers.filter(el => el.miner === miner.miner)
+      const filteredWorkers = workWorkers.filter(el => el.worker.split('.')[0] === miner.miner)
         .reduce((a, b) => a + b.current_work, 0);
       const sharedCounts = sharedWorkers.filter(el => el.miner === miner.miner)[0] || {};
       const soloCounts = soloWorkers.filter(el => el.miner === miner.miner)[0] || {};
