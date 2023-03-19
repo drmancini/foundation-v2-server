@@ -254,10 +254,10 @@ const Checks = function (logger, client, config, configMain) {
       } else {
         const startTime = Date.now() - _this.config.primary.payments.windowPPLNT;
         const endTime = block.submitted;
-        // transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
         //   _this.pool, startTime, endTime, 'primary'));
         transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
           _this.pool, block.round, false, 'primary'));
+        // transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
       }
     });
 
