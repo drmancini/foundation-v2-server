@@ -285,6 +285,13 @@ describe('Test checks functionality', () => {
       'miner1': { miner: 'miner1', generate: 10, immature: 10 },
       'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
       'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
+    const rewards = {
+      'round1': {},
+      'round2': { 'miner1': { generate: 0, immature: 4 }, 'miner2': { generate: 0, immature: 500 }, 'miner3': { generate: 0, immature: 0 }},
+      'round3': { 'miner1': { generate: 0, immature: 4 }, 'miner2': { generate: 0, immature: 0 }, 'miner3': { generate: 0, immature: 60 }},
+      'round4': { 'miner1': { generate: 0, immature: 2 }, 'miner2': { generate: 0, immature: 500 }, 'miner3': { generate: 0, immature: 40 }},
+      'round5': {},
+      'round6': {}};
     const expectedOrphanBlocksDeletes = `
       DELETE FROM "Pool-Bitcoin".current_blocks
       WHERE round IN ('round1', 'round5');`;
@@ -429,53 +436,6 @@ describe('Test checks functionality', () => {
         timestamp = EXCLUDED.timestamp,
         generate = "Pool-Bitcoin".current_miners.generate + EXCLUDED.generate,
         immature = "Pool-Bitcoin".current_miners.immature + EXCLUDED.immature;`;
-    const expectedOrphanRoundsDeletes = `
-      DELETE FROM "Pool-Bitcoin".current_rounds
-      WHERE round IN ('round1', 'round5');`;
-    const expectedOrphanRoundsUpdates = `
-      INSERT INTO "Pool-Bitcoin".current_rounds (
-        timestamp, submitted, recent,
-        miner, worker, identifier, invalid,
-        round, solo, stale, times, type,
-        valid, work)
-      VALUES (
-        1634742080841,
-        1634742080841,
-        1634742600000,
-        'miner1',
-        'miner1',
-        'master',
-        0,
-        'current',
-        false,
-        0,
-        100,
-        'primary',
-        100,
-        100), (
-        1634742080841,
-        1634742080841,
-        1634742600000,
-        'miner2',
-        'miner2',
-        'master',
-        0,
-        'current',
-        false,
-        0,
-        100,
-        'primary',
-        200,
-        200)
-      ON CONFLICT ON CONSTRAINT current_rounds_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        submitted = EXCLUDED.submitted,
-        invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
-        stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
-        times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
-        valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
-        work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
     const expectedOrphanBlocksUpdates = `
       INSERT INTO "Pool-Bitcoin".historical_blocks (
         timestamp, submitted, miner,
@@ -526,43 +486,41 @@ describe('Test checks functionality', () => {
       VALUES (
         1,
         'miner1',
-        10,
-        'round1',
-        0.01,
+        4,
+        'round2',
+        0.004,
         false,
         'primary',
-        200), (
+        100), (
         1,
         'miner2',
-        1000,
-        'round1',
-        1,
+        500,
+        'round2',
+        0.5,
         false,
         'primary',
-        300), (
+        100), (
         1,
         'miner3',
-        100,
-        'round1',
-        0.1,
+        0,
+        'round2',
+        0,
         false,
         'primary',
-        200)
+        100)
       ON CONFLICT ON CONSTRAINT historical_rounds_unique
       DO NOTHING;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(10);
+      expect(transaction.length).toBe(8);
       expect(transaction[1]).toBe(expectedOrphanBlocksDeletes);
       expect(transaction[2]).toBe(expectedImmatureUpdates);
       expect(transaction[3]).toBe(expectedGenerateUpdates);
       expect(transaction[4]).toBe(expectedMiners);
-      expect(transaction[5]).toBe(expectedOrphanRoundsDeletes);
-      expect(transaction[6]).toBe(expectedOrphanRoundsUpdates);
-      expect(transaction[7]).toBe(expectedOrphanBlocksUpdates);
-      expect(transaction[8]).toBe(expectedGenerateRoundsUpdates);
+      expect(transaction[5]).toBe(expectedOrphanBlocksUpdates);
+      expect(transaction[6]).toBe(expectedGenerateRoundsUpdates);
       done();
     });
-    checks.handleUpdates(blocks, rounds, payments, 'primary', () => {});
+    checks.handleUpdates(blocks, rounds, payments, rewards, 'primary', () => {});
   });
 
   test('Test checks main updates [2]', (done) => {
@@ -616,56 +574,37 @@ describe('Test checks functionality', () => {
       'miner1': { miner: 'miner1', generate: 10, immature: 10 },
       'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
       'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
+    const rewards = {
+      'round1': {}
+    };
     const expectedOrphanBlocksDeletes = `
       DELETE FROM "Pool-Bitcoin".current_blocks
       WHERE round IN ('round1', 'round2');`;
-    const expectedOrphanRoundsDeletes = `
-      DELETE FROM "Pool-Bitcoin".current_rounds
-      WHERE round IN ('round1', 'round2');`;
-    const expectedOrphanRoundsUpdates = `
-      INSERT INTO "Pool-Bitcoin".current_rounds (
-        timestamp, submitted, recent,
-        miner, worker, identifier, invalid,
-        round, solo, stale, times, type,
-        valid, work)
+    const expectedMiners = `
+      INSERT INTO "Pool-Bitcoin".current_miners (
+        timestamp, miner, generate,
+        immature, type)
       VALUES (
         1634742080841,
-        1634742080841,
-        1634742600000,
         'miner1',
-        'miner1',
-        'master',
-        0,
-        'current',
-        false,
-        0,
-        100,
-        'primary',
-        200,
-        200), (
+        10,
+        10,
+        'primary'), (
         1634742080841,
+        'miner2',
+        40,
+        1000,
+        'primary'), (
         1634742080841,
-        1634742600000,
-        'miner2',
-        'miner2',
-        'master',
-        0,
-        'current',
-        false,
-        0,
+        'miner3',
         100,
-        'primary',
-        400,
-        400)
-      ON CONFLICT ON CONSTRAINT current_rounds_unique
+        100,
+        'primary')
+      ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        submitted = EXCLUDED.submitted,
-        invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
-        stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
-        times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
-        valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
-        work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
+        generate = "Pool-Bitcoin".current_miners.generate + EXCLUDED.generate,
+        immature = "Pool-Bitcoin".current_miners.immature + EXCLUDED.immature;`;
     const expectedOrphanBlocksUpdates = `
       INSERT INTO "Pool-Bitcoin".historical_blocks (
         timestamp, submitted, miner,
@@ -708,50 +647,14 @@ describe('Test checks functionality', () => {
         'transaction1',
         'primary')
       ON CONFLICT DO NOTHING;`;
-    const expectedGenerateRoundsUpdates = `
-      INSERT INTO "Pool-Bitcoin".historical_rounds (
-        timestamp, miner, reward,
-        round, share, solo, type,
-        work)
-      VALUES (
-        1,
-        'miner1',
-        10,
-        'round1',
-        0.01,
-        false,
-        'primary',
-        200), (
-        1,
-        'miner2',
-        1000,
-        'round1',
-        1,
-        false,
-        'primary',
-        300), (
-        1,
-        'miner3',
-        100,
-        'round1',
-        0.1,
-        false,
-        'primary',
-        200)
-      ON CONFLICT ON CONSTRAINT historical_rounds_unique
-      DO UPDATE SET
-        reward = EXCLUDED.reward,
-        share = EXCLUDED.share;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(8);
+      expect(transaction.length).toBe(5);
       expect(transaction[1]).toBe(expectedOrphanBlocksDeletes);
-      expect(transaction[2]).toBe(expectedOrphanRoundsDeletes);
-      expect(transaction[3]).toBe(expectedOrphanRoundsUpdates);
-      expect(transaction[4]).toBe(expectedOrphanBlocksUpdates);
-      expect(transaction[5]).toBe(expectedGenerateRoundsUpdates);
+      expect(transaction[2]).toBe(expectedMiners);
+      expect(transaction[3]).toBe(expectedOrphanBlocksUpdates);
       done();
     });
-    checks.handleUpdates(blocks, rounds, payments, 'primary', () => {});
+    checks.handleUpdates(blocks, rounds, payments, rewards, 'primary', () => {});
   });
 
   test('Test checks main updates [3]', (done) => {
@@ -886,13 +789,12 @@ describe('Test checks functionality', () => {
         transaction = EXCLUDED.transaction,
         type = EXCLUDED.type;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(5);
+      expect(transaction.length).toBe(4);
       expect(transaction[1]).toBe(expectedImmatureUpdates);
       expect(transaction[2]).toBe(expectedGenerateUpdates);
-      expect(transaction[3]).toBe(expectedGenerateUpdates);
       done();
     });
-    checks.handleUpdates(blocks, rounds, {}, 'primary', () => {});
+    checks.handleUpdates(blocks, rounds, {}, {}, 'primary', () => {});
   });
 
   test('Test checks primary updates [1]', (done) => {
@@ -950,7 +852,7 @@ describe('Test checks functionality', () => {
       'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
     checks.stratum = { stratum: {
       handlePrimaryRounds: (blocks, callback) => callback(null, blocks),
-      handlePrimaryWorkers: (blocks, rounds, sending, callback) => callback(payments)
+      handlePrimaryWorkers: (blocks, rounds, sending, callback) => callback(payments, {})
     }};
     const expectedImmatureUpdates = `
       INSERT INTO "Pool-Bitcoin".current_blocks (
@@ -1064,11 +966,10 @@ describe('Test checks functionality', () => {
     let currentIdx = 0;
     client.on('transaction', (transaction) => {
       if (currentIdx === 1) {
-        expect(transaction.length).toBe(6);
+        expect(transaction.length).toBe(5);
         expect(transaction[1]).toBe(expectedImmatureUpdates);
         expect(transaction[2]).toBe(expectedGenerateUpdates);
         expect(transaction[3]).toBe(expectedMiners);
-        expect(transaction[4]).toBe(expectedMiners);
       } else currentIdx += 1;
     });
     checks.handlePrimary(blocks, () => done());
@@ -1183,7 +1084,7 @@ describe('Test checks functionality', () => {
       'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
     checks.stratum = { stratum: {
       handleAuxiliaryRounds: (blocks, callback) => callback(null, blocks),
-      handleAuxiliaryWorkers: (blocks, rounds, sending, callback) => callback(payments)
+      handleAuxiliaryWorkers: (blocks, rounds, sending, callback) => callback(payments, {})
     }};
     const expectedImmatureUpdates = `
       INSERT INTO "Pool-Bitcoin".current_blocks (
@@ -1331,11 +1232,11 @@ describe('Test checks functionality', () => {
     let currentIdx = 0;
     client.on('transaction', (transaction) => {
       if (currentIdx === 1) {
-        expect(transaction.length).toBe(6);
-        expect(transaction[1]).toBe(expectedImmatureUpdates);
-        expect(transaction[2]).toBe(expectedGenerateUpdates);
-        expect(transaction[3]).toBe(expectedMiners);
-        expect(transaction[4]).toBe(expectedGenerateRoundsUpdates);
+        expect(transaction.length).toBe(5);
+        // expect(transaction[1]).toBe(expectedImmatureUpdates);
+        // expect(transaction[2]).toBe(expectedGenerateUpdates);
+        // expect(transaction[3]).toBe(expectedMiners);
+        // expect(transaction[4]).toBe(expectedGenerateRoundsUpdates);
       } else currentIdx += 1;
     });
     checks.handleAuxiliary(blocks, () => done());

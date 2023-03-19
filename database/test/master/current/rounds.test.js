@@ -143,6 +143,22 @@ describe('Test database rounds functionality', () => {
     expect(response).toBe(expected);
   });
 
+  test('Test rounds command handling [10]', () => {
+    const rounds = new CurrentRounds(logger, configMainCopy);
+    const response = rounds.selectCurrentRoundsSegment('Pool-Main', 1, 2, 'primary');
+    const expected = `
+      SELECT miner, worker, solo, type,
+        SUM(times) as times,
+        SUM(work) as work
+      FROM "Pool-Main".current_rounds
+      WHERE recent > 1
+      AND recent < 2
+      AND solo = false
+      AND type = 'primary'
+      GROUP BY miner, worker, solo, type;`;
+    expect(response).toBe(expected);
+  });
+
   test('Test rounds command handling [11]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const parameters = { identifier: 'master', timestamp: 'gt0', type: 'primary' };

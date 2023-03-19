@@ -356,8 +356,8 @@ const Schema = function (logger, executor, configMain) {
         payment_notifications BOOLEAN NOT NULL DEFAULT false,
         payout_limit INT NOT NULL DEFAULT 0,
         subscribed BOOLEAN NOT NULL DEFAULT false,
-        type VARCHAR NOT NULL DEFAULT 'unknown',
         token VARCHAR NOT NULL DEFAULT 'unknown',
+        type VARCHAR NOT NULL DEFAULT 'unknown',
         CONSTRAINT current_users_unique UNIQUE (miner, type));
       CREATE INDEX current_users_activity_subscribed ON "${ pool }".current_users(activity_notifications, subscribed);
       CREATE INDEX current_users_miner_token ON "${ pool }".current_users(miner, token);

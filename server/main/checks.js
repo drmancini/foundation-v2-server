@@ -1,3 +1,4 @@
+const { eachOf } = require('async');
 const Text = require('../../locales/index');
 const utils = require('./utils');
 
@@ -52,7 +53,7 @@ const Checks = function (logger, client, config, configMain) {
 
   // Handle Miners Updates
   this.handleCurrentMiners = function(miners, blockType) {
-
+    
     // Return Miners Updates
     return Object.keys(miners).map((address) => {
       return {
@@ -117,39 +118,41 @@ const Checks = function (logger, client, config, configMain) {
   // Handle Historical Rounds Updates
   this.handleHistoricalRounds = function(blocks, rewards, rounds, blockType) {
     const output = [];
-    
-    // Flatten Nested Round Array
-    if (rounds.length >= 1) {
-      rounds = rounds.reduce((a, b) => a.concat(b));
-    }
 
-    // Process Rounds Data
-    rounds.forEach(round => {
-      const miner = round.miner;
+    blocks.forEach((block, idx) => {
+      const tempOutput = [];
+      const current = rounds[idx] || [];
+      const blockRewards = rewards[block.round] || {};
+      if (Object.keys(blockRewards).length === 0) return;
+      
+      current.forEach(round => {
+        const miner = round.miner;
 
-      if (miner in output) {
-        output[miner].work += round.work || 0;
-      } else {
-        const block = blocks.filter(block => block.round === round.round)[0] || {};
-        let reward = 0;
-        if (miner in rewards)
-          reward = rewards[miner].immature || 0;
-        const share = Math.round(reward / block.reward * 10000) / 10000 || 0;
+        if (miner in tempOutput) {
+          tempOutput[miner].work += round.work || 0;
+        } else {
+          let reward = 0;
+          if (miner in blockRewards)
+            reward = blockRewards[miner].immature || 0;
+          const share = Math.round(reward / block.reward * 10000) / 10000 || 0;
+  
+          tempOutput[miner] = {
+            timestamp: block.submitted || Date.now(),
+            miner: miner,
+            reward: reward,
+            round: block.round,
+            share: share,
+            solo: round.solo,
+            type: blockType,
+            work: round.work || 0,
+          };
+        }
+      });
 
-        output[miner] = {
-          timestamp: block.submitted || Date.now(),
-          miner: miner,
-          reward: reward,
-          round: round.round,
-          share: share,
-          solo: round.solo,
-          type: blockType,
-          work: round.work || 0,
-        };
-      }
+      output.push(...Object.keys(tempOutput).map(miner => tempOutput[miner]));
     });
 
-    return [...Object.keys(output).map(miner => output[miner])];
+    return output;
   };
 
   // Handle Round Failure Updates
@@ -167,15 +170,13 @@ const Checks = function (logger, client, config, configMain) {
   };
 
   // Handle Round Success Updates
-  this.handleUpdates = function(blocks, rounds, payments, blockType, callback) {
+  this.handleUpdates = function(blocks, rounds, payments, rewards, blockType, callback) {
 
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
 
     // Handle Block Categories Individually
-    const flattened = blocks.flatMap((block) => block.round);
     const orphanBlocks = blocks.filter((block) => block.category === 'orphan');
-    const orphanRounds = orphanBlocks.map((orphan) => rounds[flattened.indexOf(orphan.round)] || []);
     const immatureBlocks = blocks.filter((block) => block.category === 'immature');
     const generateBlocks = blocks.filter((block) => block.category === 'generate');
 
@@ -207,20 +208,6 @@ const Checks = function (logger, client, config, configMain) {
         _this.pool, minersUpdates));
     }
 
-    // Handle Orphan Round Delete Updates
-    const orphanRoundsDelete = orphanBlocks.map((block) => `'${ block.round }'`);
-    if (orphanRoundsDelete.length >= 1) {
-      transaction.push(_this.master.current.rounds.deleteCurrentRoundsMain(
-        _this.pool, orphanRoundsDelete));
-    }
-
-    // Handle Orphan Round Updates
-    const orphanRoundsUpdates = _this.handleCurrentOrphans(orphanRounds);
-    if (orphanRoundsUpdates.length >= 1) {
-      transaction.push(_this.master.current.rounds.insertCurrentRoundsMain(
-        _this.pool, orphanRoundsUpdates));
-    }
-
     // Handle Historical Orphan Block Updates
     const orphanBlocksUpdates = _this.handleCurrentBlocks(orphanBlocks);
     if (orphanBlocksUpdates.length >= 1) {
@@ -229,7 +216,7 @@ const Checks = function (logger, client, config, configMain) {
     }
 
     // Handle Historical Generate Round Updates
-    const immatureRoundsUpdates = _this.handleHistoricalRounds(blocks, payments, rounds, blockType);
+    const immatureRoundsUpdates = _this.handleHistoricalRounds(blocks, rewards, rounds, blockType);
     if (immatureRoundsUpdates.length >= 1) {
       transaction.push(_this.master.historical.rounds.insertHistoricalRoundsMain(
         _this.pool, immatureRoundsUpdates));
@@ -254,10 +241,8 @@ const Checks = function (logger, client, config, configMain) {
       } else {
         const startTime = Date.now() - _this.config.primary.payments.windowPPLNT;
         const endTime = block.submitted;
-        //   _this.pool, startTime, endTime, 'primary'));
-        transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
-          _this.pool, block.round, false, 'primary'));
-        // transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
+        transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
+          _this.pool, startTime, endTime, 'primary'));
       }
     });
 
@@ -270,8 +255,8 @@ const Checks = function (logger, client, config, configMain) {
       const sending = false;
       _this.stratum.stratum.handlePrimaryRounds(blocks, (error, updates) => {
         if (error) _this.handleFailures(blocks, () => callback(error));
-        else _this.stratum.stratum.handlePrimaryWorkers(blocks, rounds, sending, (results) => {
-          _this.handleUpdates(updates, rounds, results, 'primary', () => callback(null));
+        else _this.stratum.stratum.handlePrimaryWorkers(blocks, rounds, sending, (results, rewards) => {
+          _this.handleUpdates(updates, rounds, results, rewards, 'primary', () => callback(null));
         });
       });
     });
@@ -285,8 +270,15 @@ const Checks = function (logger, client, config, configMain) {
 
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
-      transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
-        _this.pool, block.round, block.solo, 'primary'));
+      if (block.solo) {
+        transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
+          _this.pool, block.round, true, 'auxiliary'));
+      } else {
+        const startTime = Date.now() - _this.config.primary.payments.windowPPLNT;
+        const endTime = block.submitted;
+        transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
+          _this.pool, startTime, endTime, 'auxiliary'));
+      }
     });
 
     // Determine Workers for Rounds
@@ -298,7 +290,7 @@ const Checks = function (logger, client, config, configMain) {
       const sending = false;
       _this.stratum.stratum.handleAuxiliaryRounds(blocks, (error, updates) => {
         if (error) _this.handleFailures(blocks, () => callback(error));
-        else _this.stratum.stratum.handleAuxiliaryWorkers(blocks, rounds, sending, (results) => {
+        else _this.stratum.stratum.handleAuxiliaryWorkers(blocks, rounds, sending, (results, rewards) => {
           _this.handleUpdates(updates, rounds, results, 'auxiliary', () => callback(null));
         });
       });
