@@ -176,11 +176,11 @@ const Payments = function (logger, client, config, configMain) {
     }
 
     // Handle Generate Round Delete Updates
-    const generateRoundsDelete = blocks.map((block) => `'${ block.round }'`);
-    if (generateRoundsDelete.length >= 1) {
-      transaction.push(_this.master.current.rounds.deleteCurrentRoundsMain(
-        _this.pool, generateRoundsDelete));
-    }
+    // const generateRoundsDelete = blocks.map((block) => `'${ block.round }'`);
+    // if (generateRoundsDelete.length >= 1) {
+    //   transaction.push(_this.master.current.rounds.deleteCurrentRoundsMain(
+    //     _this.pool, generateRoundsDelete));
+    // }
 
     // Handle Historical Generate Block Updates
     const generateBlocksUpdates = _this.handleHistoricalBlocks(blocks);
@@ -220,8 +220,17 @@ const Payments = function (logger, client, config, configMain) {
 
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
-      transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
-        _this.pool, block.round, block.solo, 'primary'));
+      if (block.solo) {
+        transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
+          _this.pool, block.round, true, 'primary'));
+      } else {
+        const startTime = Date.now() - _this.config.primary.payments.windowPPLNT;
+        const endTime = block.submitted;
+        // transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
+        //   _this.pool, startTime, endTime, 'primary'));
+        transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
+          _this.pool, block.round, false, 'primary'));
+      }
     });
 
     // Determine Workers for Rounds
