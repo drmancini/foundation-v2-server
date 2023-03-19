@@ -99,8 +99,7 @@ const CurrentRounds = function (logger, configMain) {
       AND recent < ${ endTime }
       AND solo = false
       AND type = '${ type }'
-      GROUP BY miner, worker, solo, type
-    `;
+      GROUP BY miner, worker, solo, type;`;
   };
   
   // Sum Work in Current Rounds Using Parameters

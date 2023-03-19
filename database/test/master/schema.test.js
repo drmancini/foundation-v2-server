@@ -432,7 +432,8 @@ describe('Test schema functionality', () => {
         payout_limit INT NOT NULL DEFAULT 0,
         subscribed BOOLEAN NOT NULL DEFAULT false,
         token VARCHAR NOT NULL DEFAULT 'unknown',
-        CONSTRAINT current_users_unique UNIQUE (miner));
+        type VARCHAR NOT NULL DEFAULT 'unknown',
+        CONSTRAINT current_users_unique UNIQUE (miner, type));
       CREATE INDEX current_users_activity_subscribed ON "Pool-Main".current_users(activity_notifications, subscribed);
       CREATE INDEX current_users_miner_token ON "Pool-Main".current_users(miner, token);
       CREATE INDEX current_users_payout_limit ON "Pool-Main".current_users(miner, payout_limit);`;

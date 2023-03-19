@@ -175,13 +175,6 @@ const Payments = function (logger, client, config, configMain) {
         _this.pool, minersUpdates));
     }
 
-    // Handle Generate Round Delete Updates
-    // const generateRoundsDelete = blocks.map((block) => `'${ block.round }'`);
-    // if (generateRoundsDelete.length >= 1) {
-    //   transaction.push(_this.master.current.rounds.deleteCurrentRoundsMain(
-    //     _this.pool, generateRoundsDelete));
-    // }
-
     // Handle Historical Generate Block Updates
     const generateBlocksUpdates = _this.handleHistoricalBlocks(blocks);
     if (generateBlocksUpdates.length >= 1) {
@@ -226,10 +219,8 @@ const Payments = function (logger, client, config, configMain) {
       } else {
         const startTime = Date.now() - _this.config.primary.payments.windowPPLNT;
         const endTime = block.submitted;
-        // transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
-        //   _this.pool, startTime, endTime, 'primary'));
-        transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
-          _this.pool, block.round, false, 'primary'));
+        transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
+          _this.pool, startTime, endTime, 'primary'));
       }
     });
 
@@ -243,7 +234,7 @@ const Payments = function (logger, client, config, configMain) {
       const sending = true;
       _this.stratum.stratum.handlePrimaryRounds(blocks, (error, updates) => {
         if (error) _this.handleFailures(blocks, () => callback(error));
-        else _this.stratum.stratum.handlePrimaryWorkers(blocks, rounds, sending, (results) => {
+        else _this.stratum.stratum.handlePrimaryWorkers(blocks, rounds, sending, (results, rewards) => {
           const payments = _this.handleCurrentCombined(balances, results);
 
           // Validate and Send Out Primary Payments
@@ -271,8 +262,15 @@ const Payments = function (logger, client, config, configMain) {
 
     // Add Round Lookups to Transaction
     blocks.forEach((block) => {
-      transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
-        _this.pool, block.round, block.solo, 'auxiliary'));
+      if (block.solo) {
+        transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
+          _this.pool, block.round, true, 'auxiliary'));
+      } else {
+        const startTime = Date.now() - _this.config.primary.payments.windowPPLNT;
+        const endTime = block.submitted;
+        transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
+          _this.pool, startTime, endTime, 'auxiliary'));
+      }
     });
 
     // Determine Workers for Rounds

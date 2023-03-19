@@ -288,9 +288,6 @@ describe('Test payments functionality', () => {
         timestamp = EXCLUDED.timestamp,
         balance = EXCLUDED.balance,
         paid = "Pool-Bitcoin".current_miners.paid + EXCLUDED.paid;`;
-    const expectedGenerateRoundsDeletes = `
-      DELETE FROM "Pool-Bitcoin".current_rounds
-      WHERE round IN ('round1', 'round2', 'round3', 'round4', 'round5', 'round6');`;
     const expectedGenerateBlocksUpdates = `
       INSERT INTO "Pool-Bitcoin".historical_blocks (
         timestamp, submitted, miner,
@@ -429,14 +426,13 @@ describe('Test payments functionality', () => {
         'primary')
       ON CONFLICT DO NOTHING;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(9);
+      expect(transaction.length).toBe(8);
       expect(transaction[1]).toBe(expectedGenerateBlocksDeletes);
       expect(transaction[2]).toBe(expectedResetMiners);
       expect(transaction[3]).toBe(expectedMiners);
-      expect(transaction[4]).toBe(expectedGenerateRoundsDeletes);
-      expect(transaction[5]).toBe(expectedGenerateBlocksUpdates);
-      expect(transaction[6]).toBe(expectedPayments);
-      expect(transaction[7]).toBe(expectedTransactions);
+      expect(transaction[4]).toBe(expectedGenerateBlocksUpdates);
+      expect(transaction[5]).toBe(expectedPayments);
+      expect(transaction[6]).toBe(expectedTransactions);
       done();
     });
     payments.handleUpdates(blocks, amounts, balances, 'transaction1', 'primary', () => {});
@@ -550,9 +546,6 @@ describe('Test payments functionality', () => {
         timestamp = EXCLUDED.timestamp,
         balance = EXCLUDED.balance,
         paid = "Pool-Bitcoin".current_miners.paid + EXCLUDED.paid;`;
-    const expectedGenerateRoundsDeletes = `
-      DELETE FROM "Pool-Bitcoin".current_rounds
-      WHERE round IN ('round1', 'round2');`;
     const expectedGenerateBlocksUpdates = `
       INSERT INTO "Pool-Bitcoin".historical_blocks (
         timestamp, submitted, miner,
@@ -616,37 +609,6 @@ describe('Test payments functionality', () => {
         'transaction1',
         'primary')
       ON CONFLICT DO NOTHING;`;
-    const expectedGenerateRoundsUpdates = `
-      INSERT INTO "Pool-Bitcoin".historical_rounds (
-        timestamp, miner, reward,
-        round, share, solo, type,
-        work)
-      VALUES (
-        1,
-        'miner1',
-        10,
-        'round1',
-        0.01,
-        false,
-        'primary',
-        200), (
-        1,
-        'miner2',
-        40,
-        'round1',
-        0.04,
-        false,
-        'primary',
-        200), (
-        1,
-        'miner3',
-        100,
-        'round1',
-        0.1,
-        false,
-        'primary',
-        200)
-      ON CONFLICT DO NOTHING;`;
     const expectedTransactions = `
       INSERT INTO "Pool-Bitcoin".historical_transactions (
         timestamp, amount,
@@ -659,15 +621,13 @@ describe('Test payments functionality', () => {
       ON CONFLICT DO NOTHING;`;
     client.on('transaction', (transaction) => {
       if (currentIdx === 1) {
-        expect(transaction.length).toBe(9);
+        expect(transaction.length).toBe(8);
         expect(transaction[1]).toBe(expectedGenerateBlocksDeletes);
         expect(transaction[2]).toBe(expectedResetMiners);
         expect(transaction[3]).toBe(expectedMiners);
-        expect(transaction[4]).toBe(expectedGenerateRoundsDeletes);
-        expect(transaction[5]).toBe(expectedGenerateBlocksUpdates);
-        expect(transaction[6]).toBe(expectedPayments);
-        // expect(transaction[7]).toBe(expectedGenerateRoundsUpdates);
-        expect(transaction[7]).toBe(expectedTransactions);
+        expect(transaction[4]).toBe(expectedGenerateBlocksUpdates);
+        expect(transaction[5]).toBe(expectedPayments);
+        expect(transaction[6]).toBe(expectedTransactions);
       } else currentIdx += 1;
     });
     payments.handlePrimary(blocks, {}, () => done());
@@ -977,9 +937,6 @@ describe('Test payments functionality', () => {
         timestamp = EXCLUDED.timestamp,
         balance = EXCLUDED.balance,
         paid = "Pool-Bitcoin".current_miners.paid + EXCLUDED.paid;`;
-    const expectedGenerateRoundsDeletes = `
-      DELETE FROM "Pool-Bitcoin".current_rounds
-      WHERE round IN ('round1', 'round2');`;
     const expectedGenerateBlocksUpdates = `
       INSERT INTO "Pool-Bitcoin".historical_blocks (
         timestamp, submitted, miner,
@@ -1086,14 +1043,13 @@ describe('Test payments functionality', () => {
       ON CONFLICT DO NOTHING;`;
     client.on('transaction', (transaction) => {
       if (currentIdx === 1) {
-        expect(transaction.length).toBe(9);
+        expect(transaction.length).toBe(8);
         expect(transaction[1]).toBe(expectedGenerateBlocksDeletes);
         expect(transaction[2]).toBe(expectedResetMiners);
         expect(transaction[3]).toBe(expectedMiners);
-        expect(transaction[4]).toBe(expectedGenerateRoundsDeletes);
-        expect(transaction[5]).toBe(expectedGenerateBlocksUpdates);
-        expect(transaction[6]).toBe(expectedPayments);
-        expect(transaction[7]).toBe(expectedTransactions);
+        expect(transaction[4]).toBe(expectedGenerateBlocksUpdates);
+        expect(transaction[5]).toBe(expectedPayments);
+        expect(transaction[6]).toBe(expectedTransactions);
       } else currentIdx += 1;
     });
     payments.handleAuxiliary(blocks, {}, () => done());
