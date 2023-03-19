@@ -172,11 +172,11 @@ describe('Test statistics functionality', () => {
       { worker: 'miner2', invalid: 5, solo: false, stale: 5, valid: 90 },
       { worker: 'miner3', invalid: 5, solo: false, stale: 5, valid: 90 }];
     const stats = [
-      { worker: 'miner1', hashrate_12h: 1, hashrate_24h: 1, invalid: 0, stale: 0, solo: false, valid: 1, type: 'primary' },
-      { worker: 'miner4', hashrate_12h: 1, hashrate_24h: 1, invalid: 0, stale: 0, solo: false, valid: 1, type: 'primary' }
+      { worker: 'miner1', sum_hashrate_12h: 72, sum_hashrate_24h: 144, invalid: 1, stale: 1, solo: false, valid: 1, type: 'primary' },
+      { worker: 'miner4', sum_hashrate_12h: 72, sum_hashrate_24h: 144, invalid: 0, stale: 0, solo: false, valid: 1, type: 'primary' }
     ];
     const expected = [
-      { timestamp: 1634742080841, miner: 'miner1', worker: 'miner1', efficiency: 90, hashrate: 1431655765.3333, hashrate_12h: 1, hashrate_24h: 1, invalid: 0, solo: false, stale: 0, type: 'primary', valid: 1 },
+      { timestamp: 1634742080841, miner: 'miner1', worker: 'miner1', efficiency: 90, hashrate: 1431655765.3333, hashrate_12h: 1, hashrate_24h: 1, invalid: 1, solo: false, stale: 1, type: 'primary', valid: 1 },
       { timestamp: 1634742080841, miner: 'miner2', worker: 'miner2', efficiency: 90, hashrate: 143165576.5333, hashrate_12h: 0, hashrate_24h: 0, invalid: 0, solo: false, stale: 0, type: 'primary', valid: 0 },
       { timestamp: 1634742080841, miner: 'miner3', worker: 'miner3', efficiency: 90, hashrate: 2004318071.4667, hashrate_12h: 0, hashrate_24h: 0, invalid: 0, solo: false, stale: 0, type: 'primary', valid: 0 }];
     expect(statistics.handleCurrentWorkers(hashrate, workers, stats, 'primary')).toStrictEqual(expected);
@@ -458,8 +458,8 @@ describe('Test statistics functionality', () => {
       }]},
       { rows: [{
         worker: 'miner1',
-        hashrate_12h: 1,
-        hashrate_24h: 1,
+        sum_hashrate_12h: 72,
+        sum_hashrate_24h: 144,
         invalid: 1,
         stale: 1,
         solo: true,
@@ -468,8 +468,8 @@ describe('Test statistics functionality', () => {
       }]},
       { rows: [{
         worker: 'miner1',
-        hashrate_12h: 1,
-        hashrate_24h: 1,
+        sum_hashrate_12h: 72,
+        sum_hashrate_24h: 144,
         invalid: 1,
         stale: 1,
         solo: false,
@@ -838,8 +838,8 @@ describe('Test statistics functionality', () => {
       }]},
       { rows: [{
         worker: 'miner1',
-        hashrate_12h: 1,
-        hashrate_24h: 1,
+        sum_hashrate_12h: 72,
+        sum_hashrate_24h: 144,
         invalid: 1,
         stale: 1,
         solo: true,
@@ -847,8 +847,8 @@ describe('Test statistics functionality', () => {
       }]},
       { rows: [{
         worker: 'miner1',
-        hashrate_12h: 1,
-        hashrate_24h: 1,
+        sum_hashrate_12h: 72,
+        sum_hashrate_24h: 144,
         invalid: 1,
         stale: 1,
         solo: false,

@@ -64,13 +64,9 @@ const HistoricalWorkers = function (logger, configMain) {
   this.selectHistoricalWorkersAverages = function(pool, halfDay, oneDay, solo, type) {
     return `
       SELECT miner, worker, solo,
-        AVG(CASE WHEN recent > ${ halfDay }
-          THEN hashrate ELSE null END) AS hashrate_12h,
-        AVG(CASE WHEN recent > ${ oneDay }
-          THEN hashrate ELSE null END) AS hashrate_24h,
-        SUM(CASE WHEN recent > 1679045905245
+        SUM(CASE WHEN recent > ${ halfDay }
           THEN hashrate ELSE null END) AS sum_hashrate_12h,
-        SUM(CASE WHEN recent > 1679002705245
+        SUM(CASE WHEN recent > ${ oneDay }
           THEN hashrate ELSE null END) AS sum_hashrate_24h,
         SUM(invalid) AS invalid, 
         SUM(stale) AS stale,

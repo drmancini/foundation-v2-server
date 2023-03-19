@@ -69,7 +69,7 @@ const CurrentRounds = function (logger, configMain) {
       SELECT * FROM "${ pool }".current_rounds LIMIT 0;`;
   };
 
-  // Select Current Rounds for Payments
+  // Select Current Rounds for Solo Payments
   this.selectCurrentRoundsPayments = function(pool, round, solo, type) {
     return `
       SELECT DISTINCT ON (m.worker, m.round, m.solo, m.type)
@@ -86,6 +86,21 @@ const CurrentRounds = function (logger, configMain) {
         AND m.round = t.round AND m.solo = t.solo AND m.type = t.type
       WHERE m.round = '${ round }' AND m.solo = ${ solo }
       AND m.type = '${ type }';`;
+  };
+  
+  // Select Current Rounds for Shared Payments
+  this.selectCurrentRoundsSegment = function(pool, startTime, endTime, type) {
+    return `
+      SELECT miner, worker, solo, type,
+        SUM(times) as times,
+        SUM(work) as work
+      FROM "${ pool }".current_rounds
+      WHERE recent > ${ startTime }
+      AND recent < ${ endTime }
+      AND solo = false
+      AND type = '${ type }'
+      GROUP BY miner, worker, solo, type
+    `;
   };
   
   // Sum Work in Current Rounds Using Parameters

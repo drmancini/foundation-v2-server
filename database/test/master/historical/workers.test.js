@@ -84,10 +84,10 @@ describe('Test database workers functionality', () => {
     const response = workers.selectHistoricalWorkersAverages('Pool-Main', 1, 2, true, 'primary');
     const expected = `
       SELECT miner, worker, solo,
-        AVG(CASE WHEN recent > 1
-          THEN hashrate ELSE null END) AS hashrate_12h,
-        AVG(CASE WHEN recent > 2
-          THEN hashrate ELSE null END) AS hashrate_24h,
+        SUM(CASE WHEN recent > 1
+          THEN hashrate ELSE null END) AS sum_hashrate_12h,
+        SUM(CASE WHEN recent > 2
+          THEN hashrate ELSE null END) AS sum_hashrate_24h,
         SUM(invalid) AS invalid, 
         SUM(stale) AS stale,
         SUM(valid) AS valid
