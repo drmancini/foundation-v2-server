@@ -212,15 +212,16 @@ const Payments = function (logger, client, config, configMain) {
     transaction.push(_this.master.current.users.selectCurrentUsers(_this.pool, parameters));
 
     // Add Round Lookups to Transaction
-    blocks.forEach((block) => {
+    blocks.forEach((block, idx) => {
       if (block.solo) {
         transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
           _this.pool, block.round, true, 'primary'));
       } else {
-        const startTime = Date.now() - _this.config.primary.payments.windowPPLNT;
+        const startTime = block.submitted - _this.config.primary.payments.windowPPLNT;
         const endTime = block.submitted;
+        const rounds = blocks.slice(idx + 1).map(block => block.round);
         transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
-          _this.pool, startTime, endTime, 'primary'));
+          _this.pool, startTime, endTime, rounds, 'primary'));
       }
     });
 
@@ -261,15 +262,16 @@ const Payments = function (logger, client, config, configMain) {
     transaction.push(_this.master.current.users.selectCurrentUsers(_this.pool, parameters));
 
     // Add Round Lookups to Transaction
-    blocks.forEach((block) => {
+    blocks.forEach((block, idx) => {
       if (block.solo) {
         transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
           _this.pool, block.round, true, 'auxiliary'));
       } else {
-        const startTime = Date.now() - _this.config.primary.payments.windowPPLNT;
+        const startTime = block.submitted - _this.config.primary.payments.windowPPLNT;
         const endTime = block.submitted;
+        const rounds = blocks.slice(idx + 1).map(block => block.round);
         transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
-          _this.pool, startTime, endTime, 'auxiliary'));
+          _this.pool, startTime, endTime, rounds, 'auxiliary'));
       }
     });
 
