@@ -89,17 +89,26 @@ const CurrentRounds = function (logger, configMain) {
   };
   
   // Select Current Rounds for Shared Payments
-  this.selectCurrentRoundsSegment = function(pool, startTime, endTime, type) {
-    return `
+  this.selectCurrentRoundsSegment = function(pool, startTime, endTime, rounds, type) {
+    let output = `
       SELECT miner, worker, solo, type,
         SUM(times) as times,
         SUM(work) as work
       FROM "${ pool }".current_rounds
       WHERE recent > ${ startTime }
-      AND recent < ${ endTime }
-      AND solo = false
-      AND type = '${ type }'
+        AND recent < ${ endTime }
+        AND solo = false
+        AND type = '${ type }'`;
+    if (rounds.length > 0) {
+      output += ` 
+        AND round NOT IN ('current', '${ rounds.join(`', '`) }')`;
+    } else
+      output += `
+        AND round NOT IN ('current')`;
+    output += `
       GROUP BY miner, worker, solo, type;`;
+
+    return output;
   };
   
   // Sum Work in Current Rounds Using Parameters
