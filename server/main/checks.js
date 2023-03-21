@@ -293,7 +293,7 @@ const Checks = function (logger, client, config, configMain) {
       _this.stratum.stratum.handleAuxiliaryRounds(blocks, (error, updates) => {
         if (error) _this.handleFailures(blocks, () => callback(error));
         else _this.stratum.stratum.handleAuxiliaryWorkers(blocks, rounds, sending, (results, rewards) => {
-          _this.handleUpdates(updates, rounds, results, 'auxiliary', () => callback(null));
+          _this.handleUpdates(updates, rounds, results, rewards, 'auxiliary', () => callback(null));
         });
       });
     });
@@ -386,14 +386,11 @@ const Checks = function (logger, client, config, configMain) {
     const starting = [_this.text.databaseStartingText2(blockType)];
     _this.logger.debug('Checks', _this.config.name, starting);
 
-    // Calculate Checks Features
-    const roundsWindow = Date.now() - _this.config.settings.window.rounds;
-
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
       _this.master.current.blocks.selectCurrentBlocksMain(_this.pool, { type: blockType }),
-      // _this.master.current.rounds.deleteCurrentRoundsInactive(_this.pool, roundsWindow),
+      _this.master.current.rounds.deleteCurrentRoundsInactiveSolo(_this.pool),
       'COMMIT;'];
 
     // Establish Separate Behavior

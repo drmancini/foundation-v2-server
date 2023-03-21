@@ -96,6 +96,7 @@ const HistoricalMiners = function (logger, configMain) {
         ${ miner.recent },
         '${ miner.miner }',
         ${ miner.invalid },
+        ${ miner.solo },
         ${ miner.stale },
         '${ miner.type }',
         ${ miner.valid },
@@ -110,8 +111,8 @@ const HistoricalMiners = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".historical_miners (
         timestamp, recent, miner,
-        invalid, stale, type,
-        valid, work)
+        invalid, solo, stale,
+        type, valid, work)
       VALUES ${ _this.buildHistoricalMinersMain(updates) }
       ON CONFLICT ON CONSTRAINT historical_miners_unique
       DO UPDATE SET

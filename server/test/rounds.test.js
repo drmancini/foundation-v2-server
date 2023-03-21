@@ -839,10 +839,10 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = { clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', sharevalid: true };
+    const share = { timestamp: 1634741000841, clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', sharevalid: true };
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742600000,
+      recent: 1634741400000,
       miner: 'primary',
       invalid: 0,
       stale: 0,
@@ -858,10 +858,10 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = { clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', error: 'error', sharevalid: false };
+    const share = { timestamp: 1634741000841, clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', error: 'error', sharevalid: false };
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742600000,
+      recent: 1634741400000,
       miner: 'primary',
       invalid: 1,
       stale: 0,
@@ -877,10 +877,10 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = { clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', error: 'job not found', sharevalid: true };
+    const share = { timestamp: 1634741000841, clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', error: 'job not found', sharevalid: true };
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742600000,
+      recent: 1634741400000,
       miner: 'primary',
       invalid: 0,
       stale: 1,
@@ -896,10 +896,10 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = { clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', sharevalid: true };
+    const share = { timestamp: 1634741000841, clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', sharevalid: true };
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742600000,
+      recent: 1634741400000,
       miner: 'primary',
       invalid: 0,
       stale: 0,
@@ -915,10 +915,10 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = { clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', sharevalid: true };
+    const share = { timestamp: 1634741000841, clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', sharevalid: true };
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742600000,
+      recent: 1634741400000,
       miner: 'primary',
       invalid: 0,
       stale: 0,
@@ -934,10 +934,10 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = { clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, sharevalid: true };
+    const share = { timestamp: 1634741000841, clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, sharevalid: true };
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742600000,
+      recent: 1634741400000,
       miner: '',
       invalid: 0,
       stale: 0,
@@ -953,10 +953,10 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = { clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', sharevalid: true };
+    const share = { timestamp: 1634741000841, clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', sharevalid: true };
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742600000,
+      recent: 1634741400000,
       miner: 'primary',
       worker: 'primary',
       identifier: 'master',
@@ -975,10 +975,10 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = { clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', identifier: 'eu', error: 'error', sharevalid: false };
+    const share = { timestamp: 1634741000841, clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', identifier: 'eu', error: 'error', sharevalid: false };
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742600000,
+      recent: 1634741400000,
       miner: 'primary',
       worker: 'primary',
       identifier: 'eu',
@@ -997,10 +997,10 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = { clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', error: 'job not found', sharevalid: true };
+    const share = { timestamp: 1634741000841, clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', error: 'job not found', sharevalid: true };
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742600000,
+      recent: 1634741400000,
       miner: 'primary',
       worker: 'primary',
       identifier: 'master',
@@ -1020,10 +1020,10 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = { clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', port: 3002, sharevalid: true };
+    const share = { timestamp: 1634741000841, clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', port: 3002, sharevalid: true };
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742600000,
+      recent: 1634741400000,
       miner: 'primary',
       worker: 'primary',
       identifier: 'master',
@@ -1042,10 +1042,10 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = { clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', sharevalid: true };
+    const share = { timestamp: 1634741000841, clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, addrprimary: 'primary', addrauxiliary: 'auxiliary', sharevalid: true };
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742600000,
+      recent: 1634741400000,
       miner: 'primary',
       worker: 'primary',
       identifier: 'master',
@@ -1064,10 +1064,10 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = { clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, sharevalid: true };
+    const share = { timestamp: 1634741000841, clientdiff: 1, blockdiffprimary: 1, blockdiffauxiliary: 1, sharevalid: true };
     const expected = [{
       timestamp: 1634742080841,
-      recent: 1634742600000,
+      recent: 1634741400000,
       miner: '',
       worker: '',
       identifier: 'master',
@@ -2103,7 +2103,7 @@ describe('Test rounds functionality', () => {
     const share = {
       error: '',
       uuid: '123456789',
-      timestamp: 0,
+      timestamp: 1634742180841,
       submitted: 1,
       ip: '0.0.0.0',
       port: 3002,
@@ -2122,6 +2122,20 @@ describe('Test rounds functionality', () => {
       sharevalid: true,
       transaction: 'transaction1'
     };
+    const expectedHashrate = `
+      INSERT INTO "Pool-Bitcoin".current_hashrate (
+        timestamp, miner, worker,
+        identifier, share, solo,
+        type, work)
+      VALUES (
+        1634742080841,
+        'primary',
+        'primary',
+        'master',
+        'valid',
+        true,
+        'primary',
+        1);`;
     const expectedMiners = `
       INSERT INTO "Pool-Bitcoin".current_miners (
         timestamp, miner, solo_effort,
@@ -2256,13 +2270,14 @@ describe('Test rounds functionality', () => {
         valid = "Pool-Bitcoin".historical_workers.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_workers.work + EXCLUDED.work;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(8);
-      expect(transaction[1]).toBe(expectedMiners);
-      expect(transaction[2]).toBe(expectedRounds);
-      expect(transaction[3]).toBe(expectedWorkers);
-      expect(transaction[4]).toBe(expectedHistoricalMetadata);
-      expect(transaction[5]).toBe(expectedHistoricalMiners);
-      expect(transaction[6]).toBe(expectedHistoricalWorkers);
+      expect(transaction.length).toBe(9);
+      expect(transaction[1]).toBe(expectedHashrate);
+      expect(transaction[2]).toBe(expectedMiners);
+      expect(transaction[3]).toBe(expectedRounds);
+      expect(transaction[4]).toBe(expectedWorkers);
+      expect(transaction[5]).toBe(expectedHistoricalMetadata);
+      expect(transaction[6]).toBe(expectedHistoricalMiners);
+      expect(transaction[7]).toBe(expectedHistoricalWorkers);
       done();
     });
     rounds.handleUpdates(lookups, [share], () => {});

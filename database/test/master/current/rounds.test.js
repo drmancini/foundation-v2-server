@@ -145,16 +145,34 @@ describe('Test database rounds functionality', () => {
 
   test('Test rounds command handling [10]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
-    const response = rounds.selectCurrentRoundsSegment('Pool-Main', 1, 2, 'primary');
+    const response = rounds.selectCurrentRoundsSegment('Pool-Main', 1, 2, [], 'primary');
     const expected = `
       SELECT miner, worker, solo, type,
         SUM(times) as times,
         SUM(work) as work
       FROM "Pool-Main".current_rounds
       WHERE recent > 1
-      AND recent < 2
-      AND solo = false
-      AND type = 'primary'
+        AND recent < 2
+        AND solo = false
+        AND type = 'primary'
+        AND round NOT IN ('current')
+      GROUP BY miner, worker, solo, type;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test rounds command handling [10]', () => {
+    const rounds = new CurrentRounds(logger, configMainCopy);
+    const response = rounds.selectCurrentRoundsSegment('Pool-Main', 1, 2, ['round1', 'round2'], 'primary');
+    const expected = `
+      SELECT miner, worker, solo, type,
+        SUM(times) as times,
+        SUM(work) as work
+      FROM "Pool-Main".current_rounds
+      WHERE recent > 1
+        AND recent < 2
+        AND solo = false
+        AND type = 'primary'
+        AND round NOT IN ('current', 'round1', 'round2')
       GROUP BY miner, worker, solo, type;`;
     expect(response).toBe(expected);
   });
