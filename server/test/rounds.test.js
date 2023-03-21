@@ -845,6 +845,7 @@ describe('Test rounds functionality', () => {
       recent: 1634741400000,
       miner: 'primary',
       invalid: 0,
+      solo: false,
       stale: 0,
       type: 'primary',
       valid: 1,
@@ -864,6 +865,7 @@ describe('Test rounds functionality', () => {
       recent: 1634741400000,
       miner: 'primary',
       invalid: 1,
+      solo: false,
       stale: 0,
       type: 'primary',
       valid: 0,
@@ -883,6 +885,7 @@ describe('Test rounds functionality', () => {
       recent: 1634741400000,
       miner: 'primary',
       invalid: 0,
+      solo: false,
       stale: 1,
       type: 'primary',
       valid: 0,
@@ -902,6 +905,7 @@ describe('Test rounds functionality', () => {
       recent: 1634741400000,
       miner: 'primary',
       invalid: 0,
+      solo: false,
       stale: 0,
       type: 'primary',
       valid: 1,
@@ -921,6 +925,7 @@ describe('Test rounds functionality', () => {
       recent: 1634741400000,
       miner: 'primary',
       invalid: 0,
+      solo: false,
       stale: 0,
       type: 'primary',
       valid: 2,
@@ -940,6 +945,7 @@ describe('Test rounds functionality', () => {
       recent: 1634741400000,
       miner: '',
       invalid: 0,
+      solo: false,
       stale: 0,
       type: 'auxiliary',
       valid: 1,
@@ -2025,13 +2031,14 @@ describe('Test rounds functionality', () => {
     const expectedHistoricalMiners = `
       INSERT INTO "Pool-Bitcoin".historical_miners (
         timestamp, recent, miner,
-        invalid, stale, type,
-        valid, work)
+        invalid, solo, stale,
+        type, valid, work)
       VALUES (
         1634742080841,
         1634742600000,
         'primary',
         0,
+        false,
         0,
         'primary',
         1,
@@ -2225,13 +2232,14 @@ describe('Test rounds functionality', () => {
     const expectedHistoricalMiners = `
       INSERT INTO "Pool-Bitcoin".historical_miners (
         timestamp, recent, miner,
-        invalid, stale, type,
-        valid, work)
+        invalid, solo, stale,
+        type, valid, work)
       VALUES (
         1634742080841,
         1634742600000,
         'primary',
         0,
+        true,
         0,
         'primary',
         1,
@@ -2574,13 +2582,14 @@ describe('Test rounds functionality', () => {
     const expectedPrimaryHistoricalMiners = `
       INSERT INTO "Pool-Bitcoin".historical_miners (
         timestamp, recent, miner,
-        invalid, stale, type,
-        valid, work)
+        invalid, solo, stale,
+        type, valid, work)
       VALUES (
         1634742080841,
         1634742600000,
         'primary',
         0,
+        false,
         0,
         'primary',
         1,
@@ -2595,13 +2604,14 @@ describe('Test rounds functionality', () => {
     const expectedAuxiliaryHistoricalMiners = `
       INSERT INTO "Pool-Bitcoin".historical_miners (
         timestamp, recent, miner,
-        invalid, stale, type,
-        valid, work)
+        invalid, solo, stale,
+        type, valid, work)
       VALUES (
         1634742080841,
         1634742600000,
         'primary',
         0,
+        false,
         0,
         'auxiliary',
         1,

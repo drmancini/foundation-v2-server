@@ -136,6 +136,7 @@ describe('Test database miners functionality', () => {
       recent: 1,
       miner: 'miner1',
       invalid: 0,
+      solo: false,
       stale: 0,
       type: 'primary',
       valid: 1,
@@ -145,13 +146,14 @@ describe('Test database miners functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".historical_miners (
         timestamp, recent, miner,
-        invalid, stale, type,
-        valid, work)
+        invalid, solo, stale,
+        type, valid, work)
       VALUES (
         1,
         1,
         'miner1',
         0,
+        false,
         0,
         'primary',
         1,
@@ -173,6 +175,7 @@ describe('Test database miners functionality', () => {
       recent: 1,
       miner: 'miner1',
       invalid: 0,
+      solo: false,
       stale: 0,
       type: 'primary',
       valid: 1,
@@ -182,13 +185,14 @@ describe('Test database miners functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".historical_miners (
         timestamp, recent, miner,
-        invalid, stale, type,
-        valid, work)
+        invalid, solo, stale,
+        type, valid, work)
       VALUES (
         1,
         1,
         'miner1',
         0,
+        false,
         0,
         'primary',
         1,
@@ -197,6 +201,7 @@ describe('Test database miners functionality', () => {
         1,
         'miner1',
         0,
+        false,
         0,
         'primary',
         1,
