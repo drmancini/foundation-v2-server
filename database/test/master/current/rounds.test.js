@@ -327,19 +327,20 @@ describe('Test database rounds functionality', () => {
 
   test('Test rounds command handling [16]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
-    const response = rounds.deleteCurrentRoundsInactive('Pool-Main', 1);
+    const response = rounds.deleteCurrentRoundsInactiveSolo('Pool-Main');
     const expected = `
       DELETE FROM "Pool-Main".current_rounds
-      WHERE round = 'current' AND submitted < 1;`;
+      WHERE round NOT IN ('current') 
+      AND solo = true;`;
     expect(response).toBe(expected);
   });
 
   test('Test rounds command handling [17]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
-    const response = rounds.deleteCurrentRoundsMain('Pool-Main', ['round1']);
+    const response = rounds.deleteCurrentRoundsInactiveShared('Pool-Main', 1);
     const expected = `
       DELETE FROM "Pool-Main".current_rounds
-      WHERE round IN (round1);`;
+      WHERE solo = false, AND submitted < 1;`;
     expect(response).toBe(expected);
   });
 });
