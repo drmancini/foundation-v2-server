@@ -218,14 +218,16 @@ describe('Test checks functionality', () => {
       work: 100,
     };
     const rewards = {
-      'miner1': { generate: 0, immature: 10 },
-      'miner2': { generate: 0, immature: 100 }};
+      'round1': {
+        'miner1': { generate: 0, immature: 10 },
+        'miner2': { generate: 0, immature: 100 },
+      }};
     const worker2 = { ...worker1, worker: 'worker2' };
     const worker3 = { ...worker1, miner: 'miner2', worker: 'worker3' };
     const rounds = [[worker1, worker2, worker3], [worker1, worker2, worker3]];
     const expected = [
-      {'timestamp': 1634742080000, 'miner': 'miner1', 'reward': 10, 'round': 'round1', 'share': 0.01, 'solo': false, 'type': 'primary', 'work': 400},
-      {'timestamp': 1634742080000, 'miner': 'miner2', 'reward': 100, 'round': 'round1', 'share': 0.1, 'solo': false, 'type': 'primary', 'work': 200}];
+      {'timestamp': 1634742080000, 'miner': 'miner1', 'reward': 10, 'round': 'round1', 'share': 0.01, 'solo': false, 'type': 'primary', 'work': 200},
+      {'timestamp': 1634742080000, 'miner': 'miner2', 'reward': 100, 'round': 'round1', 'share': 0.1, 'solo': false, 'type': 'primary', 'work': 100}];
     expect(payments.handleHistoricalRounds(blocks, rewards, rounds, 'primary')).toStrictEqual(expected);
   });
 
@@ -1029,7 +1031,7 @@ describe('Test checks functionality', () => {
     checks.handlePrimary(blocks, () => done());
   });
 
-  test('Test checks auxiliary updates [1]', (done) => {
+  test('Test checks primary updates [1]', (done) => {
     const initialMiner = {
       timestamp: 1,
       miner: 'miner1',
@@ -1040,7 +1042,7 @@ describe('Test checks functionality', () => {
       solo: false,
       stale: 0,
       times: 100,
-      type: 'auxiliary',
+      type: 'primary',
       valid: 100,
       work: 100,
     };
@@ -1073,7 +1075,7 @@ describe('Test checks functionality', () => {
       round: 'round',
       solo: false,
       transaction: 'transaction1',
-      type: 'auxiliary',
+      type: 'primary',
     };
     const blocks = [
       { ...initialBlock, category: 'immature', round: 'round1' },
@@ -1110,7 +1112,7 @@ describe('Test checks functionality', () => {
         'round1',
         false,
         'transaction1',
-        'auxiliary')
+        'primary')
       ON CONFLICT ON CONSTRAINT current_blocks_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
@@ -1152,7 +1154,7 @@ describe('Test checks functionality', () => {
         'round2',
         false,
         'transaction1',
-        'auxiliary')
+        'primary')
       ON CONFLICT ON CONSTRAINT current_blocks_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
@@ -1195,48 +1197,13 @@ describe('Test checks functionality', () => {
         timestamp = EXCLUDED.timestamp,
         generate = "Pool-Bitcoin".current_miners.generate + EXCLUDED.generate,
         immature = "Pool-Bitcoin".current_miners.immature + EXCLUDED.immature;`;
-    const expectedGenerateRoundsUpdates = `
-      INSERT INTO "Pool-Bitcoin".historical_rounds (
-        timestamp, miner, reward,
-        round, share, solo, type,
-        work)
-      VALUES (
-        1634742080000,
-        'miner1',
-        10,
-        'round1',
-        0.01,
-        false,
-        'auxiliary',
-        200), (
-        1634742080000,
-        'miner2',
-        40,
-        'round1',
-        0.04,
-        false,
-        'auxiliary',
-        200), (
-        1634742080000,
-        'miner3',
-        0,
-        'round1',
-        0,
-        false,
-        'auxiliary',
-        200)
-      ON CONFLICT ON CONSTRAINT historical_rounds_unique
-      DO UPDATE SET
-        reward = EXCLUDED.reward,
-        share = EXCLUDED.share;`;
     let currentIdx = 0;
     client.on('transaction', (transaction) => {
       if (currentIdx === 1) {
         expect(transaction.length).toBe(5);
-        // expect(transaction[1]).toBe(expectedImmatureUpdates);
-        // expect(transaction[2]).toBe(expectedGenerateUpdates);
-        // expect(transaction[3]).toBe(expectedMiners);
-        // expect(transaction[4]).toBe(expectedGenerateRoundsUpdates);
+        expect(transaction[1]).toBe(expectedImmatureUpdates);
+        expect(transaction[2]).toBe(expectedGenerateUpdates);
+        expect(transaction[3]).toBe(expectedMiners);
       } else currentIdx += 1;
     });
     checks.handleAuxiliary(blocks, () => done());

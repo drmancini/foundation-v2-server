@@ -398,14 +398,15 @@ const Payments = function (logger, client, config, configMain) {
     _this.logger.debug('Payments', _this.config.name, starting);
 
     // Calculate Checks Features
-    const roundsWindow = Date.now() - _this.config.settings.window.rounds;
+    const roundsWindow = Date.now() - 2 * _this.config.settings.interval.payments - 2 * _this.config.primary.payments.windowPPLNT - 720000000;
 
+      console.log(roundsWindow)
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
       _this.master.current.blocks.selectCurrentBlocksMain(_this.pool, { category: 'generate', type: blockType }),
       _this.master.current.miners.selectCurrentMinersMain(_this.pool, { balance: 'gt0', type: blockType }),
-      // _this.master.current.rounds.deleteCurrentRoundsInactive(_this.pool, roundsWindow),
+      _this.master.current.rounds.deleteCurrentRoundsInactiveShared(_this.pool, roundsWindow),
       'COMMIT;'];
 
     // Establish Separate Behavior

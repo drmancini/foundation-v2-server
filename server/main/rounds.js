@@ -408,8 +408,8 @@ const Rounds = function (logger, client, config, configMain) {
       else if (!share.sharevalid || share.error) shareType = 'invalid';
 
       // Determine Current Round States
-      const interval = _this.config.settings.interval.recent;
-      const recent = minerType ? 0 : Math.ceil(share.timestamp / interval) * interval; // why 0?
+      const interval = _this.config.settings.interval.historical;
+      const recent = minerType ? 0 : Math.ceil(share.timestamp / interval) * interval;
       const initial = rounds[worker] || {};
       const current = updates[`${ worker }_${ recent }_${ minerType }`] || {};
 
@@ -494,11 +494,11 @@ const Rounds = function (logger, client, config, configMain) {
     shares.forEach((share) => {
 
       // Set Time Values
-      const tenMinutes = 600000;
-      const timestamp = share.submitTime || Date.now();
-      const recent = Math.ceil(timestamp / tenMinutes) * tenMinutes;
+      const interval = _this.config.settings.interval.historical;
+      const recent = Math.ceil(share.timestamp / interval) * interval;
 
       // Set Types
+      const minerType = utils.checkSoloMining(_this.config, share);
       let shareType = 'valid';
       if (share.error && share.error === 'job not found') shareType = 'stale';
       else if (!share.sharevalid || share.error) shareType = 'invalid';
@@ -513,7 +513,7 @@ const Rounds = function (logger, client, config, configMain) {
       
       // Create Miner Updates
       const identifierIndex = updates.findIndex(el => (
-        el.recent === recent && el.miner == miner));
+        el.recent === recent && el.miner == miner && el.solo == minerType));
       if (identifierIndex > -1) {
         updates[identifierIndex].invalid += invalid;
         updates[identifierIndex].stale += stale;
@@ -525,6 +525,7 @@ const Rounds = function (logger, client, config, configMain) {
           recent: recent,
           miner: miner,
           invalid: invalid,
+          solo: minerType,
           stale: stale,
           type: blockType,
           valid: valid,
@@ -545,9 +546,8 @@ const Rounds = function (logger, client, config, configMain) {
     shares.forEach((share) => {
 
       // Set Time Values
-      const tenMinutes = 600000;
-      const timestamp = share.submitTime || Date.now();
-      const recent = Math.ceil(timestamp / tenMinutes) * tenMinutes;
+      const interval = _this.config.settings.interval.recent;
+      const recent = Math.ceil(share.timestamp / interval) * interval;
 
       // Set Types
       const minerType = utils.checkSoloMining(_this.config, share);

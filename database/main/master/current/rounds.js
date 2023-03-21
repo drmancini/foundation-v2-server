@@ -100,7 +100,7 @@ const CurrentRounds = function (logger, configMain) {
         AND solo = false
         AND type = '${ type }'`;
     if (rounds.length > 0) {
-      output += ` 
+      output += `
         AND round NOT IN ('current', '${ rounds.join(`', '`) }')`;
     } else
       output += `
@@ -187,18 +187,19 @@ const CurrentRounds = function (logger, configMain) {
       AND type = '${ type }';`;
   };
 
-  // Delete Rows From Current Round
-  this.deleteCurrentRoundsInactive = function(pool, submitted) {
+  // Delete Old Solo Rounds From Current Round
+  this.deleteCurrentRoundsInactiveSolo = function(pool) {
     return `
       DELETE FROM "${ pool }".current_rounds
-      WHERE round = 'current' AND submitted < ${ submitted };`;
+      WHERE round NOT IN ('current') 
+      AND solo = true;`;
   };
 
   // Delete Rows From Current Round
-  this.deleteCurrentRoundsMain = function(pool, rounds) {
+  this.deleteCurrentRoundsInactiveShared = function(pool, submitted) {
     return `
       DELETE FROM "${ pool }".current_rounds
-      WHERE round IN (${ rounds.join(', ') });`;
+      WHERE solo = false, AND submitted < ${ submitted };`;
   };
 };
 
