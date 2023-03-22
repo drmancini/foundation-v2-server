@@ -207,6 +207,8 @@ const Statistics = function (logger, client, config, configMain, template) {
       const section = worker.recent == snapshot ? tenMinutes : timestamp - snapshot;
       const hashrate = section > _this.config.settings.window.hashrate ?
         utils.roundTo((multiplier * worker.work * 1000 / section), 4) : worker.hashrate;
+
+      // if (worker.worker === 'RXP57C4cuTsV1AN2LSAPdZKmD65uYucAkb.YP-r7900') console.log(hashrate)
       return {
         timestamp: timestamp,
         recent: worker.recent,
