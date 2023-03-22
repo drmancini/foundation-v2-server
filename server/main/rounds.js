@@ -546,7 +546,7 @@ const Rounds = function (logger, client, config, configMain) {
     shares.forEach((share) => {
 
       // Set Time Values
-      const interval = _this.config.settings.interval.recent;
+      const interval = _this.config.settings.interval.historical;
       const recent = Math.ceil(share.timestamp / interval) * interval;
 
       // Set Types
