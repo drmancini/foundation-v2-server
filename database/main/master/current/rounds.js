@@ -199,7 +199,7 @@ const CurrentRounds = function (logger, configMain) {
   this.deleteCurrentRoundsInactiveShared = function(pool, submitted) {
     return `
       DELETE FROM "${ pool }".current_rounds
-      WHERE solo = false, AND submitted < ${ submitted };`;
+      WHERE solo = false AND submitted < ${ submitted };`;
   };
 };
 
