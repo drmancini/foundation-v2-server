@@ -400,7 +400,6 @@ const Payments = function (logger, client, config, configMain) {
     // Calculate Checks Features
     const roundsWindow = Date.now() - 2 * _this.config.settings.interval.payments - 2 * _this.config.primary.payments.windowPPLNT - 720000000;
 
-      console.log(roundsWindow)
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
