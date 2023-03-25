@@ -526,7 +526,8 @@ const Schema = function (logger, executor, configMain) {
         miner VARCHAR NOT NULL DEFAULT 'unknown',
         amount FLOAT NOT NULL DEFAULT 0,
         transaction VARCHAR NOT NULL DEFAULT 'unknown',
-        type VARCHAR NOT NULL DEFAULT 'primary');
+        type VARCHAR NOT NULL DEFAULT 'primary'),
+        CONSTRAINT historical_payments_unique UNIQUE (miner, transaction, type));
       CREATE INDEX historical_payments_miner ON "${ pool }".historical_payments(miner, type);
       CREATE INDEX historical_payments_transaction ON "${ pool }".historical_payments(transaction, type);
       CREATE INDEX historical_payments_type ON "${ pool }".historical_payments(type);`;
@@ -581,7 +582,8 @@ const Schema = function (logger, executor, configMain) {
         timestamp BIGINT NOT NULL DEFAULT -1,
         amount FLOAT NOT NULL DEFAULT 0,
         transaction VARCHAR NOT NULL DEFAULT 'unknown',
-        type VARCHAR NOT NULL DEFAULT 'primary');
+        type VARCHAR NOT NULL DEFAULT 'primary'),
+        CONSTRAINT historical_transactions_unique UNIQUE (transaction, type));
       CREATE INDEX historical_transactions_transaction ON "${ pool }".historical_transactions(transaction, type);
       CREATE INDEX historical_transactions_type ON "${ pool }".historical_transactions(type);`;
     _this.executor([command], () => callback());
