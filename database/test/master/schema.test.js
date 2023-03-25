@@ -626,7 +626,8 @@ describe('Test schema functionality', () => {
         miner VARCHAR NOT NULL DEFAULT 'unknown',
         amount FLOAT NOT NULL DEFAULT 0,
         transaction VARCHAR NOT NULL DEFAULT 'unknown',
-        type VARCHAR NOT NULL DEFAULT 'primary');
+        type VARCHAR NOT NULL DEFAULT 'primary'),
+        CONSTRAINT historical_payments_unique UNIQUE (miner, transaction, type));
       CREATE INDEX historical_payments_miner ON "Pool-Main".historical_payments(miner, type);
       CREATE INDEX historical_payments_transaction ON "Pool-Main".historical_payments(transaction, type);
       CREATE INDEX historical_payments_type ON "Pool-Main".historical_payments(type);`;
@@ -691,7 +692,8 @@ describe('Test schema functionality', () => {
         timestamp BIGINT NOT NULL DEFAULT -1,
         amount FLOAT NOT NULL DEFAULT 0,
         transaction VARCHAR NOT NULL DEFAULT 'unknown',
-        type VARCHAR NOT NULL DEFAULT 'primary');
+        type VARCHAR NOT NULL DEFAULT 'primary'),
+        CONSTRAINT historical_transactions_unique UNIQUE (transaction, type));
       CREATE INDEX historical_transactions_transaction ON "Pool-Main".historical_transactions(transaction, type);
       CREATE INDEX historical_transactions_type ON "Pool-Main".historical_transactions(type);`;
     const executor = mockExecutor(null, expected);
