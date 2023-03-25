@@ -286,7 +286,7 @@ const Rounds = function (logger, client, config, configMain) {
       identifier: identifier,
       ip_hash: ipHash,
       last_octet: ipOctet,
-      last_share: share.submitted || Date.now(),
+      last_share: Date.now(),
       offline_tag: false,
       solo: minerType,
       type: blockType,
