@@ -35,7 +35,7 @@ const Shares = function (logger, client, config, configMain) {
       timestamp: Date.now(),
       submitted: submitted,
       ip: shareData.ip,
-      port: shareData.port,
+      port: shareData.port || -1,
       addrprimary: shareData.addrPrimary || '',
       addrauxiliary: shareData.addrAuxiliary || '',
       blockdiffprimary: shareData.blockDiffPrimary || -1,
