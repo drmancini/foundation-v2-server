@@ -165,7 +165,7 @@ const CurrentMetadata = function (logger, configMain) {
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
+        effort = "${ pool }".current_metadata.effort + EXCLUDED.effort,
         invalid = "${ pool }".current_metadata.invalid + EXCLUDED.invalid,
         stale = "${ pool }".current_metadata.stale + EXCLUDED.stale,
         valid = "${ pool }".current_metadata.valid + EXCLUDED.valid,
