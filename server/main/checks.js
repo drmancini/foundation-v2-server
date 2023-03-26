@@ -30,13 +30,15 @@ const Checks = function (logger, client, config, configMain) {
 
     // Return Blocks Updates
     return blocks.map((block) => {
+      const confirmations = block.category === 'orphan'
+        ? 102 : block.confirmations;
       return {
         timestamp: Date.now(),
         submitted: block.submitted,
         miner: block.miner,
         worker: block.worker,
         category: block.category,
-        confirmations: block.confirmations,
+        confirmations: confirmations,
         difficulty: block.difficulty,
         hash: block.hash,
         height: block.height,
