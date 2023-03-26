@@ -168,11 +168,12 @@ const Rounds = function (logger, client, config, configMain) {
     const valid = (updates.valid || 0) + (shareType === 'valid' ? 1 : 0);
     const current = (updates.work || 0) + (shareType === 'valid' ? share.clientdiff : 0);
     const difficulty = blockType === 'primary' ? share.blockdiffprimary : share.blockdiffauxiliary;
-    const work = (initial.work || 0) + (updates.work || 0);
+    // const work = (initial.work || 0) + (updates.work || 0);
 
     // Calculate Efficiency/Effort Metadata
     const efficiency = _this.handleEfficiency(initial, shareType);
-    const effort = _this.handleEffort(share, difficulty, work, shareType);
+    // const effort = _this.handleEffort(share, difficulty, work, shareType);
+    const effort = _this.handleEffortIncrement(share, difficulty, shareType);
 
     // Return Metadata Updates
     return {
