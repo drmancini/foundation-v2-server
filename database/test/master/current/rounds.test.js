@@ -340,7 +340,7 @@ describe('Test database rounds functionality', () => {
     const response = rounds.deleteCurrentRoundsInactiveShared('Pool-Main', 1);
     const expected = `
       DELETE FROM "Pool-Main".current_rounds
-      WHERE solo = false, AND submitted < 1;`;
+      WHERE solo = false AND submitted < 1;`;
     expect(response).toBe(expected);
   });
 });

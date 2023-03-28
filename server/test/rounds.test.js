@@ -322,7 +322,7 @@ describe('Test rounds functionality', () => {
     const expected = {
       timestamp: 1634742080841,
       efficiency: 100,
-      effort: 300,
+      effort: 100,
       identifier: 'master',
       invalid: 0,
       solo: false,
@@ -345,7 +345,7 @@ describe('Test rounds functionality', () => {
     const expected = {
       timestamp: 1634742080841,
       efficiency: 0,
-      effort: 200,
+      effort: 0,
       identifier: 'master',
       invalid: 1,
       solo: false,
@@ -368,7 +368,7 @@ describe('Test rounds functionality', () => {
     const expected = {
       timestamp: 1634742080841,
       efficiency: 0,
-      effort: 200,
+      effort: 0,
       identifier: 'master',
       invalid: 0,
       solo: false,
@@ -1268,7 +1268,7 @@ describe('Test rounds functionality', () => {
     const expected = [{
       timestamp: 1634742080841,
       efficiency: 100,
-      effort: 200,
+      effort: 100,
       identifier: 'eu',
       invalid: 0,
       solo: false,
@@ -1296,7 +1296,7 @@ describe('Test rounds functionality', () => {
     const expected = [{
       timestamp: 1634742080841,
       efficiency: 100,
-      effort: 300,
+      effort: 100,
       identifier: 'eu',
       invalid: 0,
       solo: false,
@@ -1370,7 +1370,7 @@ describe('Test rounds functionality', () => {
     const expected = [{
       timestamp: 1634742080841,
       efficiency: 0,
-      effort: 100,
+      effort: 0,
       identifier: 'master',
       invalid: 0,
       solo: false,
@@ -1937,7 +1937,7 @@ describe('Test rounds functionality', () => {
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
+        effort = "Pool-Bitcoin".current_metadata.effort + EXCLUDED.effort,
         invalid = "Pool-Bitcoin".current_metadata.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_metadata.stale + EXCLUDED.stale,
         valid = "Pool-Bitcoin".current_metadata.valid + EXCLUDED.valid,
@@ -1999,7 +1999,7 @@ describe('Test rounds functionality', () => {
         'master',
         'e562f69ec36e625116376f376d991e41613e9bf3',
         0,
-        1,
+        1634742080841,
         false,
         false,
         'primary')
@@ -2200,7 +2200,7 @@ describe('Test rounds functionality', () => {
         'master',
         'e562f69ec36e625116376f376d991e41613e9bf3',
         0,
-        1,
+        1634742080841,
         false,
         true,
         'primary')
@@ -2377,7 +2377,7 @@ describe('Test rounds functionality', () => {
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
+        effort = "Pool-Bitcoin".current_metadata.effort + EXCLUDED.effort,
         invalid = "Pool-Bitcoin".current_metadata.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_metadata.stale + EXCLUDED.stale,
         valid = "Pool-Bitcoin".current_metadata.valid + EXCLUDED.valid,
@@ -2402,7 +2402,7 @@ describe('Test rounds functionality', () => {
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
+        effort = "Pool-Bitcoin".current_metadata.effort + EXCLUDED.effort,
         invalid = "Pool-Bitcoin".current_metadata.invalid + EXCLUDED.invalid,
         stale = "Pool-Bitcoin".current_metadata.stale + EXCLUDED.stale,
         valid = "Pool-Bitcoin".current_metadata.valid + EXCLUDED.valid,
@@ -2507,7 +2507,7 @@ describe('Test rounds functionality', () => {
         'master',
         'e562f69ec36e625116376f376d991e41613e9bf3',
         0,
-        1,
+        1634742080841,
         false,
         false,
         'primary')
@@ -2535,7 +2535,7 @@ describe('Test rounds functionality', () => {
         'master',
         'e562f69ec36e625116376f376d991e41613e9bf3',
         0,
-        1,
+        1634742080841,
         false,
         false,
         'auxiliary')

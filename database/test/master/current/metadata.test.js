@@ -250,7 +250,7 @@ describe('Test database metadata functionality', () => {
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
+        effort = "Pool-Main".current_metadata.effort + EXCLUDED.effort,
         invalid = "Pool-Main".current_metadata.invalid + EXCLUDED.invalid,
         stale = "Pool-Main".current_metadata.stale + EXCLUDED.stale,
         valid = "Pool-Main".current_metadata.valid + EXCLUDED.valid,
@@ -303,7 +303,7 @@ describe('Test database metadata functionality', () => {
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
+        effort = "Pool-Main".current_metadata.effort + EXCLUDED.effort,
         invalid = "Pool-Main".current_metadata.invalid + EXCLUDED.invalid,
         stale = "Pool-Main".current_metadata.stale + EXCLUDED.stale,
         valid = "Pool-Main".current_metadata.valid + EXCLUDED.valid,
