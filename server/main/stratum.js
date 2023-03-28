@@ -27,8 +27,7 @@ const Stratum = function (logger, client, config, configMain, template) {
 
   // Geenerate Difficulty Cache From Rounds Data
   this.parseDifficultyCache = function(callback) {
-    const timestamp = Date.now();
-    const cutoff = timestamp - 12 * 3600 * 1000;
+    const cutoff = Date.now() - 12 * 3600000;
     const parameters = {
       identifier: _this.configMain.identifier,
       timestamp: 'gt' + cutoff,
@@ -44,18 +43,10 @@ const Stratum = function (logger, client, config, configMain, template) {
         const workers = {};
         if (lookups[1].rowCount > 0) {
           lookups[1].rows.forEach(entry => {
-            if (entry.worker in workers) {
-              workers[entry.worker].push(entry.work);
-            } else {
-              workers[entry.worker] = [];
-            };
+            const difficulty = Math.round(entry.work / entry.segments * 1000) / 1000;
+            workers[entry.worker] = difficulty;
           });
         }
-
-        for (const [worker, data] of Object.entries(workers)) {
-          const difficulty = data.reduce((a, b) => a + b, 0) / data.length;
-          workers[worker] = Math.round(difficulty * 1000) / 1000;
-        };
 
         callback(workers);
       });
