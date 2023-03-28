@@ -113,7 +113,7 @@ const CurrentRounds = function (logger, configMain) {
   
   // Sum Work in Current Rounds Using Parameters
   this.selectCurrentRoundsSumWork = function(pool, parameters) {
-    let output = `SELECT worker, SUM(work) AS work FROM "${ pool }".current_rounds`;
+    let output = `SELECT worker, SUM(work) AS work, COUNT(work) AS segments FROM "${ pool }".current_rounds`;
     const filtered = Object.keys(parameters).filter((key) => _this.parameters.includes(key));
     filtered.forEach((parameter, idx) => {
       if (idx === 0) output += ' WHERE ';
