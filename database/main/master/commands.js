@@ -48,9 +48,17 @@ const Commands = function (logger, client, configMain) {
   /* eslint-disable */
   this.executor = function(commands, callback) {
     const query = commands.join(' ')
+    const handler = (error) => { throw new Error(error); };
     _this.client.query(query, (error, results) => {
-      if (error) _this.retry(commands, error, callback);
-      else callback(results);
+      if (error) {
+        const lines = [_this.text.databaseCommandsText1(query, JSON.stringify(error))];
+        _this.logger.error('Database', 'Worker', lines);
+        handler(error);
+      } else {
+        callback(results);
+      }
+      // if (error) _this.retry(commands, error, callback);
+      // else callback(results);
     });
   };
 
