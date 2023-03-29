@@ -118,7 +118,7 @@ const Rounds = function (logger, client, config, configMain) {
     // Return Blocks Updates
     return {
       timestamp: Date.now(),
-      submitted: Date.now(),
+      submitted: share.submitted || Date.now(),
       miner: (worker || '').split('.')[0],
       worker: worker,
       category: 'pending',
