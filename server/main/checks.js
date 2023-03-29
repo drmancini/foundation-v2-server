@@ -242,7 +242,7 @@ const Checks = function (logger, client, config, configMain) {
           _this.pool, block.round, true, 'primary'));
       } else {
         const startTime = block.submitted - _this.config.primary.payments.windowPPLNT;
-        const endTime = block.submitted;
+        const endTime = Math.floor(block.submitted / 60000) * 60000;
         const rounds = blocks.slice(idx + 1).map(block => block.round);
         transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
           _this.pool, startTime, endTime, rounds, 'primary'));
@@ -278,7 +278,7 @@ const Checks = function (logger, client, config, configMain) {
           _this.pool, block.round, true, 'auxiliary'));
       } else {
         const startTime = block.submitted - _this.config.primary.payments.windowPPLNT;
-        const endTime = block.submitted;
+        const endTime = Math.floor(block.submitted / 60000) * 60000;
         const rounds = blocks.slice(idx + 1).map(block => block.round);
         transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
           _this.pool, startTime, endTime, rounds, 'auxiliary'));
