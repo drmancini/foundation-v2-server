@@ -237,16 +237,16 @@ const Checks = function (logger, client, config, configMain) {
 
     // Add Round Lookups to Transaction
     blocks.forEach((block, idx) => {
-      if (block.solo) {
+      // if (block.solo) {
         transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
-          _this.pool, block.round, true, 'primary'));
-      } else {
-        const startTime = block.submitted - _this.config.primary.payments.windowPPLNT;
-        const endTime = Math.floor(block.submitted / 60000) * 60000;
-        const rounds = blocks.slice(idx + 1).map(block => block.round);
-        transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
-          _this.pool, startTime, endTime, rounds, 'primary'));
-      }
+          _this.pool, block.round, block.solo, 'primary'));
+      // } else {
+        // const startTime = block.submitted - _this.config.primary.payments.windowPPLNT;
+        // const endTime = Math.floor(block.submitted / 60000) * 60000;
+        // const rounds = blocks.slice(idx + 1).map(block => block.round);
+        // transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
+        //   _this.pool, startTime, endTime, rounds, 'primary'));
+      // }
     });
 
     // Determine Workers for Rounds
