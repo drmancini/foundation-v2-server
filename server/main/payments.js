@@ -143,11 +143,12 @@ const Payments = function (logger, client, config, configMain) {
   this.handleFailures = function(blocks, callback) {
 
     // Build Combined Transaction
-    const paymentsDelete = blocks.map((block) => `'${ block.round }'`);
+    const transactionsDelete = blocks.map((block) => `'${ block.round }'`);
     
     const transaction = [
       'BEGIN;',
-      _this.master.current.payments.deleteCurrentPaymentsMain(_this.pool, paymentsDelete),
+      _this.master.current.payments.deleteCurrentPaymentsMain(_this.pool, transactionsDelete),
+      _this.master.current.transactions.deleteCurrentTransactionsMain(_this.pool, transactionsDelete),
       'COMMIT;'];
 
     // Insert Work into Database
@@ -196,6 +197,13 @@ const Payments = function (logger, client, config, configMain) {
         _this.pool, [transactionsUpdates]));
     }
 
+    // Handle Transaction Delete Updates
+    const transactionsDelete = blocks.map((block) => `'${ block.round }'`);
+    if (transactionsDelete.length >= 1) {
+      transaction.push(_this.master.current.transactions.deleteCurrentTransactionsMain(
+        _this.pool, transactionsDelete));
+    }
+
     // Insert Work into Database
     transaction.push('COMMIT;');
     _this.master.executor(transaction, () => callback());
@@ -213,16 +221,18 @@ const Payments = function (logger, client, config, configMain) {
 
     // Add Round Lookups to Transaction
     blocks.forEach((block, idx) => {
-      // if (block.solo) {
+      if (block.solo) {
         transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
           _this.pool, block.round, block.solo, 'primary'));
-      // } else {
+      } else {
+        transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
+          _this.pool, block.round, block.solo, 'primary'));
       //   const startTime = block.submitted - _this.config.primary.payments.windowPPLNT;
       //   const endTime = Math.floor(block.submitted / 60000) * 60000;
       //   const rounds = blocks.slice(idx + 1).map(block => block.round);
       //   transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
       //     _this.pool, startTime, endTime, rounds, 'primary'));
-      // }
+      }
     });
 
     // Determine Workers for Rounds
@@ -265,13 +275,15 @@ const Payments = function (logger, client, config, configMain) {
     blocks.forEach((block, idx) => {
       if (block.solo) {
         transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
-          _this.pool, block.round, true, 'auxiliary'));
+          _this.pool, block.round, block.solo, 'auxiliary'));
       } else {
-        const startTime = block.submitted - _this.config.primary.payments.windowPPLNT;
-        const endTime = Math.floor(block.submitted / 60000) * 60000;
-        const rounds = blocks.slice(idx + 1).map(block => block.round);
-        transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
-          _this.pool, startTime, endTime, rounds, 'auxiliary'));
+        transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
+          _this.pool, block.round, block.solo, 'auxiliary'));
+        // const startTime = block.submitted - _this.config.primary.payments.windowPPLNT;
+        // const endTime = Math.floor(block.submitted / 60000) * 60000;
+        // const rounds = blocks.slice(idx + 1).map(block => block.round);
+        // transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
+        //   _this.pool, startTime, endTime, rounds, 'auxiliary'));
       }
     });
 
@@ -302,7 +314,117 @@ const Payments = function (logger, client, config, configMain) {
   };
 
   // Handle Payment Updates
-  this.handleRounds = function(lookups, blockType, callback) {
+  // this.handleRounds = function(lookups, blockType, callback) {
+  this.handleRounds = function(blocks, balances, blockType, callback) {
+
+    // Build Combined Transaction
+    const transaction = ['BEGIN;'];
+
+    // Build Checks for Each Block
+    const checks = [];
+    if (blocks.length >= 1) {
+    // if (lookups[1].rows[0]) {
+      blocks.forEach((block) => {
+      // lookups[1].rows.forEach((block) => {
+        checks.push({ timestamp: Date.now(), round: block.round, type: blockType });
+      });
+    }
+
+    // // Build Existing Miner Balances
+    // const balances = {};
+    // if (lookups[2].rows[0]) {
+    //   lookups[2].rows.forEach((miner) => {
+    //     if (miner.miner in balances) balances[miner.miner] += miner.balance;
+    //     else balances[miner.miner] = miner.balance;
+    //   });
+    // }
+
+    // Add Checks to Payments Table
+    if (checks.length >= 1) {
+      transaction.push(_this.master.current.payments.insertCurrentPaymentsMain(_this.pool, checks));
+    }
+
+    // Establish Separate Behavior
+    transaction.push('COMMIT;');
+    switch (blockType) {
+
+    // Primary Behavior
+    case 'primary':
+      _this.master.executor(transaction, (results) => {
+        
+        if (results.length > 2) {
+          results = results[1].rows.map((block) => block.round);
+          const validated = blocks.filter((block) => results.includes((block || {}).round));
+
+          // Blocks Exist to Send Payments
+          if (validated.length >= 1) {
+            _this.handlePrimary(validated, balances, (error) => {
+              const updates = [(error) ?
+                _this.text.databaseCommandsText2(JSON.stringify(error)) :
+                _this.text.databaseUpdatesText4(blockType, validated.length)];
+              _this.logger.debug('Payments', _this.config.name, updates);
+              callback();
+            });
+
+          // No Blocks Exist to Send Payments
+          } else {
+            const updates = [_this.text.databaseUpdatesText5(blockType)];
+            _this.logger.debug('Payments', _this.config.name, updates);
+            callback();
+          }
+
+        // No Blocks Exist to Send Payments
+        } else {
+          const updates = [_this.text.databaseUpdatesText5(blockType)];
+          _this.logger.debug('Payments', _this.config.name, updates);
+            callback();
+        }
+      });
+      break;
+
+    // Auxiliary Behavior
+    case 'auxiliary':
+      _this.master.executor(transaction, (results) => {
+
+        if (results.length > 2) {
+          results = results[1].rows.map((block) => block.round);
+          const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
+
+          // Blocks Exist to Send Payments
+          if (blocks.length >= 1) {
+            _this.handleAuxiliary(blocks, balances, (error) => {
+              const updates = [(error) ?
+                _this.text.databaseCommandsText2(JSON.stringify(error)) :
+                _this.text.databaseUpdatesText4(blockType, blocks.length)];
+              _this.logger.debug('Payments', _this.config.name, updates);
+              callback();
+            });
+
+          // No Blocks Exist to Send Payments
+          } else {
+            const updates = [_this.text.databaseUpdatesText5(blockType)];
+            _this.logger.debug('Payments', _this.config.name, updates);
+            callback();
+          }
+        
+        // No Blocks Exist to Send Payments
+        } else {
+          const updates = [_this.text.databaseUpdatesText5(blockType)];
+          _this.logger.debug('Payments', _this.config.name, updates);
+            callback();
+        }
+      });
+      break;
+
+    // Default Behavior
+    default:
+      callback();
+      break;
+    }
+  };
+
+  // Handle Checks Updates
+  this.handleChecks = function(lookups, blockType, callback) {
 
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
@@ -324,9 +446,9 @@ const Payments = function (logger, client, config, configMain) {
       });
     }
 
-    // Add Checks to Payments Table
+    // Add Checks to Transactions Table
     if (checks.length >= 1) {
-      transaction.push(_this.master.current.payments.insertCurrentPaymentsMain(_this.pool, checks));
+      transaction.push(_this.master.current.transactions.insertCurrentTransactionsMain(_this.pool, checks));
     }
 
     // Establish Separate Behavior
@@ -338,23 +460,7 @@ const Payments = function (logger, client, config, configMain) {
       _this.master.executor(transaction, (results) => {
         results = results[1].rows.map((block) => block.round);
         const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
-
-        // Blocks Exist to Send Payments
-        if (blocks.length >= 1) {
-          _this.handlePrimary(blocks, balances, (error) => {
-            const updates = [(error) ?
-              _this.text.databaseCommandsText2(JSON.stringify(error)) :
-              _this.text.databaseUpdatesText4(blockType, blocks.length)];
-            _this.logger.debug('Payments', _this.config.name, updates);
-            callback();
-          });
-
-        // No Blocks Exist to Send Payments
-        } else {
-          const updates = [_this.text.databaseUpdatesText5(blockType)];
-          _this.logger.debug('Payments', _this.config.name, updates);
-          callback();
-        }
+        _this.handleRounds(blocks, balances, blockType, callback);
       });
       break;
 
@@ -363,23 +469,7 @@ const Payments = function (logger, client, config, configMain) {
       _this.master.executor(transaction, (results) => {
         results = results[1].rows.map((block) => block.round);
         const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
-
-        // Blocks Exist to Send Payments
-        if (blocks.length >= 1) {
-          _this.handleAuxiliary(blocks, balances, (error) => {
-            const updates = [(error) ?
-              _this.text.databaseCommandsText2(JSON.stringify(error)) :
-              _this.text.databaseUpdatesText4(blockType, blocks.length)];
-            _this.logger.debug('Payments', _this.config.name, updates);
-            callback();
-          });
-
-        // No Blocks Exist to Send Payments
-        } else {
-          const updates = [_this.text.databaseUpdatesText5(blockType)];
-          _this.logger.debug('Payments', _this.config.name, updates);
-          callback();
-        }
+        _this.handleRounds(blocks, balances, blockType, callback);
       });
       break;
 
@@ -410,7 +500,8 @@ const Payments = function (logger, client, config, configMain) {
 
     // Establish Separate Behavior
     _this.master.executor(transaction, (lookups) => {
-      _this.handleRounds(lookups, blockType, callback);
+      // _this.handleRounds(lookups, blockType, callback); // replace this line with bottom line
+      _this.handleChecks(lookups, blockType, callback);
     });
   };
 

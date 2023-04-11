@@ -218,12 +218,19 @@ const Checks = function (logger, client, config, configMain) {
     }
 
     // Handle Historical Generate Round Updates
-    const immatureRoundsUpdates = _this.handleHistoricalRounds(blocks, rewards, rounds, blockType);
-    if (immatureRoundsUpdates.length >= 1) {
+    const historicalRoundsUpdates = _this.handleHistoricalRounds(blocks, rewards, rounds, blockType);
+    if (historicalRoundsUpdates.length >= 1) {
       transaction.push(_this.master.historical.rounds.insertHistoricalRoundsMain(
-        _this.pool, immatureRoundsUpdates));
+        _this.pool, historicalRoundsUpdates));
     }
     
+    // Handle Transaction Delete Updates
+    const transactionsDelete = blocks.map((block) => `'${ block.round }'`);
+    if (transactionsDelete.length >= 1) {
+      transaction.push(_this.master.current.transactions.deleteCurrentTransactionsMain(
+        _this.pool, transactionsDelete));
+    }
+
     // Insert Work into Database
     transaction.push('COMMIT;');
     _this.master.executor(transaction, () => callback());
@@ -237,16 +244,21 @@ const Checks = function (logger, client, config, configMain) {
 
     // Add Round Lookups to Transaction
     blocks.forEach((block, idx) => {
-      // if (block.solo) {
+      if (block.solo) {
         transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
           _this.pool, block.round, block.solo, 'primary'));
-      // } else {
+      } else {
+        
+        transaction.push(_this.master.current.rounds.selectCurrentRoundsPayments(
+          _this.pool, block.round, block.solo, 'primary'));
+
+        
         // const startTime = block.submitted - _this.config.primary.payments.windowPPLNT;
         // const endTime = Math.floor(block.submitted / 60000) * 60000;
         // const rounds = blocks.slice(idx + 1).map(block => block.round);
         // transaction.push(_this.master.current.rounds.selectCurrentRoundsSegment(
         //   _this.pool, startTime, endTime, rounds, 'primary'));
-      // }
+      }
     });
 
     // Determine Workers for Rounds
@@ -327,19 +339,27 @@ const Checks = function (logger, client, config, configMain) {
     // Primary Behavior
     case 'primary':
       _this.master.executor(transaction, (results) => {
-        results = results[1].rows.map(block => block.round);
-        const blocks = lookups[1].rows.filter(block => results.includes((block || {}).round));
+        if (results.length > 2) {
+          results = results[1].rows.map(block => block.round);
+          const blocks = lookups[1].rows.filter(block => results.includes((block || {}).round));
 
-        // Blocks Exist to Validate
-        if (blocks.length >= 1) {
-          _this.handlePrimary(blocks, (error) => {
-            const updates = [(error) ?
-              _this.text.databaseCommandsText2(JSON.stringify(error)) :
-              _this.text.databaseUpdatesText2(blockType, blocks.length)];
+          // Blocks Exist to Validate
+          if (blocks.length >= 1) {
+            _this.handlePrimary(blocks, (error) => {
+              const updates = [(error) ?
+                _this.text.databaseCommandsText2(JSON.stringify(error)) :
+                _this.text.databaseUpdatesText2(blockType, blocks.length)];
+              _this.logger.debug('Checks', _this.config.name, updates);
+              callback();
+            });
+
+          // No Blocks Exist to Validate
+          } else {
+            const updates = [_this.text.databaseUpdatesText3(blockType)];
             _this.logger.debug('Checks', _this.config.name, updates);
             callback();
-          });
-
+          }
+        
         // No Blocks Exist to Validate
         } else {
           const updates = [_this.text.databaseUpdatesText3(blockType)];
@@ -352,19 +372,27 @@ const Checks = function (logger, client, config, configMain) {
     // Auxiliary Behavior
     case 'auxiliary':
       _this.master.executor(transaction, (results) => {
-        results = results[1].rows.map((block) => block.round);
-        const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
+        if (results.length > 2) {
+          results = results[1].rows.map((block) => block.round);
+          const blocks = lookups[1].rows.filter((block) => results.includes((block || {}).round));
 
-        // Blocks Exist to Validate
-        if (blocks.length >= 1) {
-          _this.handleAuxiliary(blocks, (error) => {
-            const updates = [(error) ?
-              _this.text.databaseCommandsText2(JSON.stringify(error)) :
-              _this.text.databaseUpdatesText2(blockType, blocks.length)];
+          // Blocks Exist to Validate
+          if (blocks.length >= 1) {
+            _this.handleAuxiliary(blocks, (error) => {
+              const updates = [(error) ?
+                _this.text.databaseCommandsText2(JSON.stringify(error)) :
+                _this.text.databaseUpdatesText2(blockType, blocks.length)];
+              _this.logger.debug('Checks', _this.config.name, updates);
+              callback();
+            });
+
+          // No Blocks Exist to Validate
+          } else {
+            const updates = [_this.text.databaseUpdatesText3(blockType)];
             _this.logger.debug('Checks', _this.config.name, updates);
             callback();
-          });
-
+          }
+        
         // No Blocks Exist to Validate
         } else {
           const updates = [_this.text.databaseUpdatesText3(blockType)];
@@ -392,7 +420,7 @@ const Checks = function (logger, client, config, configMain) {
     const transaction = [
       'BEGIN;',
       _this.master.current.blocks.selectCurrentBlocksMain(_this.pool, { type: blockType }),
-      _this.master.current.rounds.deleteCurrentRoundsInactiveSolo(_this.pool),
+      // _this.master.current.rounds.deleteCurrentRoundsInactiveSolo(_this.pool),
       'COMMIT;'];
 
     // Establish Separate Behavior
