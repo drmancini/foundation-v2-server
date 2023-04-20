@@ -771,26 +771,26 @@ const Rounds = function (logger, client, config, configMain) {
     const round = rounds[block.addrprimary] || {};
 
     // Determine Updates for Block
-    const metadataReset = [
-      { timestamp: Date.now(), identifier: 'asia', solo: minerType, type: 'primary' },
-      { timestamp: Date.now(), identifier: 'europe', solo: minerType, type: 'primary' },
-      { timestamp: Date.now(), identifier: 'usa-east', solo: minerType, type: 'primary' },
-      { timestamp: Date.now(), identifier: 'usa-west', solo: minerType, type: 'primary' },
-    ];
+    // const metadataReset = [
+    //   { timestamp: Date.now(), identifier: 'asia', solo: minerType, type: 'primary' },
+    //   { timestamp: Date.now(), identifier: 'europe', solo: minerType, type: 'primary' },
+    //   { timestamp: Date.now(), identifier: 'usa-east', solo: minerType, type: 'primary' },
+    //   { timestamp: Date.now(), identifier: 'usa-west', solo: minerType, type: 'primary' },
+    // ];
     const blockUpdates = _this.handleCurrentBlocks(metadata, round, block, 'valid', minerType, 'primary');
     const metadataBlocks = { timestamp: Date.now(), blocks: 1, identifier: identifier, solo: minerType,
       type: 'primary' };
     const roundUpdates = (minerType) ? (
       _this.master.current.rounds.updateCurrentRoundsMainSolo(_this.pool, miner, blockUpdates.round, 'primary')) : (
       _this.master.current.rounds.updateCurrentRoundsMainShared(_this.pool, blockUpdates.round, 'primary'));
-    // const roundReset = (minerType) ? (
-    //   _this.master.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'primary')) : (
-    //   _this.master.current.metadata.insertCurrentMetadataRoundsReset(_this.pool,
-    //     Date.now(), minerType, 'primary'));
     const roundReset = (minerType) ? (
       _this.master.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'primary')) : (
-      _this.master.current.metadata.insertCurrentMetadataRoundsReset2(_this.pool,
-        metadataReset));
+      _this.master.current.metadata.insertCurrentMetadataRoundsReset(_this.pool,
+        Date.now(), minerType, 'primary'));
+    // const roundReset = (minerType) ? (
+    //   _this.master.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'primary')) : (
+    //   _this.master.current.metadata.insertCurrentMetadataRoundsReset2(_this.pool,
+    //     metadataReset));
     const workersReset = (minerType) ? (
       _this.master.current.workers.updateCurrentSoloWorkersRoundsReset(_this.pool, Date.now(), miner, 'primary')) : (
       _this.master.current.workers.updateCurrentSharedWorkersRoundsReset(_this.pool, Date.now(), 'primary'));
