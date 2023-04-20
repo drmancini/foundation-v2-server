@@ -134,6 +134,34 @@ const CurrentMetadata = function (logger, configMain) {
   };
 
   // Build Metadata Values String
+  this.buildCurrentMetadataRoundsReset = function(updates) {
+    let values = '';
+    updates.forEach((metadata, idx) => {
+      values += `(
+        ${ metadata.timestamp },
+        0, 0, 0, ${ metadata.solo }, 0, '${ metadata.type }', 0, 0)`;
+      if (idx < updates.length - 1) values += ', ';
+    });
+    return values;
+  };
+
+  // Insert Rows Using Reset
+  this.insertCurrentMetadataRoundsReset2 = function(pool, updates) {
+    return `
+      INSERT INTO "${ pool }".current_metadata (
+        timestamp, efficiency, effort,
+        invalid, solo, stale, type,
+        valid, work)
+      VALUES ${ _this.buildCurrentMetadataRoundsReset(updates) }
+      ON CONFLICT ON CONSTRAINT current_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        solo = EXCLUDED.solo,
+        efficiency = 0, effort = 0, invalid = 0,
+        stale = 0, valid = 0, work = 0;`;
+  };
+
+  // Build Metadata Values String
   this.buildCurrentMetadataRounds = function(updates) {
     let values = '';
     updates.forEach((metadata, idx) => {

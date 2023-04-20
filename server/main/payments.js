@@ -164,6 +164,8 @@ const Payments = function (logger, client, config, configMain) {
     // Handle Generate Block Delete Updates
     const generateBlocksDelete = blocks.map((block) => `'${ block.round }'`);
     if (generateBlocksDelete.length >= 1) {
+      console.log(_this.master.current.blocks.deleteCurrentBlocksMain(
+        _this.pool, generateBlocksDelete))
       transaction.push(_this.master.current.blocks.deleteCurrentBlocksMain(
         _this.pool, generateBlocksDelete));
     }
