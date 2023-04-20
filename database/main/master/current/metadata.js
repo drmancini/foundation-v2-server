@@ -139,7 +139,7 @@ const CurrentMetadata = function (logger, configMain) {
     updates.forEach((metadata, idx) => {
       values += `(
         ${ metadata.timestamp },
-        0, 0, '${ metadata.identifier }', 0, 0, '${ metadata.type }', 0, 0)`;
+        0, 0, '${ metadata.identifier }', 0, ${ metadata.solo }, 0, '${ metadata.type }', 0, 0)`;
       if (idx < updates.length - 1) values += ', ';
     });
     return values;
