@@ -777,10 +777,14 @@ const Rounds = function (logger, client, config, configMain) {
     const roundUpdates = (minerType) ? (
       _this.master.current.rounds.updateCurrentRoundsMainSolo(_this.pool, miner, blockUpdates.round, 'primary')) : (
       _this.master.current.rounds.updateCurrentRoundsMainShared(_this.pool, blockUpdates.round, 'primary'));
+    // const roundReset = (minerType) ? (
+    //   _this.master.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'primary')) : (
+    //   _this.master.current.metadata.insertCurrentMetadataRoundsReset(_this.pool,
+    //     Date.now(), minerType, 'primary'));
     const roundReset = (minerType) ? (
       _this.master.current.miners.insertCurrentMinersRoundsReset(_this.pool, Date.now(), miner, 'primary')) : (
-      _this.master.current.metadata.insertCurrentMetadataRoundsReset(_this.pool,
-        Date.now(), minerType, 'primary'));
+      _this.master.current.metadata.insertCurrentMetadataRoundsReset2(_this.pool,
+        [{ timestamp: Date.now(), solo: minerType, type: 'primary' }]));
     const workersReset = (minerType) ? (
       _this.master.current.workers.updateCurrentSoloWorkersRoundsReset(_this.pool, Date.now(), miner, 'primary')) : (
       _this.master.current.workers.updateCurrentSharedWorkersRoundsReset(_this.pool, Date.now(), 'primary'));
