@@ -247,7 +247,7 @@ const Payments = function (logger, client, config, configMain) {
       const sending = true;
       _this.stratum.stratum.handlePrimaryRounds(blocks, (error, updates) => {
         if (error) _this.handleFailures(blocks, () => callback(error));
-        else _this.stratum.stratum.handlePrimaryWorkers(blocks, rounds, sending, (results, rewards) => {
+        else _this.stratum.stratum.handlePrimaryWorkers(blocks, rounds, sending, (results) => {
           const payments = _this.handleCurrentCombined(balances, results);
 
           // Validate and Send Out Primary Payments
