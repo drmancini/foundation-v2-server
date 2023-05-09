@@ -128,6 +128,7 @@ const CurrentHashrate = function (logger, configMain) {
         '${ hashrate.miner }',
         '${ hashrate.worker }',
         '${ hashrate.identifier }',
+        '${ hashrate.ipHash }',
         '${ hashrate.share }',
         ${ hashrate.solo },
         '${ hashrate.type }',
@@ -142,8 +143,8 @@ const CurrentHashrate = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_hashrate (
         timestamp, miner, worker,
-        identifier, share, solo,
-        type, work)
+        ip_hash, identifier, share,
+        solo, type, work)
       VALUES ${ _this.buildCurrentHashrateMain(updates) };`;
   };
 

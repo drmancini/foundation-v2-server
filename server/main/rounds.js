@@ -145,12 +145,23 @@ const Rounds = function (logger, client, config, configMain) {
     const identifier = share.identifier || 'master';
     const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
 
+    // IP Address Hash
+    let ip = 'unknown';
+    let ipHash = 'unknown';
+
+    if (share.ip) {
+      const ipIndex = share.ip.split(':').length - 1;
+      ip = share.ip.split(':')[ipIndex];
+      ipHash = utils.createHash(ip);
+    };
+
     // Return Hashrate Updates
     return {
       timestamp: Date.now(),
       miner: (worker || '').split('.')[0],
       worker: worker,
       identifier: identifier,
+      ipHash: ipHash,
       share: shareType,
       solo: minerType,
       type: blockType,
