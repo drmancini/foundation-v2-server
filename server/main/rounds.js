@@ -93,7 +93,8 @@ const Rounds = function (logger, client, config, configMain) {
   // Handle Workers Processing
   this.handleWorkersLookups = function(round) {
     const workers = {};
-    round.forEach((snapshot) => workers[snapshot.worker] = snapshot);
+    // round.forEach((snapshot) => workers[snapshot.worker] = snapshot);
+    round.forEach((snapshot) => workers[`${ snapshot.worker }_${ snapshot.ip_hash}`] = snapshot);
     return workers;
   }
 
@@ -419,11 +420,10 @@ const Rounds = function (logger, client, config, configMain) {
       // Determine Current Round States
       const interval = _this.config.settings.interval.historical;
       const recent = minerType ? 0 : Math.ceil(share.timestamp / interval) * interval;
-      const initial = rounds[worker] || {};
-      const current = updates[`${ ipHash }_${ worker }_${ recent }_${ minerType }`] || {};
-
+      const initial = rounds[`${ worker }_${ ipHash }`] || {};
+      const current = updates[`${ worker }_${ ipHash }_${ recent }_${ minerType }`] || {};
       const segment = _this.handleCurrentRounds(initial, current, share, shareType, minerType, ipHash, blockType);
-      updates[`${ ipHash }_${ worker }_${ segment.recent }_${ segment.solo }`] = segment;
+      updates[`${ worker }_${ ipHash }_${ segment.recent }_${ segment.solo }`] = segment;
     });
 
     // Return Round Updates
@@ -689,7 +689,6 @@ const Rounds = function (logger, client, config, configMain) {
 
     // Handle Round Updates
     const roundUpdates = _this.handleShares(rounds, shares, 'primary');
-    console.log(roundUpdates)
     if (roundUpdates.length >= 1) {
       transaction.push(_this.master.current.rounds.insertCurrentRoundsMain(_this.pool, roundUpdates));
       if (_this.config.auxiliary && _this.config.auxiliary.enabled) {

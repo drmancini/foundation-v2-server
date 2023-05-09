@@ -7,9 +7,9 @@ const CurrentRounds = function (logger, configMain) {
 
   // Handle Current Parameters
   this.numbers = ['timestamp', 'submitted', 'invalid', 'stale', 'times', 'valid', 'work'];
-  this.strings = ['miner', 'worker', 'identifier', 'round', 'type'];
-  this.parameters = ['timestamp', 'submitted', 'miner', 'worker', 'identifier', 'invalid', 'round',
-    'solo', 'stale', 'times', 'type', 'valid', 'work'];
+  this.strings = ['miner', 'worker', 'identifier', 'ip_hash', 'round', 'type'];
+  this.parameters = ['timestamp', 'submitted', 'miner', 'worker', 'identifier', 'invalid', 
+    'ip_hash', 'round', 'solo', 'stale', 'times', 'type', 'valid', 'work'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -63,9 +63,9 @@ const CurrentRounds = function (logger, configMain) {
   // Select Current Rounds for Batching
   this.selectCurrentRoundsBatchAddresses = function(pool, addresses, type) {
     return addresses.length >= 1 ? `
-      SELECT DISTINCT ON (worker) * FROM "${ pool }".current_rounds
+      SELECT DISTINCT ON (ip_hash, worker) * FROM "${ pool }".current_rounds
       WHERE worker IN (${ addresses.join(', ') }) AND type = '${ type }'
-      ORDER BY worker, timestamp DESC;` : `
+      ORDER BY ip_hash, worker, timestamp DESC;` : `
       SELECT * FROM "${ pool }".current_rounds LIMIT 0;`;
   };
 
@@ -88,7 +88,7 @@ const CurrentRounds = function (logger, configMain) {
       AND m.type = '${ type }';`;
   };
   
-  // Select Current Rounds for Shared Payments
+  // Select Current Rounds for Shared Payments (CURRENTLY UNUSED)
   this.selectCurrentRoundsSegment = function(pool, startTime, endTime, rounds, type) {
     let output = `
       SELECT miner, worker, solo, type,
@@ -113,7 +113,7 @@ const CurrentRounds = function (logger, configMain) {
   
   // Sum Work in Current Rounds Using Parameters
   this.selectCurrentRoundsSumWork = function(pool, parameters) {
-    let output = `SELECT worker, SUM(work) AS work, COUNT(work) AS segments FROM "${ pool }".current_rounds`;
+    let output = `SELECT ip_hash, worker, SUM(work) AS work, COUNT(work) AS segments FROM "${ pool }".current_rounds`;
     const filtered = Object.keys(parameters).filter((key) => _this.parameters.includes(key));
     filtered.forEach((parameter, idx) => {
       if (idx === 0) output += ' WHERE ';
@@ -121,7 +121,7 @@ const CurrentRounds = function (logger, configMain) {
       output += `${ parameter }`;
       output += _this.handleQueries(parameters, parameter);
     });
-    output += `GROUP BY worker;`;
+    output += `GROUP BY ip_hash, worker;`;
     return output;
   };
 
@@ -137,6 +137,7 @@ const CurrentRounds = function (logger, configMain) {
         '${ round.worker }',
         '${ round.identifier }',
         ${ round.invalid },
+        '${ round.ipHash }',
         '${ round.round }',
         ${ round.solo },
         ${ round.stale },
@@ -155,8 +156,8 @@ const CurrentRounds = function (logger, configMain) {
       INSERT INTO "${ pool }".current_rounds (
         timestamp, submitted, recent,
         miner, worker, identifier, invalid,
-        round, solo, stale, times, type,
-        valid, work)
+        ip_hash, round, solo, stale, times,
+        type, valid, work)
       VALUES ${ _this.buildCurrentRoundsMain(updates) }
       ON CONFLICT ON CONSTRAINT current_rounds_unique
       DO UPDATE SET
