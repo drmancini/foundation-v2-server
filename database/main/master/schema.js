@@ -289,6 +289,7 @@ const Schema = function (logger, executor, configMain) {
         miner VARCHAR NOT NULL DEFAULT 'unknown',
         worker VARCHAR NOT NULL DEFAULT 'unknown',
         identifier VARCHAR NOT NULL DEFAULT 'master',
+        ip_hash VARCHAR NOT NULL DEFAULT 'unknown',
         invalid INT NOT NULL DEFAULT 0,
         round VARCHAR NOT NULL DEFAULT 'current',
         solo BOOLEAN NOT NULL DEFAULT false,
