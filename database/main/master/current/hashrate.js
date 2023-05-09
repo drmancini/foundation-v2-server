@@ -143,7 +143,7 @@ const CurrentHashrate = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_hashrate (
         timestamp, miner, worker,
-        ip_hash, identifier, share,
+        identifier, ip_hash, share,
         solo, type, work)
       VALUES ${ _this.buildCurrentHashrateMain(updates) };`;
   };
