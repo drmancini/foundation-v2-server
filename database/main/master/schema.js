@@ -298,7 +298,7 @@ const Schema = function (logger, executor, configMain) {
         type VARCHAR NOT NULL DEFAULT 'primary',
         valid INT NOT NULL DEFAULT 0,
         work FLOAT NOT NULL DEFAULT 0,
-        CONSTRAINT current_rounds_unique UNIQUE (recent, worker, solo, round, type));
+        CONSTRAINT current_rounds_unique UNIQUE (recent, worker, ip_hash, solo, round, type));
       CREATE INDEX current_rounds_miner ON "${ pool }".current_rounds(miner, type);
       CREATE INDEX current_rounds_worker ON "${ pool }".current_rounds(worker, type);
       CREATE INDEX current_rounds_identifier ON "${ pool }".current_rounds(identifier, type);
