@@ -211,7 +211,7 @@ const Rounds = function (logger, client, config, configMain) {
   };
 
   // Handle Round Updates
-  this.handleCurrentRounds = function(initial, updates, share, shareType, minerType, blockType) {
+  this.handleCurrentRounds = function(initial, updates, share, shareType, minerType, ipHash, blockType) {
 
     // Calculate Timing Features
     const interval = _this.config.settings.interval.recent;
@@ -244,6 +244,7 @@ const Rounds = function (logger, client, config, configMain) {
       miner: (worker || '').split('.')[0],
       worker: worker,
       identifier: identifier,
+      ipHash: ipHash,
       invalid: invalid,
       round: 'current',
       solo: minerType,
@@ -401,6 +402,13 @@ const Rounds = function (logger, client, config, configMain) {
     const updates = {};
     shares.forEach((share) => {
 
+      let ipHash = 'undefined';
+      if (share.ip) {
+        const ipIndex = share.ip.split(':').length - 1;
+        const ip = share.ip.split(':')[ipIndex];
+        ipHash = utils.createHash(ip);
+      };
+
       // Calculate Share Features
       let shareType = 'valid';
       const minerType = utils.checkSoloMining(_this.config, share);
@@ -412,10 +420,10 @@ const Rounds = function (logger, client, config, configMain) {
       const interval = _this.config.settings.interval.historical;
       const recent = minerType ? 0 : Math.ceil(share.timestamp / interval) * interval;
       const initial = rounds[worker] || {};
-      const current = updates[`${ worker }_${ recent }_${ minerType }`] || {};
+      const current = updates[`${ ipHash }_${ worker }_${ recent }_${ minerType }`] || {};
 
-      const segment = _this.handleCurrentRounds(initial, current, share, shareType, minerType, blockType);
-      updates[`${ worker }_${ segment.recent }_${ segment.solo }`] = segment;
+      const segment = _this.handleCurrentRounds(initial, current, share, shareType, minerType, ipHash, blockType);
+      updates[`${ ipHash }_${ worker }_${ segment.recent }_${ segment.solo }`] = segment;
     });
 
     // Return Round Updates
@@ -681,6 +689,7 @@ const Rounds = function (logger, client, config, configMain) {
 
     // Handle Round Updates
     const roundUpdates = _this.handleShares(rounds, shares, 'primary');
+    console.log(roundUpdates)
     if (roundUpdates.length >= 1) {
       transaction.push(_this.master.current.rounds.insertCurrentRoundsMain(_this.pool, roundUpdates));
       if (_this.config.auxiliary && _this.config.auxiliary.enabled) {
