@@ -42,11 +42,10 @@ const Stratum = function (logger, client, config, configMain, template) {
       _this.master.executor(transaction, (lookups) => {
         const workers = {};
 
-        console.log(lookups[1].rows)
         if (lookups[1].rowCount > 0) {
           lookups[1].rows.forEach(entry => {
             const difficulty = Math.round(entry.work / entry.segments * 1000) / 1000;
-            workers[entry.worker] = difficulty;
+            workers[`${ entry.worker }_${ entry.ip_hash}`] = difficulty;
           });
         }
 
