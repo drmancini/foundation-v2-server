@@ -299,13 +299,15 @@ const Schema = function (logger, executor, configMain) {
         valid INT NOT NULL DEFAULT 0,
         work FLOAT NOT NULL DEFAULT 0,
         CONSTRAINT current_rounds_unique UNIQUE (recent, worker, ip_hash, solo, round, type));
+
       CREATE INDEX current_rounds_miner ON "${ pool }".current_rounds(miner, type);
-      CREATE INDEX current_rounds_worker ON "${ pool }".current_rounds(worker, type);
+      CREATE INDEX current_rounds_worker ON "${ pool }".current_rounds(worker, ip_hash, type);
       CREATE INDEX current_rounds_identifier ON "${ pool }".current_rounds(identifier, type);
       CREATE INDEX current_rounds_round ON "${ pool }".current_rounds(solo, round, type);
       CREATE INDEX current_rounds_round_miner ON "${ pool }".current_rounds(miner, solo, round, type);
-      CREATE INDEX current_rounds_historical ON "${ pool }".current_rounds(worker, solo, type);
-      CREATE INDEX current_rounds_combined ON "${ pool }".current_rounds(worker, solo, round, type);`;
+      CREATE INDEX current_rounds_historical ON "${ pool }".current_rounds(worker, ip_hash, solo, type);
+      CREATE INDEX current_rounds_combined ON "${ pool }".current_rounds(worker, ip_hash, solo, round, type);`;
+
     _this.executor([command], () => callback());
   };
 
