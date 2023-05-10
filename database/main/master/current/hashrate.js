@@ -83,12 +83,21 @@ const CurrentHashrate = function (logger, configMain) {
   // Select Count of Distinct Workers by Identifier
   this.countCurrentHashrateIdentifiedWorker = function(pool, timestamp, solo, type) {
     return `
-      SELECT identifier, CAST(COUNT(DISTINCT worker) AS INT)
-      FROM "${ pool }".current_hashrate
-      WHERE timestamp >= ${ timestamp }
-      AND solo = ${ solo } AND type = '${ type }'
+      SELECT identifier, count(*) from (
+        SELECT DISTINCT worker, ip_hash, identifier
+        FROM "${ pool }".current_hashrate
+        WHERE timestamp >= ${ timestamp }
+          AND solo = ${ solo } AND type = '${ type }'
+        GROUP BY worker, ip_hash, identifier
+      ) AS A
       GROUP BY identifier;`;
   };
+
+  // SELECT identifier, CAST(COUNT(DISTINCT worker) AS INT)
+  // FROM "${ pool }".current_hashrate
+  // WHERE timestamp >= ${ timestamp }
+  // AND solo = ${ solo } AND type = '${ type }'
+  // GROUP BY identifier;
 
   // Select Sum of Rows Using Miners
   this.sumCurrentHashrateMiner = function(pool, timestamp, type) {

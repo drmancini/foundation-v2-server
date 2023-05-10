@@ -264,6 +264,7 @@ const Checks = function (logger, client, config, configMain) {
 
     // Determine Workers for Rounds
     transaction.push('COMMIT;');
+
     _this.master.executor(transaction, (results) => {
       const rounds = results.slice(1, -1).map((round) => round.rows);
 
@@ -414,7 +415,7 @@ const Checks = function (logger, client, config, configMain) {
 
   // Handle Checks Updates
   this.handleChecks = function(blockType, callback) {
-
+    
     // Handle Initial Logging
     const starting = [_this.text.databaseStartingText2(blockType)];
     _this.logger.debug('Checks', _this.config.name, starting);
@@ -447,7 +448,7 @@ const Checks = function (logger, client, config, configMain) {
 
   // Start Checks Capabilities
   /* istanbul ignore next */
-  this.setupChecks = function(stratum, callback) {
+  this.setupChecks = function(stratum, callback) {    
     _this.stratum = stratum;
     const interval = _this.config.settings.interval.checks;
     const numForks = utils.countProcessForks(_this.configMain);
