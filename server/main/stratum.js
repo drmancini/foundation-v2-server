@@ -25,50 +25,11 @@ const Stratum = function (logger, client, config, configMain, template) {
   process.setMaxListeners(0);
   this.forkId = process.env.forkId;
 
-  // Geenerate Difficulty Cache From Rounds Data
-  // this.parseDifficultyCache = function(callback) {
-  //   const cutoff = Date.now() - 12 * 3600000;
-  //   const parameters = {
-  //     identifier: _this.configMain.identifier,
-  //     timestamp: 'gt' + cutoff,
-  //     type: 'primary',
-  //   };
-
-  //   const transaction = [
-  //     'BEGIN;',
-  //     _this.master.current.rounds.selectCurrentRoundsSumWork(_this.pool, parameters),
-  //     'COMMIT;'];
-
-  //     _this.master.executor(transaction, (lookups) => {
-  //       const workers = {};
-
-  //       if (lookups[1].rowCount > 0) {
-  //         lookups[1].rows.forEach(entry => {
-  //           const difficulty = Math.round(entry.work / entry.segments * 1000) / 1000;
-  //           workers[`${ entry.worker }_${ entry.ip_hash}`] = difficulty;
-  //         });
-  //       }
-
-  //       callback(workers);
-  //     });
-  // };
-  
-  // Create Worker Difficulty Cache
-  // this.handleDifficultyCache = function(callback) {
-  //   if (_this.configMain.difficultyCache) {
-  //     _this.parseDifficultyCache((primaryDiff) => {
-  //       callback(primaryDiff);
-  //     })
-  //   } else callback({});
-  // };
-
   // Build Stratum from Configuration
   /* istanbul ignore next */
-  // this.handleStratum = function(difficulties) {
   this.handleStratum = function() {
 
     // Build Stratum Server
-    // _this.stratum = _this.template.builder(_this.config, _this.configMain, difficulties, () => {});
     _this.stratum = _this.template.builder(_this.config, _this.configMain, () => {});
 
     // Handle Stratum Main Events
@@ -126,8 +87,6 @@ const Stratum = function (logger, client, config, configMain, template) {
     _this.shares = new Shares(logger, _this.client, _this.config, _this.configMain);
 
     // Build Daemon/Stratum Functionality
-    // _this.handleDifficultyCache((difficulties) => {
-    // _this.handleStratum(difficulties);
     _this.handleStratum();
     _this.stratum.setupPrimaryDaemons(() => {
     _this.stratum.setupAuxiliaryDaemons(() => {
@@ -145,7 +104,6 @@ const Stratum = function (logger, client, config, configMain, template) {
     })
 
     // Too Much Indentation
-    // })})})})})})})});
     })})})})})})});
   }
 };
