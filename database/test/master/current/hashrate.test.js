@@ -86,10 +86,13 @@ describe('Test database hashrate functionality', () => {
     const hashrate = new CurrentHashrate(logger, configMainCopy);
     const response = hashrate.countCurrentHashrateIdentifiedWorker('Pool-Main', 1, false, 'primary');
     const expected = `
-      SELECT identifier, CAST(COUNT(DISTINCT worker) AS INT)
-      FROM "Pool-Main".current_hashrate
-      WHERE timestamp >= 1
-      AND solo = false AND type = 'primary'
+      SELECT identifier, count(*) from (
+        SELECT DISTINCT worker, ip_hash, identifier
+        FROM "Pool-Main".current_hashrate
+        WHERE timestamp >= 1
+          AND solo = false AND type = 'primary'
+        GROUP BY worker, ip_hash, identifier
+      ) AS A
       GROUP BY identifier;`;
     expect(response).toBe(expected);
   });
@@ -154,13 +157,14 @@ describe('Test database hashrate functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".current_hashrate (
         timestamp, miner, worker,
-        identifier, share, solo,
-        type, work)
+        identifier, ip_hash, share,
+        solo, type, work)
       VALUES (
         1,
         'miner1',
         'worker1',
         'master',
+        'undefined',
         'valid',
         false,
         'primary',
@@ -184,13 +188,14 @@ describe('Test database hashrate functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".current_hashrate (
         timestamp, miner, worker,
-        identifier, share, solo,
-        type, work)
+        identifier, ip_hash, share,
+        solo, type, work)
       VALUES (
         1,
         'miner1',
         'worker1',
         'master',
+        'undefined',
         'valid',
         false,
         'primary',
@@ -199,6 +204,7 @@ describe('Test database hashrate functionality', () => {
         'miner1',
         'worker1',
         'master',
+        'undefined',
         'valid',
         false,
         'primary',

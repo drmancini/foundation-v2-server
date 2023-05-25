@@ -118,6 +118,7 @@ const Checks = function (logger, client, config, configMain) {
   };
 
   // Handle Historical Rounds Updates
+  // this.handleHistoricalRounds = function(blocks, rounds, blockType) {
   this.handleHistoricalRounds = function(blocks, rewards, rounds, blockType) {
     const output = [];
 
@@ -273,6 +274,8 @@ const Checks = function (logger, client, config, configMain) {
       _this.stratum.stratum.handlePrimaryRounds(blocks, (error, updates) => {
         if (error) _this.handleFailures(blocks, () => callback(error));
         else _this.stratum.stratum.handlePrimaryWorkers(blocks, rounds, sending, (results, rewards) => {
+        // else _this.stratum.stratum.handlePrimaryWorkers(blocks, rounds, sending, (results) => {
+          // _this.handleUpdates(updates, rounds, results, 'primary', () => callback(null));
           _this.handleUpdates(updates, rounds, results, rewards, 'primary', () => callback(null));
         });
       });

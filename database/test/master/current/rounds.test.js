@@ -107,9 +107,9 @@ describe('Test database rounds functionality', () => {
     const addresses = [ 'address1', 'address2' ];
     const response = rounds.selectCurrentRoundsBatchAddresses('Pool-Main', addresses, 'primary');
     const expected = `
-      SELECT DISTINCT ON (worker) * FROM "Pool-Main".current_rounds
+      SELECT DISTINCT ON (ip_hash, worker) * FROM "Pool-Main".current_rounds
       WHERE worker IN (address1, address2) AND type = 'primary'
-      ORDER BY worker, timestamp DESC;`;
+      ORDER BY ip_hash, worker, timestamp DESC;`;
     expect(response).toBe(expected);
   });
 
@@ -126,24 +126,25 @@ describe('Test database rounds functionality', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const response = rounds.selectCurrentRoundsPayments('Pool-Main', 'round1', false, 'primary');
     const expected = `
-      SELECT DISTINCT ON (m.worker, m.round, m.solo, m.type)
+      SELECT DISTINCT ON (m.worker, m.ip_hash, m.round, m.solo, m.type)
         t.timestamp, t.submitted, t.recent, m.miner, m.worker,
         m.identifier, t.invalid, m.round, m.solo, t.stale, t.times, m.type,
         t.valid, t.work FROM (
-      SELECT worker, round, solo, type, MAX(timestamp) as timestamp,
+      SELECT worker, ip_hash, round, solo, type, MAX(timestamp) as timestamp,
         MAX(submitted) as submitted, MAX(recent) as recent,
         SUM(invalid) as invalid, SUM(stale) as stale, SUM(times) as times,
         SUM(valid) as valid, SUM(work) as work
       FROM "Pool-Main".current_rounds
-      GROUP BY worker, round, solo, type
+      GROUP BY worker, ip_hash, round, solo, type
         ) t JOIN "Pool-Main".current_rounds m ON m.worker = t.worker
-        AND m.round = t.round AND m.solo = t.solo AND m.type = t.type
+        AND m.ip_hash = t.ip_hash AND m.round = t.round
+        AND m.solo = t.solo AND m.type = t.type
       WHERE m.round = 'round1' AND m.solo = false
       AND m.type = 'primary';`;
     expect(response).toBe(expected);
   });
 
-  test('Test rounds command handling [10]', () => {
+  test('Test rounds command handling [11]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const response = rounds.selectCurrentRoundsSegment('Pool-Main', 1, 2, [], 'primary');
     const expected = `
@@ -160,7 +161,7 @@ describe('Test database rounds functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test rounds command handling [10]', () => {
+  test('Test rounds command handling [12]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const response = rounds.selectCurrentRoundsSegment('Pool-Main', 1, 2, ['round1', 'round2'], 'primary');
     const expected = `
@@ -177,15 +178,15 @@ describe('Test database rounds functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test rounds command handling [11]', () => {
+  test('Test rounds command handling [13]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const parameters = { identifier: 'master', timestamp: 'gt0', type: 'primary' };
     const response = rounds.selectCurrentRoundsSumWork('Pool-Main', parameters);
-    const expected = `SELECT worker, SUM(work) AS work FROM "Pool-Main".current_rounds WHERE identifier = 'master' AND timestamp > 0 AND type = 'primary'GROUP BY worker;`;
+    const expected = `SELECT worker, SUM(work) AS work, COUNT(work) AS segments FROM \"Pool-Main\".current_rounds WHERE identifier = 'master' AND timestamp > 0 AND type = 'primary'GROUP BY worker;`;
     expect(response).toBe(expected);
   });
 
-  test('Test rounds command handling [12]', () => {
+  test('Test rounds command handling [14]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const updates = {
       timestamp: 1,
@@ -208,8 +209,8 @@ describe('Test database rounds functionality', () => {
       INSERT INTO "Pool-Main".current_rounds (
         timestamp, submitted, recent,
         miner, worker, identifier, invalid,
-        round, solo, stale, times, type,
-        valid, work)
+        ip_hash, round, solo, stale, times,
+        type, valid, work)
       VALUES (
         1,
         1,
@@ -218,6 +219,7 @@ describe('Test database rounds functionality', () => {
         'worker1',
         'master',
         0,
+        'undefined',
         'round1',
         true,
         0,
@@ -237,7 +239,7 @@ describe('Test database rounds functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test rounds command handling [13]', () => {
+  test('Test rounds command handling [15]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const updates = {
       timestamp: 1,
@@ -260,8 +262,8 @@ describe('Test database rounds functionality', () => {
       INSERT INTO "Pool-Main".current_rounds (
         timestamp, submitted, recent,
         miner, worker, identifier, invalid,
-        round, solo, stale, times, type,
-        valid, work)
+        ip_hash, round, solo, stale, times,
+        type, valid, work)
       VALUES (
         1,
         1,
@@ -270,6 +272,7 @@ describe('Test database rounds functionality', () => {
         'worker1',
         'master',
         0,
+        'undefined',
         'round1',
         true,
         0,
@@ -284,6 +287,7 @@ describe('Test database rounds functionality', () => {
         'worker1',
         'master',
         0,
+        'undefined',
         'round1',
         true,
         0,
@@ -303,7 +307,7 @@ describe('Test database rounds functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test rounds command handling [14]', () => {
+  test('Test rounds command handling [16]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const response = rounds.updateCurrentRoundsMainSolo('Pool-Main', 'miner1', 'round1', 'primary');
     const expected = `
@@ -314,7 +318,7 @@ describe('Test database rounds functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test rounds command handling [15]', () => {
+  test('Test rounds command handling [17]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const response = rounds.updateCurrentRoundsMainShared('Pool-Main', 'round1', 'primary');
     const expected = `
@@ -325,7 +329,7 @@ describe('Test database rounds functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test rounds command handling [16]', () => {
+  test('Test rounds command handling [18]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const response = rounds.deleteCurrentRoundsInactiveSolo('Pool-Main');
     const expected = `
@@ -335,7 +339,7 @@ describe('Test database rounds functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test rounds command handling [17]', () => {
+  test('Test rounds command handling [19]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
     const response = rounds.deleteCurrentRoundsInactiveShared('Pool-Main', 1);
     const expected = `
