@@ -354,6 +354,7 @@ describe('Test schema functionality', () => {
         miner VARCHAR NOT NULL DEFAULT 'unknown',
         worker VARCHAR NOT NULL DEFAULT 'unknown',
         identifier VARCHAR NOT NULL DEFAULT 'master',
+        ip_hash VARCHAR NOT NULL DEFAULT 'unknown',
         invalid INT NOT NULL DEFAULT 0,
         round VARCHAR NOT NULL DEFAULT 'current',
         solo BOOLEAN NOT NULL DEFAULT false,
@@ -362,14 +363,14 @@ describe('Test schema functionality', () => {
         type VARCHAR NOT NULL DEFAULT 'primary',
         valid INT NOT NULL DEFAULT 0,
         work FLOAT NOT NULL DEFAULT 0,
-        CONSTRAINT current_rounds_unique UNIQUE (recent, worker, solo, round, type));
+        CONSTRAINT current_rounds_unique UNIQUE (recent, worker, ip_hash, solo, round, type));
       CREATE INDEX current_rounds_miner ON "Pool-Main".current_rounds(miner, type);
-      CREATE INDEX current_rounds_worker ON "Pool-Main".current_rounds(worker, type);
+      CREATE INDEX current_rounds_worker ON "Pool-Main".current_rounds(worker, ip_hash, type);
       CREATE INDEX current_rounds_identifier ON "Pool-Main".current_rounds(identifier, type);
       CREATE INDEX current_rounds_round ON "Pool-Main".current_rounds(solo, round, type);
       CREATE INDEX current_rounds_round_miner ON "Pool-Main".current_rounds(miner, solo, round, type);
-      CREATE INDEX current_rounds_historical ON "Pool-Main".current_rounds(worker, solo, type);
-      CREATE INDEX current_rounds_combined ON "Pool-Main".current_rounds(worker, solo, round, type);`;
+      CREATE INDEX current_rounds_historical ON "Pool-Main".current_rounds(worker, ip_hash, solo, type);
+      CREATE INDEX current_rounds_combined ON "Pool-Main".current_rounds(worker, ip_hash, solo, round, type);`;
     const executor = mockExecutor(null, expected);
     const schema = new Schema(logger, executor, configMainCopy);
     schema.createCurrentRounds('Pool-Main', () => {});
