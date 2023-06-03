@@ -26,7 +26,7 @@ exports.databaseUpdatesText6 = (shares) => `Finished updating metadata and round
 exports.databaseUpdatesText7 = () => `Finished updating metadata and rounds with submitted shares: (0)`;
 
 // Shares Text
-exports.sharesSubmissionsText1 = (difficulty, actual, address, ip) => `A share was accepted at difficulty ${ difficulty }/${ actual || 0 } by ${ address } [${ ip }]`;
+exports.sharesSubmissionsText1 = (difficulty, actual, address, ip) => `A share was accepted at difficulty ${ difficulty }/${ actual } by ${ address } [${ ip }]`;
 exports.sharesSubmissionsText2 = (error, address, ip) => `A share was rejected (${ error }) from ${ address } [${ ip }]`;
 
 // Starting Text

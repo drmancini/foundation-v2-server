@@ -1,4 +1,5 @@
 const Text = require('../../locales/index');
+const utils = require('./utils');
 const uuid = require('uuid');
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,10 +79,13 @@ const Shares = function (logger, client, config, configMain) {
     // Add Share/Block Data to Local Table
     _this.handleShares(shareData, shareValid, blockValid, () => {
       const type = (shareType === 'valid') ? 'log' : 'error';
+      const address = shareData.addrPrimary || 'anonymous'
+      const targetDiff = utils.roundTo(shareData.difficulty, 4);
+      const actualDiff = utils.roundTo(shareData.shareDiff, 4) || 0;
       const lines = [(shareType === 'valid') ?
         _this.text.sharesSubmissionsText1(
-          shareData.difficulty, shareData.shareDiff, shareData.addrPrimary, shareData.ip) :
-        _this.text.sharesSubmissionsText2(shareData.error, shareData.addrPrimary, shareData.ip)];
+          targetDiff, actualDiff, address, shareData.ip) :
+        _this.text.sharesSubmissionsText2(shareData.error, address, shareData.ip)];
       _this.logger[type]('Shares', _this.config.name, lines);
       callback();
     });

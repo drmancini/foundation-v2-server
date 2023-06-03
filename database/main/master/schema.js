@@ -101,7 +101,7 @@ const Schema = function (logger, executor, configMain) {
         solo BOOLEAN NOT NULL DEFAULT false,
         transaction VARCHAR NOT NULL DEFAULT 'unknown',
         type VARCHAR NOT NULL DEFAULT 'primary',
-        CONSTRAINT current_blocks_unique UNIQUE (round, type));
+        CONSTRAINT current_blocks_unique UNIQUE (round, height, type));
       CREATE INDEX current_blocks_miner ON "${ pool }".current_blocks(miner, type);
       CREATE INDEX current_blocks_miner_solo_submitted ON "${ pool }".current_blocks(miner, solo, submitted, type);
       CREATE INDEX current_blocks_worker ON "${ pool }".current_blocks(worker, type);

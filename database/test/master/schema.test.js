@@ -136,7 +136,7 @@ describe('Test schema functionality', () => {
         solo BOOLEAN NOT NULL DEFAULT false,
         transaction VARCHAR NOT NULL DEFAULT 'unknown',
         type VARCHAR NOT NULL DEFAULT 'primary',
-        CONSTRAINT current_blocks_unique UNIQUE (round, type));
+        CONSTRAINT current_blocks_unique UNIQUE (round, height, type));
       CREATE INDEX current_blocks_miner ON "Pool-Main".current_blocks(miner, type);
       CREATE INDEX current_blocks_miner_solo_submitted ON "Pool-Main".current_blocks(miner, solo, submitted, type);
       CREATE INDEX current_blocks_worker ON "Pool-Main".current_blocks(worker, type);
