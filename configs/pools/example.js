@@ -45,6 +45,7 @@ config.primary.payments = {};
 config.primary.payments.enabled = true;
 config.primary.payments.minConfirmations = 10;
 config.primary.payments.minPayment = 0.005;
+config.primary.payments.defaultPayment = 0.01;
 config.primary.payments.transactionFee = 0.004;
 config.primary.payments.daemon = {};
 config.primary.payments.daemon.host = '127.0.0.1';
@@ -102,6 +103,7 @@ config.settings.banning.purgeInterval = 300000; // ms
 
 // Batch Configuration
 config.settings.batch = {};
+config.settings.batch.enabled = true;
 config.settings.batch.limit = 200;
 
 // Timeout Configuration

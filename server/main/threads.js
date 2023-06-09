@@ -1,6 +1,5 @@
 const Builder = require('./builder');
 const Loader = require('./loader');
-const Server = require('./server');
 const Workers = require('./workers');
 const cluster = require('cluster');
 
@@ -26,7 +25,6 @@ const Threads = function(logger, client, configMain) {
       _this.client.master.commands.schema.handleSchema(configs, () => {
         _this.client.worker.commands.schema.handleSchema(configs, () => {
           builder.configs = configs;
-          builder.setupPoolServer();
           builder.setupPoolWorkers();
         });
       });
@@ -35,9 +33,6 @@ const Threads = function(logger, client, configMain) {
     // Handle Worker Forks
     if (cluster.isWorker) {
       switch (process.env.type) {
-      case 'server':
-        new Server(_this.logger, _this.client).setupServer(() => {});
-        break;
       case 'worker':
         new Workers(_this.logger, _this.client).setupWorkers(() => {});
         break;

@@ -10,6 +10,7 @@ const CurrentNetwork = require('./current/network');
 const CurrentPayments = require('./current/payments');
 const CurrentRounds = require('./current/rounds');
 const CurrentTransactions = require('./current/transactions');
+const CurrentUsers = require('./current/users');
 const CurrentWorkers = require('./current/workers');
 
 // Historical Table Commands
@@ -83,6 +84,7 @@ const Commands = function (logger, client, configMain) {
   this.current.payments = new CurrentPayments(_this.logger, _this.configMain);
   this.current.rounds = new CurrentRounds(_this.logger, _this.configMain);
   this.current.transactions = new CurrentTransactions(_this.logger, _this.configMain);
+  this.current.users = new CurrentUsers(_this.logger, _this.configMain);
   this.current.workers = new CurrentWorkers(_this.logger, _this.configMain);
 };
 

@@ -13,9 +13,9 @@ const CurrentMetadata = function (logger, configMain) {
   // Handle Current Parameters
   this.numbers = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate', 'invalid', 'miners',
     'stale', 'valid', 'work', 'workers'];
-  this.strings = ['type'];
-  this.parameters = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate', 'invalid', 'miners',
-    'stale', 'type', 'valid', 'work', 'workers'];
+  this.strings = ['identifier', 'type'];
+  this.parameters = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate', 'identifier',
+    'invalid', 'miners', 'solo', 'stale', 'type', 'valid', 'work', 'workers'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -73,6 +73,8 @@ const CurrentMetadata = function (logger, configMain) {
       values += `(
         ${ metadata.timestamp },
         ${ metadata.blocks },
+        '${ metadata.identifier }',
+        ${ metadata.solo },
         '${ metadata.type }')`;
       if (idx < updates.length - 1) values += ', ';
     });
@@ -83,7 +85,8 @@ const CurrentMetadata = function (logger, configMain) {
   this.insertCurrentMetadataBlocks = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_metadata (
-        timestamp, blocks, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES ${ _this.buildCurrentMetadataBlocks(updates) }
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
@@ -121,31 +124,14 @@ const CurrentMetadata = function (logger, configMain) {
         workers = EXCLUDED.workers;`;
   };
 
-  // Build Metadata Values String
-  this.buildCurrentMetadataRoundsReset = function(updates) {
-    let values = '';
-    updates.forEach((metadata, idx) => {
-      values += `(
-        ${ metadata.timestamp },
-        0, 0, 0, 0, '${ metadata.type }', 0, 0)`;
-      if (idx < updates.length - 1) values += ', ';
-    });
-    return values;
-  };
-
-  // Insert Rows Using Reset
-  this.insertCurrentMetadataRoundsReset = function(pool, updates) {
+  // Update Rows Using Reset
+  this.updateCurrentMetadataSharedRoundsReset = function(pool, timestamp, blockType) {
     return `
-      INSERT INTO "${ pool }".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, stale, type, valid,
-        work)
-      VALUES ${ _this.buildCurrentMetadataRoundsReset(updates) }
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        efficiency = 0, effort = 0, invalid = 0,
-        stale = 0, valid = 0, work = 0;`;
+      UPDATE "${ pool }".current_metadata
+      SET timestamp = ${ timestamp }, efficiency = 0,
+        effort = 0, invalid = 0, stale = 0, valid = 0,
+        work = 0
+      WHERE type = '${ blockType }' AND solo = false;`;
   };
 
   // Build Metadata Values String
@@ -154,9 +140,10 @@ const CurrentMetadata = function (logger, configMain) {
     updates.forEach((metadata, idx) => {
       values += `(
         ${ metadata.timestamp },
-        ${ metadata.efficiency },
         ${ metadata.effort },
+        '${ metadata.identifier }',
         ${ metadata.invalid },
+        ${ metadata.solo },
         ${ metadata.stale },
         '${ metadata.type }',
         ${ metadata.valid },
@@ -170,15 +157,14 @@ const CurrentMetadata = function (logger, configMain) {
   this.insertCurrentMetadataRounds = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, stale, type, valid,
-        work)
+        timestamp, effort, identifier,
+        invalid, solo, stale, type,
+        valid, work)
       VALUES ${ _this.buildCurrentMetadataRounds(updates) }
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
+        effort = "${ pool }".current_metadata.effort + EXCLUDED.effort,
         invalid = "${ pool }".current_metadata.invalid + EXCLUDED.invalid,
         stale = "${ pool }".current_metadata.stale + EXCLUDED.stale,
         valid = "${ pool }".current_metadata.valid + EXCLUDED.valid,

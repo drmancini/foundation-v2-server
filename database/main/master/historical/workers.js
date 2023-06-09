@@ -100,6 +100,47 @@ const HistoricalWorkers = function (logger, configMain) {
       ON CONFLICT ON CONSTRAINT historical_workers_recent
       DO NOTHING;`;
   };
+
+  // Build Workers Values String
+  this.buildHistoricalWorkersRounds = function(updates) {
+    let values = '';
+    updates.forEach((worker, idx) => {
+      values += `(
+        ${ worker.timestamp },
+        ${ worker.recent },
+        '${ worker.miner }',
+        '${ worker.worker }',
+        '${ worker.identifier }',
+        ${ worker.invalid },
+        '${ worker.ip_hash }',
+        ${ worker.solo },
+        ${ worker.stale },
+        '${ worker.type }',
+        ${ worker.valid },
+        ${ worker.work })`;
+      if (idx < updates.length - 1) values += ', ';
+    });
+    return values;
+  };
+
+  // Insert Rows Using Historical Data
+  this.insertHistoricalWorkersRounds = function(pool, updates) {
+    return `
+      INSERT INTO "${ pool }".historical_workers (
+        timestamp, recent, miner,
+        worker, identifier, invalid,
+        ip_hash, solo, stale, type,
+        valid, work)
+      VALUES ${ _this.buildHistoricalWorkersRounds(updates) }
+      ON CONFLICT ON CONSTRAINT historical_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        identifier = EXCLUDED.identifier,
+        invalid = "${ pool }".historical_workers.invalid + EXCLUDED.invalid,
+        stale = "${ pool }".historical_workers.stale + EXCLUDED.stale,
+        valid = "${ pool }".historical_workers.valid + EXCLUDED.valid,
+        work = "${ pool }".historical_workers.work + EXCLUDED.work;`;
+  };
 };
 
 module.exports = HistoricalWorkers;

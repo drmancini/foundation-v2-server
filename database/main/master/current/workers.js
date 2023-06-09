@@ -11,10 +11,11 @@ const CurrentWorkers = function (logger, configMain) {
   this.text = Text[configMain.language];
 
   // Handle Current Parameters
-  this.numbers = ['timestamp', 'efficiency', 'effort', 'hashrate', 'invalid', 'stale', 'valid', 'work'];
-  this.strings = ['miner', 'worker', 'type'];
-  this.parameters = ['timestamp', 'miner', 'worker', 'efficiency', 'effort', 'hashrate', 'invalid',
-    'solo', 'stale', 'type', 'valid', 'work'];
+  this.numbers = ['timestamp', 'efficiency', 'hashrate', 'hashrate_12h', 'hashrate_24h', 'invalid',
+    'stale', 'valid'];
+  this.strings = ['miner', 'worker', 'ip_hash', 'type'];
+  this.parameters = ['timestamp', 'miner', 'worker', 'efficiency', 'hashrate', 'hashrate_12h',
+    'hashrate_24h', 'ip_hash', 'invalid', 'solo', 'stale', 'type', 'valid'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -82,9 +83,17 @@ const CurrentWorkers = function (logger, configMain) {
         ${ worker.timestamp },
         '${ worker.miner }',
         '${ worker.worker }',
+        ${ worker.efficiency },
         ${ worker.hashrate },
+        ${ worker.hashrate_12h },
+        ${ worker.hashrate_24h },
+        '${ worker.identifier }',
+        ${ worker.invalid },
+        '${ worker.ip_hash }',
         ${ worker.solo },
-        '${ worker.type }')`;
+        ${ worker.stale },
+        '${ worker.type }',
+        ${ worker.valid })`;
       if (idx < updates.length - 1) values += ', ';
     });
     return values;
@@ -94,13 +103,21 @@ const CurrentWorkers = function (logger, configMain) {
   this.insertCurrentWorkersHashrate = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_workers (
-        timestamp, miner, worker,
-        hashrate, solo, type)
+        timestamp, miner, worker, efficiency,
+        hashrate, hashrate_12h, hashrate_24h,
+        identifier, invalid, ip_hash, solo,
+        stale, type, valid)
       VALUES ${ _this.buildCurrentWorkersHashrate(updates) }
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        hashrate = EXCLUDED.hashrate;`;
+        efficiency = EXCLUDED.efficiency,
+        hashrate = EXCLUDED.hashrate,
+        hashrate_12h = EXCLUDED.hashrate_12h,
+        hashrate_24h = EXCLUDED.hashrate_24h,
+        invalid = EXCLUDED.invalid,
+        stale = EXCLUDED.stale,
+        valid = EXCLUDED.valid;`;
   };
 
   // Build Workers Values String
@@ -111,14 +128,13 @@ const CurrentWorkers = function (logger, configMain) {
         ${ worker.timestamp },
         '${ worker.miner }',
         '${ worker.worker }',
-        ${ worker.efficiency },
-        ${ worker.effort },
-        ${ worker.invalid },
+        '${ worker.identifier }',
+        '${ worker.ip_hash }',
+        ${ worker.last_octet },
+        ${ worker.last_share },
+        ${ worker.offline_tag },
         ${ worker.solo },
-        ${ worker.stale },
-        '${ worker.type }',
-        ${ worker.valid },
-        ${ worker.work })`;
+        '${ worker.type }')`;
       if (idx < updates.length - 1) values += ', ';
     });
     return values;
@@ -129,20 +145,16 @@ const CurrentWorkers = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_workers (
         timestamp, miner, worker,
-        efficiency, effort, invalid,
-        solo, stale, type, valid,
-        work)
+        identifier, ip_hash,
+        last_octet, last_share,
+        offline_tag, solo, type)
       VALUES ${ _this.buildCurrentWorkersRounds(updates) }
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
-        invalid = "${ pool }".current_workers.invalid + EXCLUDED.invalid,
-        solo = EXCLUDED.solo,
-        stale = "${ pool }".current_workers.stale + EXCLUDED.stale,
-        valid = "${ pool }".current_workers.valid + EXCLUDED.valid,
-        work = "${ pool }".current_workers.work + EXCLUDED.work;`;
+        identifier = EXCLUDED.identifier,
+        last_share = EXCLUDED.last_share,
+        offline_tag = EXCLUDED.offline_tag;`;
   };
 
   // Delete Rows From Current Round

@@ -152,6 +152,7 @@ describe('Test database rounds functionality', () => {
       worker: 'worker1',
       identifier: 'master',
       invalid: 0,
+      ip_hash: 'hash',
       round: 'round1',
       solo: true,
       stale: 0,
@@ -165,8 +166,8 @@ describe('Test database rounds functionality', () => {
       INSERT INTO "Pool-Main".current_rounds (
         timestamp, submitted, recent,
         miner, worker, identifier, invalid,
-        round, solo, stale, times, type,
-        valid, work)
+        ip_hash, round, solo, stale, times,
+        type, valid, work)
       VALUES (
         1,
         1,
@@ -175,6 +176,7 @@ describe('Test database rounds functionality', () => {
         'worker1',
         'master',
         0,
+        'hash',
         'round1',
         true,
         0,
@@ -205,6 +207,7 @@ describe('Test database rounds functionality', () => {
       round: 'round1',
       identifier: 'master',
       invalid: 0,
+      ip_hash: 'hash',
       solo: true,
       stale: 0,
       times: 100,
@@ -217,8 +220,8 @@ describe('Test database rounds functionality', () => {
       INSERT INTO "Pool-Main".current_rounds (
         timestamp, submitted, recent,
         miner, worker, identifier, invalid,
-        round, solo, stale, times, type,
-        valid, work)
+        ip_hash, round, solo, stale, times,
+        type, valid, work)
       VALUES (
         1,
         1,
@@ -227,6 +230,7 @@ describe('Test database rounds functionality', () => {
         'worker1',
         'master',
         0,
+        'hash',
         'round1',
         true,
         0,
@@ -241,6 +245,7 @@ describe('Test database rounds functionality', () => {
         'worker1',
         'master',
         0,
+        'hash',
         'round1',
         true,
         0,

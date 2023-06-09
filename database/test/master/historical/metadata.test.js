@@ -70,6 +70,70 @@ describe('Test database metadata functionality', () => {
     expect(response).toBe(expected);
   });
 
+  test('Test metadata command handling [6]', () => {
+    const metadata = new HistoricalMetadata(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      recent: 1,
+      blocks: 1,
+      identifier: 'master',
+      solo: false,
+      type: 'primary',
+    };
+    const response = metadata.insertHistoricalMetadataBlocks('Pool-Main', [updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".historical_metadata (
+        timestamp, recent, blocks,
+        identifier, solo, type)
+      VALUES (
+        1,
+        1,
+        1,
+        'master',
+        false,
+        'primary')
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        blocks = "Pool-Main".historical_metadata.blocks + EXCLUDED.blocks;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test metadata command handling [7]', () => {
+    const metadata = new HistoricalMetadata(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      recent: 1,
+      blocks: 1,
+      identifier: 'master',
+      solo: false,
+      type: 'primary',
+    };
+    const response = metadata.insertHistoricalMetadataBlocks('Pool-Main', [updates, updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".historical_metadata (
+        timestamp, recent, blocks,
+        identifier, solo, type)
+      VALUES (
+        1,
+        1,
+        1,
+        'master',
+        false,
+        'primary'), (
+        1,
+        1,
+        1,
+        'master',
+        false,
+        'primary')
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        blocks = "Pool-Main".historical_metadata.blocks + EXCLUDED.blocks;`;
+    expect(response).toBe(expected);
+  });
+
   test('Test metadata command handling [4]', () => {
     const metadata = new HistoricalMetadata(logger, configMainCopy);
     const updates = {
@@ -108,7 +172,7 @@ describe('Test database metadata functionality', () => {
         1,
         8,
         1)
-      ON CONFLICT ON CONSTRAINT historical_metadata_recent
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO NOTHING;`;
     expect(response).toBe(expected);
   });
@@ -164,8 +228,97 @@ describe('Test database metadata functionality', () => {
         1,
         8,
         1)
-      ON CONFLICT ON CONSTRAINT historical_metadata_recent
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
       DO NOTHING;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test metadata command handling [8]', () => {
+    const metadata = new HistoricalMetadata(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      recent: 1,
+      blocks: 1,
+      identifier: 'master',
+      invalid: 0,
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+      work: 1,
+    };
+    const response = metadata.insertHistoricalMetadataRounds('Pool-Main', [updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".historical_metadata (
+        timestamp, recent,
+        identifier, invalid, solo,
+        stale, type, valid, work)
+      VALUES (
+        1,
+        1,
+        'master',
+        0,
+        false,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        invalid = "Pool-Main".historical_metadata.invalid + EXCLUDED.invalid,
+        stale = "Pool-Main".historical_metadata.stale + EXCLUDED.stale,
+        valid = "Pool-Main".historical_metadata.valid + EXCLUDED.valid,
+        work = "Pool-Main".historical_metadata.work + EXCLUDED.work;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test metadata command handling [9]', () => {
+    const metadata = new HistoricalMetadata(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      recent: 1,
+      blocks: 1,
+      identifier: 'master',
+      invalid: 0,
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+      work: 1,
+    };
+    const response = metadata.insertHistoricalMetadataRounds('Pool-Main', [updates, updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".historical_metadata (
+        timestamp, recent,
+        identifier, invalid, solo,
+        stale, type, valid, work)
+      VALUES (
+        1,
+        1,
+        'master',
+        0,
+        false,
+        0,
+        'primary',
+        1,
+        1), (
+        1,
+        1,
+        'master',
+        0,
+        false,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        invalid = "Pool-Main".historical_metadata.invalid + EXCLUDED.invalid,
+        stale = "Pool-Main".historical_metadata.stale + EXCLUDED.stale,
+        valid = "Pool-Main".historical_metadata.valid + EXCLUDED.valid,
+        work = "Pool-Main".historical_metadata.work + EXCLUDED.work;`;
     expect(response).toBe(expected);
   });
 });

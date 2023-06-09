@@ -441,8 +441,8 @@ const Statistics = function (logger, client, config, configMain, template) {
     const interval = _this.config.settings.interval.statistics;
     setTimeout(() => {
       _this.handleInterval();
-      if (_this.config.primary.checks.enabled) _this.handleStatistics('primary', () => {});
-      if (_this.config.auxiliary && _this.config.auxiliary.enabled && _this.config.auxiliary.checks.enabled) {
+      if (_this.config.primary.statistics.enabled) _this.handleStatistics('primary', () => {});
+      if (_this.config.auxiliary && _this.config.auxiliary.enabled && _this.config.auxiliary.statistics.enabled) {
         _this.handleStatistics('auxiliary', () => {});
       }
     }, interval);

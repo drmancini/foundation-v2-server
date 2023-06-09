@@ -75,15 +75,20 @@ describe('Test database metadata functionality', () => {
     const updates = {
       timestamp: 1,
       blocks: 1,
+      identifier: 'master',
+      solo: false,
       type: 'primary',
     };
     const response = metadata.insertCurrentMetadataBlocks('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
-        timestamp, blocks, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES (
         1,
         1,
+        'master',
+        false,
         'primary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
@@ -97,18 +102,25 @@ describe('Test database metadata functionality', () => {
     const updates = {
       timestamp: 1,
       blocks: 1,
+      identifier: 'master',
+      solo: false,
       type: 'primary',
     };
     const response = metadata.insertCurrentMetadataBlocks('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
-        timestamp, blocks, type)
+        timestamp, blocks, identifier,
+        solo, type)
       VALUES (
         1,
         1,
+        'master',
+        false,
         'primary'), (
         1,
         1,
+        'master',
+        false,
         'primary')
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
@@ -182,53 +194,24 @@ describe('Test database metadata functionality', () => {
 
   test('Test metadata command handling [8]', () => {
     const metadata = new CurrentMetadata(logger, configMainCopy);
-    const updates = { timestamp: 1, type: 'primary' };
-    const response = metadata.insertCurrentMetadataRoundsReset('Pool-Main', [updates]);
+    const response = metadata.updateCurrentMetadataSharedRoundsReset('Pool-Main', 1, 'primary');
     const expected = `
-      INSERT INTO "Pool-Main".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, stale, type, valid,
-        work)
-      VALUES (
-        1,
-        0, 0, 0, 0, 'primary', 0, 0)
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        efficiency = 0, effort = 0, invalid = 0,
-        stale = 0, valid = 0, work = 0;`;
+      UPDATE "Pool-Main".current_metadata
+      SET timestamp = 1, efficiency = 0,
+        effort = 0, invalid = 0, stale = 0, valid = 0,
+        work = 0
+      WHERE type = 'primary' AND solo = false;`;
     expect(response).toBe(expected);
   });
 
   test('Test metadata command handling [9]', () => {
     const metadata = new CurrentMetadata(logger, configMainCopy);
-    const updates = { timestamp: 1, type: 'primary' };
-    const response = metadata.insertCurrentMetadataRoundsReset('Pool-Main', [updates, updates]);
-    const expected = `
-      INSERT INTO "Pool-Main".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, stale, type, valid,
-        work)
-      VALUES (
-        1,
-        0, 0, 0, 0, 'primary', 0, 0), (
-        1,
-        0, 0, 0, 0, 'primary', 0, 0)
-      ON CONFLICT ON CONSTRAINT current_metadata_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        efficiency = 0, effort = 0, invalid = 0,
-        stale = 0, valid = 0, work = 0;`;
-    expect(response).toBe(expected);
-  });
-
-  test('Test metadata command handling [10]', () => {
-    const metadata = new CurrentMetadata(logger, configMainCopy);
     const updates = {
       timestamp: 1,
-      efficiency: 100,
       effort: 100,
+      identifier: 'master',
       invalid: 0,
+      solo: false,
       stale: 0,
       type: 'primary',
       valid: 1,
@@ -237,14 +220,15 @@ describe('Test database metadata functionality', () => {
     const response = metadata.insertCurrentMetadataRounds('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, stale, type, valid,
-        work)
+        timestamp, effort, identifier,
+        invalid, solo, stale, type,
+        valid, work)
       VALUES (
         1,
         100,
-        100,
+        'master',
         0,
+        false,
         0,
         'primary',
         1,
@@ -252,8 +236,7 @@ describe('Test database metadata functionality', () => {
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
+        effort = "Pool-Main".current_metadata.effort + EXCLUDED.effort,
         invalid = "Pool-Main".current_metadata.invalid + EXCLUDED.invalid,
         stale = "Pool-Main".current_metadata.stale + EXCLUDED.stale,
         valid = "Pool-Main".current_metadata.valid + EXCLUDED.valid,
@@ -261,13 +244,14 @@ describe('Test database metadata functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test metadata command handling [11]', () => {
+  test('Test metadata command handling [10]', () => {
     const metadata = new CurrentMetadata(logger, configMainCopy);
     const updates = {
       timestamp: 1,
-      efficiency: 100,
       effort: 100,
+      identifier: 'master',
       invalid: 0,
+      solo: false,
       stale: 0,
       type: 'primary',
       valid: 1,
@@ -276,22 +260,24 @@ describe('Test database metadata functionality', () => {
     const response = metadata.insertCurrentMetadataRounds('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
-        timestamp, efficiency, effort,
-        invalid, stale, type, valid,
-        work)
+        timestamp, effort, identifier,
+        invalid, solo, stale, type,
+        valid, work)
       VALUES (
         1,
         100,
-        100,
+        'master',
         0,
+        false,
         0,
         'primary',
         1,
         8), (
         1,
         100,
-        100,
+        'master',
         0,
+        false,
         0,
         'primary',
         1,
@@ -299,8 +285,7 @@ describe('Test database metadata functionality', () => {
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
+        effort = "Pool-Main".current_metadata.effort + EXCLUDED.effort,
         invalid = "Pool-Main".current_metadata.invalid + EXCLUDED.invalid,
         stale = "Pool-Main".current_metadata.stale + EXCLUDED.stale,
         valid = "Pool-Main".current_metadata.valid + EXCLUDED.valid,
