@@ -176,4 +176,110 @@ describe('Test database workers functionality', () => {
       DO NOTHING;`;
     expect(response).toBe(expected);
   });
+
+  test('Test workers command handling [7]', () => {
+    const workers = new HistoricalWorkers(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      recent: 1,
+      miner: 'miner1',
+      worker: 'worker1',
+      identifier: 'master',
+      invalid: 0,
+      ip_hash: 'hash',
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+      work: 1,
+    };
+    const response = workers.insertHistoricalWorkersRounds('Pool-Main', [updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".historical_workers (
+        timestamp, recent, miner,
+        worker, identifier, invalid,
+        ip_hash, solo, stale, type,
+        valid, work)
+      VALUES (
+        1,
+        1,
+        'miner1',
+        'worker1',
+        'master',
+        0,
+        'hash',
+        false,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        identifier = EXCLUDED.identifier,
+        invalid = "Pool-Main".historical_workers.invalid + EXCLUDED.invalid,
+        stale = "Pool-Main".historical_workers.stale + EXCLUDED.stale,
+        valid = "Pool-Main".historical_workers.valid + EXCLUDED.valid,
+        work = "Pool-Main".historical_workers.work + EXCLUDED.work;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test workers command handling [8]', () => {
+    const workers = new HistoricalWorkers(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      recent: 1,
+      miner: 'miner1',
+      worker: 'worker1',
+      identifier: 'master',
+      invalid: 0,
+      ip_hash: 'hash',
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+      work: 1,
+    };
+    const response = workers.insertHistoricalWorkersRounds('Pool-Main', [updates, updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".historical_workers (
+        timestamp, recent, miner,
+        worker, identifier, invalid,
+        ip_hash, solo, stale, type,
+        valid, work)
+      VALUES (
+        1,
+        1,
+        'miner1',
+        'worker1',
+        'master',
+        0,
+        'hash',
+        false,
+        0,
+        'primary',
+        1,
+        1), (
+        1,
+        1,
+        'miner1',
+        'worker1',
+        'master',
+        0,
+        'hash',
+        false,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        identifier = EXCLUDED.identifier,
+        invalid = "Pool-Main".historical_workers.invalid + EXCLUDED.invalid,
+        stale = "Pool-Main".historical_workers.stale + EXCLUDED.stale,
+        valid = "Pool-Main".historical_workers.valid + EXCLUDED.valid,
+        work = "Pool-Main".historical_workers.work + EXCLUDED.work;`;
+    expect(response).toBe(expected);
+  });
 });

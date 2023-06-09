@@ -12,9 +12,9 @@ const CurrentRounds = function (logger, configMain) {
 
   // Handle Current Parameters
   this.numbers = ['timestamp', 'submitted', 'invalid', 'stale', 'times', 'valid', 'work'];
-  this.strings = ['miner', 'worker', 'identifier', 'round', 'type'];
-  this.parameters = ['timestamp', 'submitted', 'miner', 'worker', 'identifier', 'invalid', 'round',
-    'solo', 'stale', 'times', 'type', 'valid', 'work'];
+  this.strings = ['miner', 'worker', 'identifier', 'ip_hash', 'round', 'type'];
+  this.parameters = ['timestamp', 'submitted', 'miner', 'worker', 'identifier', 'invalid', 'ip_hash',
+    'round', 'solo', 'stale', 'times', 'type', 'valid', 'work'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -74,7 +74,7 @@ const CurrentRounds = function (logger, configMain) {
       SELECT * FROM "${ pool }".current_rounds LIMIT 0;`;
   };
 
-  // Select Current Rounds for Payments
+  // Select Current Rounds for Payments FIX
   this.selectCurrentRoundsPayments = function(pool, round, solo, type) {
     return `
       SELECT DISTINCT ON (m.worker, m.round, m.solo, m.type)
@@ -105,6 +105,7 @@ const CurrentRounds = function (logger, configMain) {
         '${ round.worker }',
         '${ round.identifier }',
         ${ round.invalid },
+        '${ round.ip_hash }',
         '${ round.round }',
         ${ round.solo },
         ${ round.stale },
@@ -123,8 +124,8 @@ const CurrentRounds = function (logger, configMain) {
       INSERT INTO "${ pool }".current_rounds (
         timestamp, submitted, recent,
         miner, worker, identifier, invalid,
-        round, solo, stale, times, type,
-        valid, work)
+        ip_hash, round, solo, stale, times,
+        type, valid, work)
       VALUES ${ _this.buildCurrentRoundsMain(updates) }
       ON CONFLICT ON CONSTRAINT current_rounds_unique
       DO UPDATE SET

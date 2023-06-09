@@ -11,11 +11,11 @@ const CurrentMiners = function (logger, configMain) {
   this.text = Text[configMain.language];
 
   // Handle Current Parameters
-  this.numbers = ['timestamp', 'balance', 'efficiency', 'effort', 'generate', 'hashrate', 'immature',
-    'invalid', 'paid', 'stale', 'valid', 'work'];
+  this.numbers = ['timestamp', 'efficiency', 'effort', 'hashrate', 'invalid', 'paid', 'stale',
+    'valid', 'work'];
   this.strings = ['miner', 'type'];
-  this.parameters = ['timestamp', 'miner', 'balance', 'efficiency', 'effort', 'generate', 'hashrate',
-    'immature', 'invalid', 'paid', 'stale', 'type', 'valid', 'work'];
+  this.parameters = ['timestamp', 'miner', 'efficiency', 'effort', 'hashrate', 'invalid', 'solo',
+    'stale', 'type', 'valid', 'work'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -69,9 +69,9 @@ const CurrentMiners = function (logger, configMain) {
   // Select Current Rounds for Batching
   this.selectCurrentMinersBatchAddresses = function(pool, addresses, type) {
     return addresses.length >= 1 ? `
-      SELECT DISTINCT ON (miner) * FROM "${ pool }".current_miners
+      SELECT DISTINCT ON (miner, solo) * FROM "${ pool }".current_miners
       WHERE miner IN (${ addresses.join(', ') }) AND type = '${ type }'
-      ORDER BY miner, timestamp DESC;` : `
+      ORDER BY miner, solo, timestamp DESC;` : `
       SELECT * FROM "${ pool }".current_miners LIMIT 0;`;
   };
 
@@ -83,6 +83,7 @@ const CurrentMiners = function (logger, configMain) {
         ${ miner.timestamp },
         '${ miner.miner }',
         ${ miner.hashrate },
+        ${ miner.solo },
         '${ miner.type }')`;
       if (idx < updates.length - 1) values += ', ';
     });
@@ -94,7 +95,7 @@ const CurrentMiners = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_miners (
         timestamp, miner, hashrate,
-        type)
+        solo, type)
       VALUES ${ _this.buildCurrentMinersHashrate(updates) }
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
@@ -109,12 +110,9 @@ const CurrentMiners = function (logger, configMain) {
       values += `(
         ${ miner.timestamp },
         '${ miner.miner }',
-        ${ miner.efficiency },
         ${ miner.effort },
-        ${ miner.invalid },
-        ${ miner.stale },
+        ${ miner.solo },
         '${ miner.type }',
-        ${ miner.valid },
         ${ miner.work })`;
       if (idx < updates.length - 1) values += ', ';
     });
@@ -125,92 +123,31 @@ const CurrentMiners = function (logger, configMain) {
   this.insertCurrentMinersRounds = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_miners (
-        timestamp, miner, efficiency,
-        effort, invalid, stale, type,
-        valid, work)
+        timestamp, miner, effort,
+        solo, type, work)
       VALUES ${ _this.buildCurrentMinersRounds(updates) }
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = EXCLUDED.efficiency,
-        effort = EXCLUDED.effort,
-        invalid = "${ pool }".current_miners.invalid + EXCLUDED.invalid,
-        stale = "${ pool }".current_miners.stale + EXCLUDED.stale,
-        valid = "${ pool }".current_miners.valid + EXCLUDED.valid,
+        effort = "${ pool }".current_miners.effort + EXCLUDED.effort,
         work = "${ pool }".current_miners.work + EXCLUDED.work;`;
   };
 
-  // Build Miners Values String
-  this.buildCurrentMinersPayments = function(updates) {
-    let values = '';
-    updates.forEach((miner, idx) => {
-      values += `(
-        ${ miner.timestamp },
-        '${ miner.miner }',
-        ${ miner.balance },
-        ${ miner.paid },
-        '${ miner.type }')`;
-      if (idx < updates.length - 1) values += ', ';
-    });
-    return values;
-  };
-
-  // Insert Rows Using Payment Data
-  this.insertCurrentMinersPayments = function(pool, updates) {
-    return `
-      INSERT INTO "${ pool }".current_miners (
-        timestamp, miner, balance,
-        paid, type)
-      VALUES ${ _this.buildCurrentMinersPayments(updates) }
-      ON CONFLICT ON CONSTRAINT current_miners_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        balance = EXCLUDED.balance,
-        paid = "${ pool }".current_miners.paid + EXCLUDED.paid;`;
-  };
-
-  // Build Miners Values String
-  this.buildCurrentMinersUpdates = function(updates) {
-    let values = '';
-    updates.forEach((miner, idx) => {
-      values += `(
-        ${ miner.timestamp },
-        '${ miner.miner }',
-        ${ miner.generate },
-        ${ miner.immature },
-        '${ miner.type }')`;
-      if (idx < updates.length - 1) values += ', ';
-    });
-    return values;
-  };
-
-  // Insert Rows Using Payment Data
-  this.insertCurrentMinersUpdates = function(pool, updates) {
-    return `
-      INSERT INTO "${ pool }".current_miners (
-        timestamp, miner, generate,
-        immature, type)
-      VALUES ${ _this.buildCurrentMinersUpdates(updates) }
-      ON CONFLICT ON CONSTRAINT current_miners_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        generate = "${ pool }".current_miners.generate + EXCLUDED.generate,
-        immature = "${ pool }".current_miners.immature + EXCLUDED.immature;`;
-  };
-
-  // Insert Rows Using Reset
-  this.insertCurrentMinersReset = function(pool, type) {
+  // Reset Solo Miner Using Round Data
+  this.updateCurrentSoloMinersReset = function(pool, timestamp, miner, blockType) {
     return `
       UPDATE "${ pool }".current_miners
-      SET generate = 0 WHERE type = '${ type }';`;
+      SET timestamp = ${ timestamp }, effort = 0,
+        work = 0
+      WHERE miner = '${ miner }' AND solo = true
+        AND type = '${ blockType }';`;
   };
 
-  // Delete Rows From Current Round
+  // Delete Rows From Current Miners
   this.deleteCurrentMinersInactive = function(pool, timestamp) {
     return `
       DELETE FROM "${ pool }".current_miners
-      WHERE timestamp < ${ timestamp } AND balance = 0
-      AND generate = 0 AND immature = 0 AND paid = 0;`;
+      WHERE timestamp < ${ timestamp } AND effort = 0;`;
   };
 };
 
