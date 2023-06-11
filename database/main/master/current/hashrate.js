@@ -12,9 +12,9 @@ const CurrentHashrate = function (logger, configMain) {
 
   // Handle Current Parameters
   this.numbers = ['timestamp', 'work'];
-  this.strings = ['miner', 'worker', 'identifier', 'share', 'type'];
-  this.parameters = ['timestamp', 'miner', 'worker', 'identifier', 'share', 'solo',
-    'type', 'work'];
+  this.strings = ['miner', 'worker', 'identifier', 'ip_hash', 'share', 'type'];
+  this.parameters = ['timestamp', 'miner', 'worker', 'identifier', 'ip_hash', 'share',
+    'solo', 'type', 'work'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -68,47 +68,64 @@ const CurrentHashrate = function (logger, configMain) {
   // Select Count of Distinct Miners
   this.countCurrentHashrateMiner = function(pool, timestamp, type) {
     return `
-      SELECT CAST(COUNT(DISTINCT miner) AS INT)
-      FROM "${ pool }".current_hashrate
-      WHERE timestamp >= ${ timestamp }
-      AND type = '${ type }';`;
+      SELECT identifier, solo,
+        CAST(COUNT(*) AS INT) AS miners
+      FROM (
+        SELECT DISTINCT miner, identifier,
+          solo
+        FROM "${ pool }".current_hashrate
+        WHERE timestamp >= ${ timestamp }
+        AND type = '${ type }'
+      ) a
+      GROUP BY identifier, solo;`;
   };
 
   // Select Sum of Rows Using Miners
   this.sumCurrentHashrateMiner = function(pool, timestamp, type) {
     return `
-      SELECT miner, SUM(work) as current_work
+      SELECT miner, solo,
+        SUM(work) as work
       FROM "${ pool }".current_hashrate
       WHERE timestamp >= ${ timestamp }
-      AND type = '${ type }' GROUP BY miner;`;
+      AND type = '${ type }'
+      GROUP BY miner, solo;`;
   };
 
   // Select Count of Distinct Workers
-  this.countCurrentHashrateWorker = function(pool, timestamp, solo, type) {
+  this.countCurrentHashrateWorker = function(pool, timestamp, type) {
     return `
-      SELECT CAST(COUNT(DISTINCT worker) AS INT)
-      FROM "${ pool }".current_hashrate
-      WHERE timestamp >= ${ timestamp }
-      AND solo = ${ solo } AND type = '${ type }';`;
+      SELECT identifier, solo,
+        CAST(COUNT(*) AS INT) AS workers
+      FROM (
+        SELECT DISTINCT worker, identifier,
+          ip_hash, solo
+        FROM "${ pool }".current_hashrate
+        WHERE timestamp >= ${ timestamp }
+        AND type = '${ type }'
+      ) a
+      GROUP BY identifier, solo;`;
   };
 
   // Select Sum of Rows Using Workers
-  this.sumCurrentHashrateWorker = function(pool, timestamp, solo, type) {
+  this.sumCurrentHashrateWorker = function(pool, timestamp, type) {
     return `
-      SELECT worker, SUM(work) as current_work
+      SELECT worker, ip_hash, solo,
+        SUM(work) as work
       FROM "${ pool }".current_hashrate
       WHERE timestamp >= ${ timestamp }
-      AND solo = ${ solo } AND type = '${ type }'
-      GROUP BY worker;`;
+      AND type = '${ type }'
+      GROUP BY worker, ip_hash, solo;`;
   };
 
   // Select Sum of Rows Using Types
-  this.sumCurrentHashrateType = function(pool, timestamp, solo, type) {
+  this.sumCurrentHashrateType = function(pool, timestamp, type) {
     return `
-      SELECT SUM(work) as current_work
+      SELECT identifier, solo,
+        SUM(work) as work
       FROM "${ pool }".current_hashrate
       WHERE timestamp >= ${ timestamp }
-      AND solo = ${ solo } AND type = '${ type }';`;
+      AND type = '${ type }'
+      GROUP BY identifier, solo;`;
   };
 
   // Build Hashrate Values String
@@ -120,6 +137,7 @@ const CurrentHashrate = function (logger, configMain) {
         '${ hashrate.miner }',
         '${ hashrate.worker }',
         '${ hashrate.identifier }',
+        '${ hashrate.ip_hash }',
         '${ hashrate.share }',
         ${ hashrate.solo },
         '${ hashrate.type }',
@@ -134,8 +152,8 @@ const CurrentHashrate = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_hashrate (
         timestamp, miner, worker,
-        identifier, share, solo,
-        type, work)
+        identifier, ip_hash, share,
+        solo, type, work)
       VALUES ${ _this.buildCurrentHashrateMain(updates) };`;
   };
 

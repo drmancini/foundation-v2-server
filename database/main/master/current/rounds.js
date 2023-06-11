@@ -68,9 +68,9 @@ const CurrentRounds = function (logger, configMain) {
   // Select Current Rounds for Batching
   this.selectCurrentRoundsBatchAddresses = function(pool, addresses, type) {
     return addresses.length >= 1 ? `
-      SELECT DISTINCT ON (worker) * FROM "${ pool }".current_rounds
+      SELECT DISTINCT ON (worker, ip_hash, solo) * FROM "${ pool }".current_rounds
       WHERE worker IN (${ addresses.join(', ') }) AND type = '${ type }'
-      ORDER BY worker, timestamp DESC;` : `
+      ORDER BY worker, ip_hash, solo, timestamp DESC;` : `
       SELECT * FROM "${ pool }".current_rounds LIMIT 0;`;
   };
 

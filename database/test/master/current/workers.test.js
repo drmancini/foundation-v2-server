@@ -103,51 +103,30 @@ describe('Test database workers functionality', () => {
       timestamp: 1,
       miner: 'miner1',
       worker: 'worker1',
-      efficiency: 1,
       hashrate: 1,
-      hashrate_12h: 1,
-      hashrate_24h: 1,
       identifier: 'master',
-      identifier: 'master',
-      invalid: 0,
       ip_hash: 'hash',
       solo: false,
-      stale: 0,
       type: 'primary',
-      valid: 1,
     };
     const response = workers.insertCurrentWorkersHashrate('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_workers (
-        timestamp, miner, worker, efficiency,
-        hashrate, hashrate_12h, hashrate_24h,
-        identifier, invalid, ip_hash, solo,
-        stale, type, valid)
+        timestamp, miner, worker,
+        hashrate, ip_hash, solo,
+        type)
       VALUES (
         1,
         'miner1',
         'worker1',
         1,
-        1,
-        1,
-        1,
-        'master',
-        0,
         'hash',
         false,
-        0,
-        'primary',
-        1)
+        'primary')
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = EXCLUDED.efficiency,
-        hashrate = EXCLUDED.hashrate,
-        hashrate_12h = EXCLUDED.hashrate_12h,
-        hashrate_24h = EXCLUDED.hashrate_24h,
-        invalid = EXCLUDED.invalid,
-        stale = EXCLUDED.stale,
-        valid = EXCLUDED.valid;`;
+        hashrate = EXCLUDED.hashrate;`;
     expect(response).toBe(expected);
   });
 
@@ -157,65 +136,37 @@ describe('Test database workers functionality', () => {
       timestamp: 1,
       miner: 'miner1',
       worker: 'worker1',
-      efficiency: 1,
       hashrate: 1,
-      hashrate_12h: 1,
-      hashrate_24h: 1,
       identifier: 'master',
-      identifier: 'master',
-      invalid: 0,
       ip_hash: 'hash',
       solo: false,
-      stale: 0,
       type: 'primary',
-      valid: 1,
     };
     const response = workers.insertCurrentWorkersHashrate('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_workers (
-        timestamp, miner, worker, efficiency,
-        hashrate, hashrate_12h, hashrate_24h,
-        identifier, invalid, ip_hash, solo,
-        stale, type, valid)
+        timestamp, miner, worker,
+        hashrate, ip_hash, solo,
+        type)
       VALUES (
         1,
         'miner1',
         'worker1',
         1,
-        1,
-        1,
-        1,
-        'master',
-        0,
         'hash',
         false,
-        0,
-        'primary',
-        1), (
+        'primary'), (
         1,
         'miner1',
         'worker1',
         1,
-        1,
-        1,
-        1,
-        'master',
-        0,
         'hash',
         false,
-        0,
-        'primary',
-        1)
+        'primary')
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        efficiency = EXCLUDED.efficiency,
-        hashrate = EXCLUDED.hashrate,
-        hashrate_12h = EXCLUDED.hashrate_12h,
-        hashrate_24h = EXCLUDED.hashrate_24h,
-        invalid = EXCLUDED.invalid,
-        stale = EXCLUDED.stale,
-        valid = EXCLUDED.valid;`;
+        hashrate = EXCLUDED.hashrate;`;
     expect(response).toBe(expected);
   });
 
@@ -314,6 +265,116 @@ describe('Test database workers functionality', () => {
   });
 
   test('Test workers command handling [11]', () => {
+    const workers = new CurrentWorkers(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      worker: 'worker1',
+      miner: 'miner1',
+      efficiency: 100,
+      hashrate_12h: 1,
+      hashrate_24h: 1,
+      invalid: 0,
+      ip_hash: 'hash',
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+    };
+    const response = workers.insertCurrentWorkersShares('Pool-Main', [updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".current_workers (
+        timestamp, miner, worker,
+        efficiency, hashrate_12h,
+        hashrate_24h, invalid,
+        ip_hash, solo, stale,
+        type, valid)
+      VALUES (
+        1,
+        'miner1',
+        'worker1',
+        100,
+        1,
+        1,
+        0,
+        'hash',
+        false,
+        0,
+        'primary',
+        1)
+      ON CONFLICT ON CONSTRAINT current_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        efficiency = EXCLUDED.efficiency,
+        hashrate_12h = EXCLUDED.hashrate_12h,
+        hashrate_24h = EXCLUDED.hashrate_24h,
+        invalid = EXCLUDED.invalid,
+        stale = EXCLUDED.stale,
+        valid = EXCLUDED.valid;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test workers command handling [12]', () => {
+    const workers = new CurrentWorkers(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      worker: 'worker1',
+      miner: 'miner1',
+      efficiency: 100,
+      hashrate_12h: 1,
+      hashrate_24h: 1,
+      invalid: 0,
+      ip_hash: 'hash',
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+    };
+    const response = workers.insertCurrentWorkersShares('Pool-Main', [updates, updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".current_workers (
+        timestamp, miner, worker,
+        efficiency, hashrate_12h,
+        hashrate_24h, invalid,
+        ip_hash, solo, stale,
+        type, valid)
+      VALUES (
+        1,
+        'miner1',
+        'worker1',
+        100,
+        1,
+        1,
+        0,
+        'hash',
+        false,
+        0,
+        'primary',
+        1), (
+        1,
+        'miner1',
+        'worker1',
+        100,
+        1,
+        1,
+        0,
+        'hash',
+        false,
+        0,
+        'primary',
+        1)
+      ON CONFLICT ON CONSTRAINT current_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        efficiency = EXCLUDED.efficiency,
+        hashrate_12h = EXCLUDED.hashrate_12h,
+        hashrate_24h = EXCLUDED.hashrate_24h,
+        invalid = EXCLUDED.invalid,
+        stale = EXCLUDED.stale,
+        valid = EXCLUDED.valid;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test workers command handling [13]', () => {
     const workers = new CurrentWorkers(logger, configMainCopy);
     const response = workers.deleteCurrentWorkersInactive('Pool-Main', 1);
     const expected = `

@@ -16,7 +16,9 @@ describe('Test database miners functionality', () => {
     const miners = new HistoricalMiners(logger, configMainCopy);
     expect(typeof miners.configMain).toBe('object');
     expect(typeof miners.selectHistoricalMinersMain).toBe('function');
-    expect(typeof miners.insertHistoricalMinersMain).toBe('function');
+    expect(typeof miners.selectHistoricalMinersAverages).toBe('function');
+    expect(typeof miners.insertHistoricalMinersHashrate).toBe('function');
+    expect(typeof miners.insertHistoricalMinersRounds).toBe('function');
   });
 
   test('Test query handling [1]', () => {
@@ -72,40 +74,20 @@ describe('Test database miners functionality', () => {
 
   test('Test miners command handling [4]', () => {
     const miners = new HistoricalMiners(logger, configMainCopy);
-    const updates = {
-      timestamp: 1,
-      recent: 1,
-      miner: 'miner1',
-      efficiency: 100,
-      effort: 100,
-      hashrate: 1,
-      invalid: 0,
-      stale: 0,
-      type: 'primary',
-      valid: 1,
-      work: 1,
-    };
-    const response = miners.insertHistoricalMinersMain('Pool-Main', [updates]);
+    const response = miners.selectHistoricalMinersAverages('Pool-Main', 10, 20, 'primary');
     const expected = `
-      INSERT INTO "Pool-Main".historical_miners (
-        timestamp, recent, miner,
-        efficiency, effort, hashrate,
-        invalid, stale, type, valid,
-        work)
-      VALUES (
-        1,
-        1,
-        'miner1',
-        100,
-        100,
-        1,
-        0,
-        0,
-        'primary',
-        1,
-        1)
-      ON CONFLICT ON CONSTRAINT historical_miners_recent
-      DO NOTHING;`;
+      SELECT miner, solo,
+        SUM (CASE WHEN recent > 10
+          THEN work ELSE 0 END) AS sum_work_12h,
+        SUM (CASE WHEN recent > 20
+          THEN work ELSE 0 END) AS sum_work_24h,
+        CAST (SUM (invalid) AS INT) AS invalid, 
+        CAST (SUM (stale) AS INT) AS stale,
+        CAST (SUM (valid) AS INT) AS valid
+      FROM "Pool-Main".historical_miners
+      WHERE recent > 20
+        AND type = 'primary'
+      GROUP BY miner, solo;`;
     expect(response).toBe(expected);
   });
 
@@ -115,30 +97,128 @@ describe('Test database miners functionality', () => {
       timestamp: 1,
       recent: 1,
       miner: 'miner1',
-      efficiency: 100,
-      effort: 100,
       hashrate: 1,
+      solo: false,
+      type: 'primary',
+    };
+    const response = miners.insertHistoricalMinersHashrate('Pool-Main', [updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".historical_miners (
+        timestamp, recent, miner,
+        hashrate, solo, type)
+      VALUES (
+        1,
+        1,
+        'miner1',
+        1,
+        false,
+        'primary')
+      ON CONFLICT ON CONSTRAINT historical_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate = EXCLUDED.hashrate;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test miners command handling [6]', () => {
+    const miners = new HistoricalMiners(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      recent: 1,
+      miner: 'miner1',
+      hashrate: 1,
+      solo: false,
+      type: 'primary',
+    };
+    const response = miners.insertHistoricalMinersHashrate('Pool-Main', [updates, updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".historical_miners (
+        timestamp, recent, miner,
+        hashrate, solo, type)
+      VALUES (
+        1,
+        1,
+        'miner1',
+        1,
+        false,
+        'primary'), (
+        1,
+        1,
+        'miner1',
+        1,
+        false,
+        'primary')
+      ON CONFLICT ON CONSTRAINT historical_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate = EXCLUDED.hashrate;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test miners command handling [7]', () => {
+    const miners = new HistoricalMiners(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      recent: 1,
+      miner: 'miner1',
       invalid: 0,
+      solo: false,
       stale: 0,
       type: 'primary',
       valid: 1,
       work: 1,
     };
-    const response = miners.insertHistoricalMinersMain('Pool-Main', [updates, updates]);
+    const response = miners.insertHistoricalMinersRounds('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_miners (
         timestamp, recent, miner,
-        efficiency, effort, hashrate,
-        invalid, stale, type, valid,
-        work)
+        invalid, solo, stale,
+        type, valid, work)
       VALUES (
         1,
         1,
         'miner1',
-        100,
-        100,
-        1,
         0,
+        false,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        invalid = "Pool-Main".historical_miners.invalid + EXCLUDED.invalid,
+        stale = "Pool-Main".historical_miners.stale + EXCLUDED.stale,
+        valid = "Pool-Main".historical_miners.valid + EXCLUDED.valid,
+        work = "Pool-Main".historical_miners.work + EXCLUDED.work;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test miners command handling [8]', () => {
+    const miners = new HistoricalMiners(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      recent: 1,
+      miner: 'miner1',
+      invalid: 0,
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+      work: 1,
+    };
+    const response = miners.insertHistoricalMinersRounds('Pool-Main', [updates, updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".historical_miners (
+        timestamp, recent, miner,
+        invalid, solo, stale,
+        type, valid, work)
+      VALUES (
+        1,
+        1,
+        'miner1',
+        0,
+        false,
         0,
         'primary',
         1,
@@ -146,16 +226,19 @@ describe('Test database miners functionality', () => {
         1,
         1,
         'miner1',
-        100,
-        100,
-        1,
         0,
+        false,
         0,
         'primary',
         1,
         1)
-      ON CONFLICT ON CONSTRAINT historical_miners_recent
-      DO NOTHING;`;
+      ON CONFLICT ON CONSTRAINT historical_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        invalid = "Pool-Main".historical_miners.invalid + EXCLUDED.invalid,
+        stale = "Pool-Main".historical_miners.stale + EXCLUDED.stale,
+        valid = "Pool-Main".historical_miners.valid + EXCLUDED.valid,
+        work = "Pool-Main".historical_miners.work + EXCLUDED.work;`;
     expect(response).toBe(expected);
   });
 });

@@ -133,19 +133,23 @@ describe('Test database metadata functionality', () => {
     const metadata = new CurrentMetadata(logger, configMainCopy);
     const updates = {
       timestamp: 1,
+      identifier: 'master',
       hashrate: 1,
       miners: 1,
+      solo: false,
       type: 'primary',
       workers: 1,
     };
     const response = metadata.insertCurrentMetadataHashrate('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
-        timestamp, hashrate, miners,
-        type, workers)
+        timestamp, identifier, hashrate,
+        solo, miners, type, workers)
       VALUES (
         1,
+        'master',
         1,
+        false,
         1,
         'primary',
         1)
@@ -162,24 +166,30 @@ describe('Test database metadata functionality', () => {
     const metadata = new CurrentMetadata(logger, configMainCopy);
     const updates = {
       timestamp: 1,
+      identifier: 'master',
       hashrate: 1,
       miners: 1,
+      solo: false,
       type: 'primary',
       workers: 1,
     };
     const response = metadata.insertCurrentMetadataHashrate('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
-        timestamp, hashrate, miners,
-        type, workers)
+        timestamp, identifier, hashrate,
+        solo, miners, type, workers)
       VALUES (
         1,
+        'master',
         1,
+        false,
         1,
         'primary',
         1), (
         1,
+        'master',
         1,
+        false,
         1,
         'primary',
         1)
@@ -210,36 +220,26 @@ describe('Test database metadata functionality', () => {
       timestamp: 1,
       effort: 100,
       identifier: 'master',
-      invalid: 0,
       solo: false,
-      stale: 0,
       type: 'primary',
-      valid: 1,
       work: 8,
     };
     const response = metadata.insertCurrentMetadataRounds('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
         timestamp, effort, identifier,
-        invalid, solo, stale, type,
-        valid, work)
+        solo, type, work)
       VALUES (
         1,
         100,
         'master',
-        0,
         false,
-        0,
         'primary',
-        1,
         8)
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         effort = "Pool-Main".current_metadata.effort + EXCLUDED.effort,
-        invalid = "Pool-Main".current_metadata.invalid + EXCLUDED.invalid,
-        stale = "Pool-Main".current_metadata.stale + EXCLUDED.stale,
-        valid = "Pool-Main".current_metadata.valid + EXCLUDED.valid,
         work = "Pool-Main".current_metadata.work + EXCLUDED.work;`;
     expect(response).toBe(expected);
   });
@@ -261,8 +261,46 @@ describe('Test database metadata functionality', () => {
     const expected = `
       INSERT INTO "Pool-Main".current_metadata (
         timestamp, effort, identifier,
-        invalid, solo, stale, type,
-        valid, work)
+        solo, type, work)
+      VALUES (
+        1,
+        100,
+        'master',
+        false,
+        'primary',
+        8), (
+        1,
+        100,
+        'master',
+        false,
+        'primary',
+        8)
+      ON CONFLICT ON CONSTRAINT current_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        effort = "Pool-Main".current_metadata.effort + EXCLUDED.effort,
+        work = "Pool-Main".current_metadata.work + EXCLUDED.work;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test metadata command handling [11]', () => {
+    const metadata = new CurrentMetadata(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      efficiency: 100,
+      identifier: 'master',
+      invalid: 0,
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+      work: 8,
+    };
+    const response = metadata.insertCurrentMetadataShares('Pool-Main', [updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".current_metadata (
+        timestamp, efficiency, identifier,
+        invalid, solo, stale, type, valid)
       VALUES (
         1,
         100,
@@ -271,8 +309,36 @@ describe('Test database metadata functionality', () => {
         false,
         0,
         'primary',
-        1,
-        8), (
+        1)
+      ON CONFLICT ON CONSTRAINT current_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        efficiency = EXCLUDED.efficiency,
+        invalid = EXCLUDED.invalid,
+        stale = EXCLUDED.stale,
+        valid = EXCLUDED.valid;`;
+    expect(response).toBe(expected);
+  });
+
+  test('Test metadata command handling [12]', () => {
+    const metadata = new CurrentMetadata(logger, configMainCopy);
+    const updates = {
+      timestamp: 1,
+      efficiency: 100,
+      identifier: 'master',
+      invalid: 0,
+      solo: false,
+      stale: 0,
+      type: 'primary',
+      valid: 1,
+      work: 8,
+    };
+    const response = metadata.insertCurrentMetadataShares('Pool-Main', [updates, updates]);
+    const expected = `
+      INSERT INTO "Pool-Main".current_metadata (
+        timestamp, efficiency, identifier,
+        invalid, solo, stale, type, valid)
+      VALUES (
         1,
         100,
         'master',
@@ -280,16 +346,22 @@ describe('Test database metadata functionality', () => {
         false,
         0,
         'primary',
+        1), (
         1,
-        8)
+        100,
+        'master',
+        0,
+        false,
+        0,
+        'primary',
+        1)
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = "Pool-Main".current_metadata.effort + EXCLUDED.effort,
-        invalid = "Pool-Main".current_metadata.invalid + EXCLUDED.invalid,
-        stale = "Pool-Main".current_metadata.stale + EXCLUDED.stale,
-        valid = "Pool-Main".current_metadata.valid + EXCLUDED.valid,
-        work = "Pool-Main".current_metadata.work + EXCLUDED.work;`;
+        efficiency = EXCLUDED.efficiency,
+        invalid = EXCLUDED.invalid,
+        stale = EXCLUDED.stale,
+        valid = EXCLUDED.valid;`;
     expect(response).toBe(expected);
   });
 });

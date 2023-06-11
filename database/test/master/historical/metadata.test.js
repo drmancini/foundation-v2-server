@@ -16,7 +16,8 @@ describe('Test database metadata functionality', () => {
     const metadata = new HistoricalMetadata(logger, configMainCopy);
     expect(typeof metadata.configMain).toBe('object');
     expect(typeof metadata.selectHistoricalMetadataMain).toBe('function');
-    expect(typeof metadata.insertHistoricalMetadataMain).toBe('function');
+    expect(typeof metadata.insertHistoricalMetadataBlocks).toBe('function');
+    expect(typeof metadata.insertHistoricalMetadataRounds).toBe('function');
   });
 
   test('Test query handling [1]', () => {
@@ -139,41 +140,34 @@ describe('Test database metadata functionality', () => {
     const updates = {
       timestamp: 1,
       recent: 1,
-      blocks: 1,
-      efficiency: 100,
-      effort: 100,
+      identifier: 'master',
       hashrate: 1,
-      invalid: 0,
+      solo: false,
       miners: 1,
-      stale: 1,
       type: 'primary',
-      valid: 1,
-      work: 8,
       workers: 1,
     };
-    const response = metadata.insertHistoricalMetadataMain('Pool-Main', [updates]);
+    const response = metadata.insertHistoricalMetadataHashrate('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_metadata (
-        timestamp, recent, blocks,
-        efficiency, effort, hashrate,
-        invalid, miners, stale,
-        type, valid, work, workers)
+        timestamp, recent, identifier,
+        hashrate, solo, miners, type,
+        workers)
       VALUES (
         1,
         1,
+        'master',
         1,
-        100,
-        100,
-        1,
-        0,
-        1,
+        false,
         1,
         'primary',
-        1,
-        8,
         1)
       ON CONFLICT ON CONSTRAINT historical_metadata_unique
-      DO NOTHING;`;
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate = EXCLUDED.hashrate,
+        miners = EXCLUDED.miners,
+        workers = EXCLUDED.workers;`;
     expect(response).toBe(expected);
   });
 
@@ -182,58 +176,46 @@ describe('Test database metadata functionality', () => {
     const updates = {
       timestamp: 1,
       recent: 1,
-      blocks: 1,
-      efficiency: 100,
-      effort: 100,
+      identifier: 'master',
       hashrate: 1,
-      invalid: 0,
+      solo: false,
       miners: 1,
-      stale: 1,
       type: 'primary',
-      valid: 1,
-      work: 8,
       workers: 1,
     };
-    const response = metadata.insertHistoricalMetadataMain('Pool-Main', [updates, updates]);
+    const response = metadata.insertHistoricalMetadataHashrate('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_metadata (
-        timestamp, recent, blocks,
-        efficiency, effort, hashrate,
-        invalid, miners, stale,
-        type, valid, work, workers)
+        timestamp, recent, identifier,
+        hashrate, solo, miners, type,
+        workers)
       VALUES (
         1,
         1,
+        'master',
         1,
-        100,
-        100,
-        1,
-        0,
-        1,
+        false,
         1,
         'primary',
-        1,
-        8,
         1), (
         1,
         1,
+        'master',
         1,
-        100,
-        100,
-        1,
-        0,
-        1,
+        false,
         1,
         'primary',
-        1,
-        8,
         1)
       ON CONFLICT ON CONSTRAINT historical_metadata_unique
-      DO NOTHING;`;
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate = EXCLUDED.hashrate,
+        miners = EXCLUDED.miners,
+        workers = EXCLUDED.workers;`;
     expect(response).toBe(expected);
   });
 
-  test('Test metadata command handling [8]', () => {
+  test('Test metadata command handling [6]', () => {
     const metadata = new HistoricalMetadata(logger, configMainCopy);
     const updates = {
       timestamp: 1,
@@ -273,7 +255,7 @@ describe('Test database metadata functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test metadata command handling [9]', () => {
+  test('Test metadata command handling [7]', () => {
     const metadata = new HistoricalMetadata(logger, configMainCopy);
     const updates = {
       timestamp: 1,

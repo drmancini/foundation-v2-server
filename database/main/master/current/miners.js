@@ -12,10 +12,10 @@ const CurrentMiners = function (logger, configMain) {
 
   // Handle Current Parameters
   this.numbers = ['timestamp', 'efficiency', 'effort', 'hashrate', 'invalid', 'paid', 'stale',
-    'valid', 'work'];
+    'valid'];
   this.strings = ['miner', 'type'];
   this.parameters = ['timestamp', 'miner', 'efficiency', 'effort', 'hashrate', 'invalid', 'solo',
-    'stale', 'type', 'valid', 'work'];
+    'stale', 'type', 'valid'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -112,8 +112,7 @@ const CurrentMiners = function (logger, configMain) {
         '${ miner.miner }',
         ${ miner.effort },
         ${ miner.solo },
-        '${ miner.type }',
-        ${ miner.work })`;
+        '${ miner.type }')`;
       if (idx < updates.length - 1) values += ', ';
     });
     return values;
@@ -124,21 +123,59 @@ const CurrentMiners = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_miners (
         timestamp, miner, effort,
-        solo, type, work)
+        solo, type)
       VALUES ${ _this.buildCurrentMinersRounds(updates) }
       ON CONFLICT ON CONSTRAINT current_miners_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = "${ pool }".current_miners.effort + EXCLUDED.effort,
-        work = "${ pool }".current_miners.work + EXCLUDED.work;`;
+        effort = "${ pool }".current_miners.effort + EXCLUDED.effort;`;
+  };
+
+  // Build Miners Values String
+  this.buildCurrentMinersShares = function(updates) {
+    let values = '';
+    updates.forEach((miner, idx) => {
+      values += `(
+        ${ miner.timestamp },
+        '${ miner.miner }',
+        ${ miner.efficiency },
+        ${ miner.hashrate_12h },
+        ${ miner.hashrate_24h },
+        ${ miner.invalid },
+        ${ miner.solo },
+        ${ miner.stale },
+        ${ miner.valid },
+        '${ miner.type }')`;
+      if (idx < updates.length - 1) values += ', ';
+    });
+    return values;
+  };
+
+  // Insert Rows Using Shares Data
+  this.insertCurrentMinersShares = function(pool, updates) {
+    return `
+      INSERT INTO "${ pool }".current_miners (
+        timestamp, miner, efficiency,
+        hashrate_12h, hashrate_24h,
+        invalid, solo, stale, valid,
+        type)
+      VALUES ${ _this.buildCurrentMinersShares(updates) }
+      ON CONFLICT ON CONSTRAINT current_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        efficiency = EXCLUDED.efficiency,
+        hashrate_12h = EXCLUDED.hashrate_12h,
+        hashrate_24h = EXCLUDED.hashrate_24h,
+        invalid = EXCLUDED.invalid,
+        stale = EXCLUDED.stale,
+        valid = EXCLUDED.valid;`;
   };
 
   // Reset Solo Miner Using Round Data
   this.updateCurrentSoloMinersReset = function(pool, timestamp, miner, blockType) {
     return `
       UPDATE "${ pool }".current_miners
-      SET timestamp = ${ timestamp }, effort = 0,
-        work = 0
+      SET timestamp = ${ timestamp }, effort = 0
       WHERE miner = '${ miner }' AND solo = true
         AND type = '${ blockType }';`;
   };
