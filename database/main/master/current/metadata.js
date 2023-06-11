@@ -100,7 +100,9 @@ const CurrentMetadata = function (logger, configMain) {
     updates.forEach((metadata, idx) => {
       values += `(
         ${ metadata.timestamp },
+        '${ metadata.identifier }',
         ${ metadata.hashrate },
+        ${ metadata.solo },
         ${ metadata.miners },
         '${ metadata.type }',
         ${ metadata.workers })`;
@@ -113,8 +115,8 @@ const CurrentMetadata = function (logger, configMain) {
   this.insertCurrentMetadataHashrate = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_metadata (
-        timestamp, hashrate, miners,
-        type, workers)
+        timestamp, identifier, hashrate,
+        solo, miners, type, workers)
       VALUES ${ _this.buildCurrentMetadataHashrate(updates) }
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
@@ -142,11 +144,8 @@ const CurrentMetadata = function (logger, configMain) {
         ${ metadata.timestamp },
         ${ metadata.effort },
         '${ metadata.identifier }',
-        ${ metadata.invalid },
         ${ metadata.solo },
-        ${ metadata.stale },
         '${ metadata.type }',
-        ${ metadata.valid },
         ${ metadata.work })`;
       if (idx < updates.length - 1) values += ', ';
     });
@@ -158,17 +157,47 @@ const CurrentMetadata = function (logger, configMain) {
     return `
       INSERT INTO "${ pool }".current_metadata (
         timestamp, effort, identifier,
-        invalid, solo, stale, type,
-        valid, work)
+        solo, type, work)
       VALUES ${ _this.buildCurrentMetadataRounds(updates) }
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         effort = "${ pool }".current_metadata.effort + EXCLUDED.effort,
-        invalid = "${ pool }".current_metadata.invalid + EXCLUDED.invalid,
-        stale = "${ pool }".current_metadata.stale + EXCLUDED.stale,
-        valid = "${ pool }".current_metadata.valid + EXCLUDED.valid,
         work = "${ pool }".current_metadata.work + EXCLUDED.work;`;
+  };
+
+  // Build Metadata Values String
+  this.buildCurrentMetadataShares = function(updates) {
+    let values = '';
+    updates.forEach((metadata, idx) => {
+      values += `(
+        ${ metadata.timestamp },
+        ${ metadata.efficiency },
+        '${ metadata.identifier }',
+        ${ metadata.invalid },
+        ${ metadata.solo },
+        ${ metadata.stale },
+        '${ metadata.type }',
+        ${ metadata.valid })`;
+      if (idx < updates.length - 1) values += ', ';
+    });
+    return values;
+  };
+
+  // Insert Rows Using Round Data
+  this.insertCurrentMetadataShares = function(pool, updates) {
+    return `
+      INSERT INTO "${ pool }".current_metadata (
+        timestamp, efficiency, identifier,
+        invalid, solo, stale, type, valid)
+      VALUES ${ _this.buildCurrentMetadataShares(updates) }
+      ON CONFLICT ON CONSTRAINT current_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        efficiency = EXCLUDED.efficiency,
+        invalid = EXCLUDED.invalid,
+        stale = EXCLUDED.stale,
+        valid = EXCLUDED.valid;`;
   };
 };
 

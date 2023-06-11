@@ -107,9 +107,9 @@ describe('Test database rounds functionality', () => {
     const addresses = ['address1', 'address2', 'address3'];
     const response = rounds.selectCurrentRoundsBatchAddresses('Pool-Main', addresses, 'primary');
     const expected = `
-      SELECT DISTINCT ON (worker) * FROM "Pool-Main".current_rounds
+      SELECT DISTINCT ON (worker, ip_hash, solo) * FROM "Pool-Main".current_rounds
       WHERE worker IN (address1, address2, address3) AND type = 'primary'
-      ORDER BY worker, timestamp DESC;`;
+      ORDER BY worker, ip_hash, solo, timestamp DESC;`;
     expect(response).toBe(expected);
   });
 

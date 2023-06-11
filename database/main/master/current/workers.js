@@ -83,11 +83,40 @@ const CurrentWorkers = function (logger, configMain) {
         ${ worker.timestamp },
         '${ worker.miner }',
         '${ worker.worker }',
-        ${ worker.efficiency },
         ${ worker.hashrate },
+        '${ worker.ip_hash }',
+        ${ worker.solo },
+        '${ worker.type }')`;
+      if (idx < updates.length - 1) values += ', ';
+    });
+    return values;
+  };
+
+  // Insert Rows Using Hashrate Data
+  this.insertCurrentWorkersHashrate = function(pool, updates) {
+    return `
+      INSERT INTO "${ pool }".current_workers (
+        timestamp, miner, worker,
+        hashrate, ip_hash, solo,
+        type)
+      VALUES ${ _this.buildCurrentWorkersHashrate(updates) }
+      ON CONFLICT ON CONSTRAINT current_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate = EXCLUDED.hashrate;`;
+  };
+
+  // Build Workers Values String
+  this.buildCurrentWorkersShares = function(updates) {
+    let values = '';
+    updates.forEach((worker, idx) => {
+      values += `(
+        ${ worker.timestamp },
+        '${ worker.miner }',
+        '${ worker.worker }',
+        ${ worker.efficiency },
         ${ worker.hashrate_12h },
         ${ worker.hashrate_24h },
-        '${ worker.identifier }',
         ${ worker.invalid },
         '${ worker.ip_hash }',
         ${ worker.solo },
@@ -100,19 +129,19 @@ const CurrentWorkers = function (logger, configMain) {
   };
 
   // Insert Rows Using Hashrate Data
-  this.insertCurrentWorkersHashrate = function(pool, updates) {
+  this.insertCurrentWorkersShares = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".current_workers (
-        timestamp, miner, worker, efficiency,
-        hashrate, hashrate_12h, hashrate_24h,
-        identifier, invalid, ip_hash, solo,
-        stale, type, valid)
-      VALUES ${ _this.buildCurrentWorkersHashrate(updates) }
+        timestamp, miner, worker,
+        efficiency, hashrate_12h,
+        hashrate_24h, invalid,
+        ip_hash, solo, stale,
+        type, valid)
+      VALUES ${ _this.buildCurrentWorkersShares(updates) }
       ON CONFLICT ON CONSTRAINT current_workers_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         efficiency = EXCLUDED.efficiency,
-        hashrate = EXCLUDED.hashrate,
         hashrate_12h = EXCLUDED.hashrate_12h,
         hashrate_24h = EXCLUDED.hashrate_24h,
         invalid = EXCLUDED.invalid,

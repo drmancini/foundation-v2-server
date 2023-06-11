@@ -1,3 +1,4 @@
+const { identifier } = require('../../configs/main/example');
 const Text = require('../../locales/index');
 const utils = require('./utils');
 
@@ -25,345 +26,286 @@ const Statistics = function (logger, client, config, configMain, template) {
     current: _this.client.master.commands.current,
     historical: _this.client.master.commands.historical };
 
-  // Handle Current Metadata Updates
-  this.handleCurrentMetadata = function(miners, workers, total, blockType) {
+  // Handle Metadata Hashrate Updates
+  this.handleMetadataHashrate = function(miners, workers, work, blockType) {
 
-    // Calculate Features of Metadata
-    const algorithm = _this.config.primary.coin.algorithm || 'sha256d';
-    const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
-    const section = _this.config.settings.window.hashrate;
-
-    // Return Metadata Updates
-    return {
-      timestamp: Date.now(),
-      hashrate: (multiplier * total * 1000) / section,
-      miners: miners,
-      type: blockType,
-      workers: workers,
-    };
-  };
-
-  // Handle Current Miners Updates
-  this.handleCurrentMiners = function(hashrate, miners, blockType) {
-
-    // Calculate Features of Miners
-    const timestamp = Date.now();
-    const algorithm = _this.config.primary.coin.algorithm || 'sha256d';
-    const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
-    const section = _this.config.settings.window.hashrate;
-
-    // Return Miners Updates
-    return miners.map((miner) => {
-      const filtered = hashrate.filter((share) => share.miner === miner.miner);
-      const minerHash = filtered[0] || { current_work: 0 };
-      return {
-        timestamp: timestamp,
-        miner: miner.miner,
-        hashrate: (multiplier * minerHash.current_work * 1000) / section,
-        type: blockType,
-      };
-    });
-  };
-
-  // Handle Workers Updates
-  this.handleCurrentWorkers = function(hashrate, workers, blockType) {
-
-    // Calculate Features of Workers
-    const timestamp = Date.now();
-    const algorithm = _this.config.primary.coin.algorithm || 'sha256d';
-    const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
-    const section = _this.config.settings.window.hashrate;
-
-    // Return Workers Updates
-    return workers.map((worker) => {
-      const filtered = hashrate.filter((share) => share.worker === worker.worker);
-      const workerHash = filtered[0] || { current_work: 0 };
-      return {
-        timestamp: timestamp,
-        miner: (worker.worker || '').split('.')[0],
-        worker: worker.worker,
-        hashrate: (multiplier * workerHash.current_work * 1000) / section,
-        solo: worker.solo,
-        type: blockType,
-      };
-    });
-  };
-
-  // Handle Historical Metadata Updates
-  this.handleHistoricalMetadata = function(metadata) {
+    const metadata = {};
 
     // Calculate Features of Metadata
     const timestamp = Date.now();
-    const interval = _this.config.settings.interval.historical;
-    const recent = Math.round(timestamp / interval) * interval;
+    const interval = _this.config.settings.interval.recent;
+    const recent = Math.ceil(timestamp / interval) * interval;
+    const algorithm = _this.config.primary.coin.algorithm;
+    const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
+    const section = _this.config.settings.window.hashrate;
+
+    // Process Worker Counts
+    workers.forEach(element => {
+      const unique = `${element.identifier}_${element.solo}`;
+      metadata[unique] = {
+        timestamp: timestamp,
+        recent: recent,
+        identifier: element.identifier,
+        solo: element.solo,
+        type: blockType,
+        workers: element.workers,
+      }
+    });
+
+    // Process Miner Counts
+    miners.forEach(element => {
+      const unique = `${element.identifier}_${element.solo}`;
+      metadata[unique].miners = element.miners;
+    });
+
+    // Process Hashrate
+    work.forEach(element => {
+      const unique = `${element.identifier}_${element.solo}`;
+      const hashrate = multiplier * element.work * 1000 / section;
+      metadata[unique].hashrate = hashrate;
+    });
 
     // Return Metadata Updates
-    return {
-      timestamp: timestamp,
-      recent: recent,
-      blocks: metadata.blocks,
-      efficiency: metadata.efficiency,
-      effort: metadata.effort,
-      hashrate: metadata.hashrate,
-      invalid: metadata.invalid,
-      miners: metadata.miners,
-      stale: metadata.stale,
-      type: metadata.type,
-      valid: metadata.valid,
-      work: metadata.work,
-      workers: metadata.workers,
-    };
+    return Object.values(metadata)
   };
 
-  // Handle Historical Miners Updates
-  this.handleHistoricalMiners = function(miners) {
+  // Handle Metadata Share Updates
+  this.handleMetadataShares = function(history, blockType) {
+
+    const metadata = {};
+    const timestamp = Date.now();
+    
+    // Count Share Types
+    history.forEach(element => {
+      const unique = `${element.identifier}_${element.solo}`;
+      if (unique in metadata) {
+        metadata[unique].stale += element.stale;
+        metadata[unique].invalid += element.invalid;
+        metadata[unique].valid += element.valid;
+      } else {
+        metadata[unique] = {
+          timestamp: timestamp,
+          identifier: element.identifier,
+          invalid: element.invalid,
+          solo: element.solo,
+          stale: element.stale,
+          type: blockType,
+          valid: element.valid,
+        };
+      }
+    });
+
+    // Calculate Share Efficiency
+    for (const [key, value] of Object.entries(metadata)) {
+      const total = value.invalid + value.stale + value.valid;
+      const efficiency = Math.round(((value.valid / total) || 0) * 10000) / 100;
+      metadata[key].efficiency = efficiency;
+    };
+
+    // Return Metadata Updates
+    return Object.values(metadata)
+  };
+
+  // Handle Miners Hashrate Updates
+  this.handleMinerHashrate = function(minerWorkSums, blockType) {
+
+    const miners = {};
 
     // Calculate Features of Miners
     const timestamp = Date.now();
-    const interval = _this.config.settings.interval.historical;
-    const recent = Math.round(timestamp / interval) * interval;
+    const interval = _this.config.settings.interval.recent;
+    const recent = Math.ceil(timestamp / interval) * interval;
+    const algorithm = _this.config.primary.coin.algorithm;
+    const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
+    const section = _this.config.settings.window.hashrate;
 
-    // Return Miners Updates
-    return miners.map((miner) => {
-      return {
+    // Process Individual Miners
+    minerWorkSums.forEach(element => {
+      const unique = `${element.miner}_${element.solo}`;
+      const hashrate = multiplier * element.work * 1000 / section;
+      miners[unique] = {
         timestamp: timestamp,
         recent: recent,
-        miner: miner.miner,
-        efficiency: miner.efficiency,
-        effort: miner.effort,
-        hashrate: miner.hashrate,
-        invalid: miner.invalid,
-        stale: miner.stale,
-        type: miner.type,
-        valid: miner.valid,
-        work: miner.work,
+        miner: element.miner,
+        hashrate: hashrate,
+        solo: element.solo,
+        type: blockType,
+      }
+    });
+
+    // Return Miners Updates
+    return Object.values(miners)
+  };
+
+  // Handle Miners Shares Updates
+  this.handleMinersShares = function(historicalMiners, blockType) {
+
+    const miners = {};
+
+    // Calculate Features of Miners
+    const timestamp = Date.now();
+    const algorithm = _this.config.primary.coin.algorithm;
+    const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;    
+
+    // Process Individual Miners
+    historicalMiners.forEach(element => {
+      const unique = `${element.miner}_${element.solo}`;
+      const hashrate_12h = multiplier * element.sum_work_12h * 1000 / 43200000;
+      const hashrate_24h = multiplier * element.sum_work_24h * 1000 / 86400000;
+      const total = element.invalid + element.stale + element.valid;
+      const efficiency = Math.round(((element.valid / total) || 0) * 10000) / 100;
+
+      miners[unique] = {
+        timestamp: timestamp,
+        miner: element.miner,
+        efficiency: efficiency,
+        hashrate_12h: hashrate_12h,
+        hashrate_24h: hashrate_24h,
+        invalid: element.invalid,
+        solo: element.solo,
+        stale: element.stale,
+        valid: element.valid,
+        type: blockType,
       };
     });
+
+    return Object.values(miners);
   };
 
-  // Handle Historical Network Updates
-  this.handleHistoricalNetwork = function(network) {
+  // Handle Workers Hashrate Updates
+  this.handleWorkerHashrate = function(workerWorkSums, blockType) {
 
-    // Calculate Features of Network
-    const timestamp = Date.now();
-    const interval = _this.config.settings.interval.historical;
-    const recent = Math.round(timestamp / interval) * interval;
-
-    // Return Network Updates
-    return {
-      timestamp: timestamp,
-      recent: recent,
-      difficulty: network.difficulty,
-      hashrate: network.hashrate,
-      height: network.height,
-      type: network.type,
-    };
-  };
-
-  // Handle Historical Workers Updates
-  this.handleHistoricalWorkers = function(workers) {
+    const workers = {};
 
     // Calculate Features of Workers
     const timestamp = Date.now();
-    const interval = _this.config.settings.interval.historical;
-    const recent = Math.round(timestamp / interval) * interval;
+    const interval = _this.config.settings.interval.recent;
+    const recent = Math.ceil(timestamp / interval) * interval;
+    const algorithm = _this.config.primary.coin.algorithm;
+    const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
+    const section = _this.config.settings.window.hashrate;
 
-    // Return Workers Updates
-    return workers.map((worker) => {
-      return {
+    // Process Individual Workers
+    workerWorkSums.forEach(element => {
+      const unique = `${element.worker}_${element.ip_hash}_${element.solo}`;
+      const hashrate = multiplier * element.work * 1000 / section;
+      workers[unique] = {
         timestamp: timestamp,
         recent: recent,
-        miner: worker.miner,
-        worker: worker.worker,
-        efficiency: worker.efficiency,
-        effort: worker.effort,
-        hashrate: worker.hashrate,
-        invalid: worker.invalid,
-        solo: worker.solo,
-        stale: worker.stale,
-        type: worker.type,
-        valid: worker.valid,
-        work: worker.work,
-      };
+        miner: element.worker.split('.')[0],
+        worker: element.worker,
+        hashrate: hashrate,
+        ip_hash: element.ip_hash,
+        solo: element.solo,
+        type: blockType,
+      }
     });
+
+    // Return Workers Updates
+    return Object.values(workers)
   };
 
-  // Handle Primary Updates
-  this.handlePrimary = function(lookups, callback) {
+  // Handle Workers Shares Updates
+  this.handleWorkerShares = function(historicalWorkers, blockType) {
+
+    const workers = {};
+
+    // Calculate Features of Workers
+    const timestamp = Date.now();
+    const algorithm = _this.config.primary.coin.algorithm;
+    const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
+
+    // Process Individual Workers
+    historicalWorkers.forEach(element => {
+      const unique = `${element.worker}_${element.ip_hash}_${element.solo}`;
+      const hashrate_12h = multiplier * element.sum_work_12h * 1000 / 43200000;
+      const hashrate_24h = multiplier * element.sum_work_24h * 1000 / 86400000;
+      const total = element.invalid + element.stale + element.valid;
+      const efficiency = Math.round(((element.valid / total) || 0) * 10000) / 100;
+
+      workers[unique] = {
+        timestamp: timestamp,
+        miner: element.worker.split('.')[0],
+        worker: element.worker,
+        efficiency: efficiency,
+        hashrate_12h: hashrate_12h,
+        hashrate_24h: hashrate_24h,
+        invalid: element.invalid,
+        ip_hash: element.ip_hash,
+        solo: element.solo,
+        stale: element.stale,
+        valid: element.valid,
+        type: blockType,
+      };
+    });
+
+    return Object.values(workers);
+  };
+
+  // Handle Statistics Updates
+  this.handleUpdates = function(lookups, blockType, callback) {
+
+    // Define Individual Lookups
+    const minersCounts = lookups[2].rows;
+    const workersCounts = lookups[3].rows;
+    const minerWorkSums = lookups[4].rows;
+    const workerWorkSums = lookups[5].rows;
+    const identifierWorkSums = lookups[6].rows;
+    const historicalMetadata = lookups[7].rows;
+    const historicalMinersShares = lookups[11].rows;
+    const historicalWorkersShares = lookups[12].rows;
 
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
 
-    // Handle Metadata Hashrate Updates
-    if (lookups[2].rows[0] && lookups[3].rows[0] && lookups[4].rows[0] && lookups[8].rows[0]) {
-      const minersMetadata = lookups[2].rows[0].count || 0;
-      const soloWorkersMetadata = lookups[3].rows[0].count || 0;
-      const sharedWorkersMetadata = lookups[4].rows[0].count || 0;
-      const workersMetadata = soloWorkersMetadata + sharedWorkersMetadata;
-      const currentMetadata = lookups[8].rows[0].current_work || 0;
-      const metadataUpdates = _this.handleCurrentMetadata(
-        minersMetadata, workersMetadata, currentMetadata, 'primary');
+    // Handle Current and Historical Metadata Hashrate Updates
+    if (minersCounts.length > 0 && workersCounts.length > 0 && identifierWorkSums.length > 0) {
+      const metadataHashrateUpdates = _this.handleMetadataHashrate(
+        minersCounts, workersCounts, identifierWorkSums, blockType);
       transaction.push(_this.master.current.metadata.insertCurrentMetadataHashrate(
-        _this.pool, [metadataUpdates]));
+        _this.pool, metadataHashrateUpdates));
+      transaction.push(_this.master.historical.metadata.insertHistoricalMetadataHashrate(
+        _this.pool, metadataHashrateUpdates));
     }
 
-    // Handle Miners Hashrate Updates
-    if (lookups[11].rows.length >= 1) {
-      const hashrate = lookups[5].rows;
-      const miners = lookups[11].rows;
-      const minersUpdates = _this.handleCurrentMiners(hashrate, miners, 'primary');
+    // Handle Current Metadata Share Updates
+    if (historicalMetadata.length > 0) {
+      const metadataShareUpdates = _this.handleMetadataShares(historicalMetadata, blockType);
+      transaction.push(_this.master.current.metadata.insertCurrentMetadataShares(
+        _this.pool, metadataShareUpdates));
+    }
+
+    // Handle Current and Historical Miner Hashrate Updates
+    if (minerWorkSums.length > 0) {
+      const minerHashrateUpdates = _this.handleMinerHashrate(minerWorkSums, blockType);
       transaction.push(_this.master.current.miners.insertCurrentMinersHashrate(
-        _this.pool, minersUpdates));
+        _this.pool, minerHashrateUpdates));
+      transaction.push(_this.master.historical.miners.insertHistoricalMinersHashrate(
+        _this.pool, minerHashrateUpdates));
     }
 
-    // Handle Workers Solo Hashrate Updates
-    if (lookups[15].rows.length >= 1) {
-      const hashrate = lookups[6].rows;
-      const soloWorkers = lookups[15].rows;
-      const soloWorkersUpdates = _this.handleCurrentWorkers(hashrate, soloWorkers, 'primary');
+    // Handle Current Miner Share Updates
+    if (historicalMinersShares.length > 0) {
+      const minerSharesUpdates = _this.handleMinersShares(historicalMinersShares, blockType);
+      transaction.push(_this.master.current.miners.insertCurrentMinersShares(
+        _this.pool, minerSharesUpdates));
+    };
+    
+    // Handle Current and Historical Worker Hashrate Updates
+    if (workerWorkSums.length > 0) {
+      const workerHashrateUpdates = _this.handleWorkerHashrate(workerWorkSums, blockType);
       transaction.push(_this.master.current.workers.insertCurrentWorkersHashrate(
-        _this.pool, soloWorkersUpdates));
+        _this.pool, workerHashrateUpdates));
+      transaction.push(_this.master.historical.workers.insertHistoricalWorkersHashrate(
+        _this.pool, workerHashrateUpdates));
     }
 
-    // Handle Workers Shared Hashrate Updates
-    if (lookups[16].rows.length >= 1) {
-      const hashrate = lookups[7].rows;
-      const sharedWorkers = lookups[16].rows;
-      const sharedWorkersUpdates = _this.handleCurrentWorkers(hashrate, sharedWorkers, 'primary');
-      transaction.push(_this.master.current.workers.insertCurrentWorkersHashrate(
-        _this.pool, sharedWorkersUpdates));
-    }
-
-    // Handle Historical Metadata Updates
-    if (lookups[9].rows[0]) {
-      const historicalMetadata = lookups[9].rows[0];
-      const historicalMetadataUpdates = _this.handleHistoricalMetadata(historicalMetadata);
-      transaction.push(_this.master.historical.metadata.insertHistoricalMetadataMain(
-        _this.pool, [historicalMetadataUpdates]));
-    }
-
-    // Handle Historical Miners Updates
-    if (lookups[11].rows.length >= 1) {
-      const historicalMiners = lookups[11].rows;
-      const historicalMinersUpdates = _this.handleHistoricalMiners(historicalMiners);
-      transaction.push(_this.master.historical.miners.insertHistoricalMinersMain(
-        _this.pool, historicalMinersUpdates));
-    }
-
-    // Handle Historical Network Updates
-    if (lookups[12].rows[0]) {
-      const historicalNetwork = lookups[12].rows[0];
-      const historicalNetworkUpdates = _this.handleHistoricalNetwork(historicalNetwork);
-      transaction.push(_this.master.historical.network.insertHistoricalNetworkMain(
-        _this.pool, [historicalNetworkUpdates]));
-    }
-
-    // Handle Historical Solo Workers Updates
-    if (lookups[15].rows.length >= 1) {
-      const historicalSoloWorkers = lookups[15].rows;
-      const historicalSoloWorkersUpdates = _this.handleHistoricalWorkers(historicalSoloWorkers);
-      transaction.push(_this.master.historical.workers.insertHistoricalWorkersMain(
-        _this.pool, historicalSoloWorkersUpdates));
-    }
-
-    // Handle Historical Shared Workers Updates
-    if (lookups[16].rows.length >= 1) {
-      const historicalSharedWorkers = lookups[16].rows;
-      const historicalSharedWorkersUpdates = _this.handleHistoricalWorkers(historicalSharedWorkers);
-      transaction.push(_this.master.historical.workers.insertHistoricalWorkersMain(
-        _this.pool, historicalSharedWorkersUpdates));
-    }
-
-    // Insert Work into Database
-    transaction.push('COMMIT;');
-    _this.master.executor(transaction, () => callback());
-  };
-
-  // Handle Auxiliary Updates
-  this.handleAuxiliary = function(lookups, callback) {
-
-    // Build Combined Transaction
-    const transaction = ['BEGIN;'];
-
-    // Handle Metadata Hashrate Updates
-    if (lookups[2].rows[0] && lookups[3].rows[0] && lookups[4].rows[0] && lookups[8].rows[0]) {
-      const minersMetadata = lookups[2].rows[0].count || 0;
-      const soloWorkersMetadata = lookups[3].rows[0].count || 0;
-      const sharedWorkersMetadata = lookups[4].rows[0].count || 0;
-      const workersMetadata = soloWorkersMetadata + sharedWorkersMetadata;
-      const currentMetadata = lookups[8].rows[0].current_work || 0;
-      const metadataUpdates = _this.handleCurrentMetadata(
-        minersMetadata, workersMetadata, currentMetadata, 'auxiliary');
-      transaction.push(_this.master.current.metadata.insertCurrentMetadataHashrate(
-        _this.pool, [metadataUpdates]));
-    }
-
-    // Handle Miners Hashrate Updates
-    if (lookups[11].rows.length >= 1) {
-      const hashrate = lookups[5].rows;
-      const miners = lookups[11].rows;
-      const minersUpdates = _this.handleCurrentMiners(hashrate, miners, 'auxiliary');
-      transaction.push(_this.master.current.miners.insertCurrentMinersHashrate(
-        _this.pool, minersUpdates));
-    }
-
-    // Handle Workers Solo Hashrate Updates
-    if (lookups[15].rows.length >= 1) {
-      const hashrate = lookups[6].rows;
-      const soloWorkers = lookups[15].rows;
-      const soloWorkersUpdates = _this.handleCurrentWorkers(hashrate, soloWorkers, 'auxiliary');
-      transaction.push(_this.master.current.workers.insertCurrentWorkersHashrate(
-        _this.pool, soloWorkersUpdates));
-    }
-
-    // Handle Workers Shared Hashrate Updates
-    if (lookups[16].rows.length >= 1) {
-      const hashrate = lookups[7].rows;
-      const sharedWorkers = lookups[16].rows;
-      const sharedWorkersUpdates = _this.handleCurrentWorkers(hashrate, sharedWorkers, 'auxiliary');
-      transaction.push(_this.master.current.workers.insertCurrentWorkersHashrate(
-        _this.pool, sharedWorkersUpdates));
-    }
-
-    // Handle Historical Metadata Updates
-    if (lookups[9].rows[0]) {
-      const historicalMetadata = lookups[9].rows[0];
-      const historicalMetadataUpdates = _this.handleHistoricalMetadata(historicalMetadata);
-      transaction.push(_this.master.historical.metadata.insertHistoricalMetadataMain(
-        _this.pool, [historicalMetadataUpdates]));
-    }
-
-    // Handle Historical Miners Updates
-    if (lookups[11].rows.length >= 1) {
-      const historicalMiners = lookups[11].rows;
-      const historicalMinersUpdates = _this.handleHistoricalMiners(historicalMiners);
-      transaction.push(_this.master.historical.miners.insertHistoricalMinersMain(
-        _this.pool, historicalMinersUpdates));
-    }
-
-    // Handle Historical Network Updates
-    if (lookups[12].rows[0]) {
-      const historicalNetwork = lookups[12].rows[0];
-      const historicalNetworkUpdates = _this.handleHistoricalNetwork(historicalNetwork);
-      transaction.push(_this.master.historical.network.insertHistoricalNetworkMain(
-        _this.pool, [historicalNetworkUpdates]));
-    }
-
-    // Handle Historical Solo Workers Updates
-    if (lookups[15].rows.length >= 1) {
-      const historicalSoloWorkers = lookups[15].rows;
-      const historicalSoloWorkersUpdates = _this.handleHistoricalWorkers(historicalSoloWorkers);
-      transaction.push(_this.master.historical.workers.insertHistoricalWorkersMain(
-        _this.pool, historicalSoloWorkersUpdates));
-    }
-
-    // Handle Historical Shared Workers Updates
-    if (lookups[16].rows.length >= 1) {
-      const historicalSharedWorkers = lookups[16].rows;
-      const historicalSharedWorkersUpdates = _this.handleHistoricalWorkers(historicalSharedWorkers);
-      transaction.push(_this.master.historical.workers.insertHistoricalWorkersMain(
-        _this.pool, historicalSharedWorkersUpdates));
-    }
+    // Handle Current Worker Share Updates
+    if (historicalWorkersShares.length > 0) {
+      const workerSharesUpdates = _this.handleWorkerShares(historicalWorkersShares, blockType);
+      transaction.push(_this.master.current.workers.insertCurrentWorkersShares(
+        _this.pool, workerSharesUpdates)); 
+    };
 
     // Insert Work into Database
     transaction.push('COMMIT;');
@@ -378,61 +320,40 @@ const Statistics = function (logger, client, config, configMain, template) {
     _this.logger.debug('Statistics', _this.config.name, starting);
 
     // Calculate Statistics Features
-    const hashrateWindow = Date.now() - _this.config.settings.window.hashrate;
-    const inactiveWindow = Date.now() - _this.config.settings.window.inactive;
-    const updateWindow = Date.now() - _this.config.settings.window.updates;
+    const timestamp = Date.now();
+    const hashrateWindow = timestamp - _this.config.settings.window.hashrate;
+    const halfDayWindow = timestamp - 43200000;
+    const inactiveWindow = timestamp - _this.config.settings.window.inactive;
+    const interval = _this.config.settings.interval.historical;
+    const oneDayWindow = timestamp - 86400000;
+    const oneDayRecent = Math.ceil(oneDayWindow / interval) * interval;
+    const updateWindow = timestamp - _this.config.settings.window.updates;
 
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
       _this.master.current.hashrate.deleteCurrentHashrateInactive(_this.pool, hashrateWindow),
       _this.master.current.hashrate.countCurrentHashrateMiner(_this.pool, hashrateWindow, blockType),
-      _this.master.current.hashrate.countCurrentHashrateWorker(_this.pool, hashrateWindow, true, blockType),
-      _this.master.current.hashrate.countCurrentHashrateWorker(_this.pool, hashrateWindow, false, blockType),
+      _this.master.current.hashrate.countCurrentHashrateWorker(_this.pool, hashrateWindow, blockType),
       _this.master.current.hashrate.sumCurrentHashrateMiner(_this.pool, hashrateWindow, blockType),
-      _this.master.current.hashrate.sumCurrentHashrateWorker(_this.pool, hashrateWindow, true, blockType),
-      _this.master.current.hashrate.sumCurrentHashrateWorker(_this.pool, hashrateWindow, false, blockType),
-      _this.master.current.hashrate.sumCurrentHashrateType(_this.pool, hashrateWindow, false, blockType),
-      _this.master.current.metadata.selectCurrentMetadataMain(_this.pool, { type: blockType }),
+      _this.master.current.hashrate.sumCurrentHashrateWorker(_this.pool, hashrateWindow, blockType),
+      _this.master.current.hashrate.sumCurrentHashrateType(_this.pool, hashrateWindow, blockType),
+      _this.master.historical.metadata.selectHistoricalMetadataMain(_this.pool, { recent: 'ge' + oneDayRecent, type: blockType }),
       _this.master.current.miners.deleteCurrentMinersInactive(_this.pool, inactiveWindow),
-      _this.master.current.miners.selectCurrentMinersMain(_this.pool, { type: blockType }),
-      _this.master.current.network.selectCurrentNetworkMain(_this.pool, { type: blockType }),
       _this.master.current.transactions.deleteCurrentTransactionsInactive(_this.pool, updateWindow),
       _this.master.current.workers.deleteCurrentWorkersInactive(_this.pool, inactiveWindow),
-      _this.master.current.workers.selectCurrentWorkersMain(_this.pool, { solo: true, type: blockType }),
-      _this.master.current.workers.selectCurrentWorkersMain(_this.pool, { solo: false, type: blockType }),
+      _this.master.historical.miners.selectHistoricalMinersAverages(_this.pool, halfDayWindow, oneDayWindow, blockType),
+      _this.master.historical.workers.selectHistoricalWorkersAverages(_this.pool, halfDayWindow, oneDayWindow, blockType),
       'COMMIT;'];
 
-    // Establish Separate Behavior
-    switch (blockType) {
-
-    // Primary Behavior
-    case 'primary':
-      _this.master.executor(transaction, (lookups) => {
-        _this.handlePrimary(lookups, () => {
-          const updates = [_this.text.databaseUpdatesText1(blockType)];
-          _this.logger.debug('Statistics', _this.config.name, updates);
-          callback();
-        });
+    // Handle Statistics Updates
+    _this.master.executor(transaction, (lookups) => {
+      _this.handleUpdates(lookups, blockType, () => {
+        const updates = [_this.text.databaseUpdatesText1(blockType)];
+        _this.logger.debug('Statistics', _this.config.name, updates);
+        callback();
       });
-      break;
-
-    // Auxiliary Behavior
-    case 'auxiliary':
-      _this.master.executor(transaction, (lookups) => {
-        _this.handleAuxiliary(lookups, () => {
-          const updates = [_this.text.databaseUpdatesText1(blockType)];
-          _this.logger.debug('Statistics', _this.config.name, updates);
-          callback();
-        });
-      });
-      break;
-
-    // Default Behavior
-    default:
-      callback();
-      break;
-    }
+    });
   };
 
   // Start Statistics Interval Management

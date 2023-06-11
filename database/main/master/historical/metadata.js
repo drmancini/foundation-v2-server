@@ -11,11 +11,11 @@ const HistoricalMetadata = function (logger, configMain) {
   this.text = Text[configMain.language];
 
   // Handle Historical Parameters
-  this.numbers = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate', 'identifier', 'miners',
-    'recent', 'work', 'workers'];
+  this.numbers = ['timestamp', 'recent', 'blocks', 'hashrate', 'identifier', 'miners', 'work',
+    'workers'];
   this.strings = ['identifier', 'type'];
-  this.parameters = ['timestamp', 'blocks', 'efficiency', 'effort', 'hashrate', 'miners', 'recent', 
-    'solo', 'type', 'work', 'workers'];
+  this.parameters = ['timestamp', 'recent', 'blocks', 'hashrate', 'miners', 'solo', 'type',
+    'work', 'workers'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -67,42 +67,6 @@ const HistoricalMetadata = function (logger, configMain) {
   };
 
   // Build Metadata Values String
-  this.buildHistoricalMetadataMain = function(updates) {
-    let values = '';
-    updates.forEach((metadata, idx) => {
-      values += `(
-        ${ metadata.timestamp },
-        ${ metadata.recent },
-        ${ metadata.blocks },
-        ${ metadata.efficiency },
-        ${ metadata.effort },
-        ${ metadata.hashrate },
-        ${ metadata.invalid },
-        ${ metadata.miners },
-        ${ metadata.stale },
-        '${ metadata.type }',
-        ${ metadata.valid },
-        ${ metadata.work },
-        ${ metadata.workers })`;
-      if (idx < updates.length - 1) values += ', ';
-    });
-    return values;
-  };
-
-  // Insert Rows Using Historical Data
-  this.insertHistoricalMetadataMain = function(pool, updates) {
-    return `
-      INSERT INTO "${ pool }".historical_metadata (
-        timestamp, recent, blocks,
-        efficiency, effort, hashrate,
-        invalid, miners, stale,
-        type, valid, work, workers)
-      VALUES ${ _this.buildHistoricalMetadataMain(updates) }
-      ON CONFLICT ON CONSTRAINT historical_metadata_unique
-      DO NOTHING;`;
-  };
-
-  // Build Metadata Values String
   this.buildHistoricalMetadataBlocks = function(updates) {
     let values = '';
     updates.forEach((metadata, idx) => {
@@ -129,6 +93,40 @@ const HistoricalMetadata = function (logger, configMain) {
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
         blocks = "${ pool }".historical_metadata.blocks + EXCLUDED.blocks;`;
+  };
+
+  // Build Metadata Values String
+  this.buildHistoricalMetadataHashrate = function(updates) {
+    let values = '';
+    updates.forEach((metadata, idx) => {
+      values += `(
+        ${ metadata.timestamp },
+        ${ metadata.recent },
+        '${ metadata.identifier }',
+        ${ metadata.hashrate },
+        ${ metadata.solo },
+        ${ metadata.miners },
+        '${ metadata.type }',
+        ${ metadata.workers })`;
+      if (idx < updates.length - 1) values += ', ';
+    });
+    return values;
+  };
+
+  // Insert Rows Using Hashrate Data
+  this.insertHistoricalMetadataHashrate = function(pool, updates) {
+    return `
+      INSERT INTO "${ pool }".historical_metadata (
+        timestamp, recent, identifier,
+        hashrate, solo, miners, type,
+        workers)
+      VALUES ${ _this.buildHistoricalMetadataHashrate(updates) }
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        hashrate = EXCLUDED.hashrate,
+        miners = EXCLUDED.miners,
+        workers = EXCLUDED.workers;`;
   };
 
   // Build Metadata Values String
