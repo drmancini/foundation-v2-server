@@ -65,6 +65,11 @@ const LocalShares = function (logger, configMain) {
     return output + ';';
   };
 
+  // Select Count all Rows
+  this.selectLocalSharesCount = function(pool) {
+    return `SELECT CAST(COUNT(*) AS INT) AS share_count FROM "${ pool }".local_shares;`;
+  };
+
   // Build Shares Values String
   this.buildLocalSharesMain = function(updates) {
     let values = '';

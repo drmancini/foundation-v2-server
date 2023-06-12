@@ -64,6 +64,10 @@ const LocalTransactions = function (logger, configMain) {
     return output + ';';
   };
 
+  // Select Count all Rows
+  this.selectLocalTransactionsCount = function(pool) {
+    return `SELECT CAST(COUNT(*) AS INT) AS transaction_count FROM "${ pool }".local_transactions;`;
+  };
 
   // Build Transactions Values String
   this.buildLocalTransactionsMain = function(updates) {

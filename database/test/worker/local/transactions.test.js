@@ -64,6 +64,13 @@ describe('Test database transactions functionality', () => {
 
   test('Test transactions command handling [3]', () => {
     const transactions = new LocalTransactions(logger, configMainCopy);
+    const response = transactions.selectLocalTransactionsCount('Pool-Main');
+    const expected = 'SELECT CAST(COUNT(*) AS INT) AS transaction_count FROM "Pool-Main".local_transactions;';
+    expect(response).toBe(expected);
+  });
+
+  test('Test transactions command handling [4]', () => {
+    const transactions = new LocalTransactions(logger, configMainCopy);
     const updates = {
       timestamp: 1,
       uuid: 'uuid',
@@ -82,7 +89,7 @@ describe('Test database transactions functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test transactions command handling [4]', () => {
+  test('Test transactions command handling [5]', () => {
     const transactions = new LocalTransactions(logger, configMainCopy);
     const updates = {
       timestamp: 1,
@@ -105,7 +112,7 @@ describe('Test database transactions functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test transactions command handling [5]', () => {
+  test('Test transactions command handling [6]', () => {
     const transactions = new LocalTransactions(logger, configMainCopy);
     const response = transactions.deleteLocalTransactionsMain('Pool-Main', ['round1']);
     const expected = `
@@ -114,7 +121,7 @@ describe('Test database transactions functionality', () => {
     expect(response).toBe(expected);
   });
 
-  test('Test transactions command handling [6]', () => {
+  test('Test transactions command handling [7]', () => {
     const transactions = new LocalTransactions(logger, configMainCopy);
     const response = transactions.deleteLocalTransactionsInactive('Pool-Main', 1);
     const expected = `

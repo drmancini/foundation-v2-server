@@ -2,6 +2,7 @@ const Schema = require('./schema');
 const Text = require('../../../locales/index');
 
 // Local Table Commands
+const LocalHistory = require('./local/history');
 const LocalShares = require('./local/shares');
 const LocalTransactions = require('./local/transactions');
 
@@ -47,6 +48,7 @@ const Commands = function (logger, client, configMain) {
   this.schema = new Schema(_this.logger, _this.executor, _this.configMain);
 
   // Initialize Local Commands
+  this.local.history = new LocalHistory(_this.logger, _this.configMain);
   this.local.shares = new LocalShares(_this.logger, _this.configMain);
   this.local.transactions = new LocalTransactions(_this.logger, _this.configMain);
 };

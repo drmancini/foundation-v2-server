@@ -77,18 +77,19 @@ const CurrentRounds = function (logger, configMain) {
   // Select Current Rounds for Payments FIX
   this.selectCurrentRoundsPayments = function(pool, round, solo, type) {
     return `
-      SELECT DISTINCT ON (m.worker, m.round, m.solo, m.type)
+      SELECT DISTINCT ON (m.worker, m.ip_hash, m.round, m.solo, m.type)
         t.timestamp, t.submitted, t.recent, m.miner, m.worker,
         m.identifier, t.invalid, m.round, m.solo, t.stale, t.times, m.type,
         t.valid, t.work FROM (
-      SELECT worker, round, solo, type, MAX(timestamp) as timestamp,
+      SELECT worker, ip_hash, round, solo, type, MAX(timestamp) as timestamp,
         MAX(submitted) as submitted, MAX(recent) as recent,
         SUM(invalid) as invalid, SUM(stale) as stale, SUM(times) as times,
         SUM(valid) as valid, SUM(work) as work
       FROM "${ pool }".current_rounds
-      GROUP BY worker, round, solo, type
+      GROUP BY worker, ip_hash, round, solo, type
         ) t JOIN "${ pool }".current_rounds m ON m.worker = t.worker
-        AND m.round = t.round AND m.solo = t.solo AND m.type = t.type
+        AND m.ip_hash = t.ip_hash AND m.round = t.round
+        AND m.solo = t.solo AND m.type = t.type
       WHERE m.round = '${ round }' AND m.solo = ${ solo }
       AND m.type = '${ type }';`;
   };
