@@ -716,4 +716,36 @@ describe('Test schema functionality', () => {
     const schema = new Schema(logger, executor, configMainCopy);
     schema.createHistoricalWorkers('Pool-Main', () => {});
   });
+
+  test('Test schema functionality [3]', () => {
+    const results = { rows: [{ exists: true }]};
+    const expected = `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'Pool-Main'
+        AND table_name = 'local_history');`;
+    const executor = mockExecutor(results, expected);
+    const schema = new Schema(logger, executor, configMainCopy);
+    schema.selectLocalHistory('Pool-Main', (results) => {
+      expect(results).toBe(true);
+    });
+  });
+
+  test('Test schema functionality [4]', () => {
+    const expected = `
+      CREATE TABLE "Pool-Main".local_history(
+        id BIGSERIAL PRIMARY KEY,
+        timestamp BIGINT NOT NULL DEFAULT -1,
+        recent BIGINT NOT NULL DEFAULT -1,
+        identifier VARCHAR NOT NULL DEFAULT 'master',
+        share_count INT NOT NULL DEFAULT 0,
+        share_writes INT NOT NULL DEFAULT 0,
+        transaction_count INT NOT NULL DEFAULT 0,
+        CONSTRAINT local_history_unique UNIQUE (recent, identifier));
+      CREATE INDEX local_history_identifier ON "Pool-Main".local_history(identifier);
+      CREATE INDEX local_history_recent ON "Pool-Main".local_history(recent, identifier);`;
+    const executor = mockExecutor(null, expected);
+    const schema = new Schema(logger, executor, configMainCopy);
+    schema.createLocalHistory('Pool-Main', () => {});
+  });
 });

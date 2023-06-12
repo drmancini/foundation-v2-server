@@ -814,6 +814,25 @@ describe('Test rounds functionality', () => {
     expect(rounds.handleHashrate([share], 'primary')).toStrictEqual([expected]);
   });
 
+  test('Test rounds shares history updates [1]', () => {
+    MockDate.set(1634742080841);
+    const client = mockClient(configMainCopy, { rows: [] });
+    const logger = new Logger(configMainCopy);
+    const rounds = new Rounds(logger, client, configCopy, configMainCopy);
+    const counts = {
+      shares: 1,
+      transactions: 1,
+    };
+    const expected = {
+      timestamp: 1634742080841,
+      recent: 1634742600000,
+      identifier: '',
+      share_count: 1,
+      transaction_count: 1,
+    };
+    expect(rounds.handleHistoryShares(counts)).toStrictEqual(expected);
+  });
+
   test('Test rounds metadata updates [1]', () => {
     MockDate.set(1634742080841);
     const client = mockClient(configMainCopy, { rows: [] });
@@ -3030,7 +3049,7 @@ describe('Test rounds functionality', () => {
       sharevalid: true,
       transaction: 'transaction1'
     };
-    rounds.handleSegments([share, share, share], () => done());
+    rounds.handleSegments([share, share, share], {}, () => done());
   });
 
   test('Test rounds segment handling [2]', (done) => {
@@ -3072,7 +3091,7 @@ describe('Test rounds functionality', () => {
       sharevalid: true,
       transaction: 'transaction1'
     };
-    rounds.handleSegments([share], () => done());
+    rounds.handleSegments([share], {}, () => done());
   });
 
   test('Test rounds segment handling [3]', (done) => {
@@ -3114,7 +3133,7 @@ describe('Test rounds functionality', () => {
       sharevalid: true,
       transaction: 'transaction1'
     };
-    rounds.handleSegments([share], () => done());
+    rounds.handleSegments([share], {}, () => done());
   });
 
   test('Test rounds segment handling [4]', (done) => {
@@ -3156,7 +3175,7 @@ describe('Test rounds functionality', () => {
       sharevalid: true,
       transaction: 'transaction1'
     };
-    rounds.handleSegments([share], () => done());
+    rounds.handleSegments([share], {}, () => done());
   });
 
   test('Test rounds segment handling [5]', (done) => {
@@ -3198,7 +3217,7 @@ describe('Test rounds functionality', () => {
       sharevalid: true,
       transaction: 'transaction1'
     };
-    rounds.handleSegments([share], () => done());
+    rounds.handleSegments([share], {}, () => done());
   });
 
   test('Test rounds segment handling [6]', (done) => {
@@ -3240,7 +3259,7 @@ describe('Test rounds functionality', () => {
       sharevalid: true,
       transaction: 'transaction1'
     };
-    rounds.handleSegments([share], () => done());
+    rounds.handleSegments([share], {}, () => done());
   });
 
   test('Test rounds segment handling [7]', (done) => {
@@ -3261,6 +3280,6 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, lookups);
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    rounds.handleSegments([], () => done());
+    rounds.handleSegments([], {}, () => done());
   });
 });

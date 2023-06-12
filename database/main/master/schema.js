@@ -616,6 +616,33 @@ const Schema = function (logger, executor, configMain) {
     _this.executor([command], () => callback());
   };
 
+  // Check if Local History Table Exists in Database
+  this.selectLocalHistory = function(pool, callback) {
+    const command = `
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = '${ pool }'
+        AND table_name = 'local_history');`;
+    _this.executor([command], (results) => callback(results.rows[0].exists));
+  };
+
+  // Deploy Local History Table to Database
+  this.createLocalHistory = function(pool, callback) {
+    const command = `
+      CREATE TABLE "${ pool }".local_history(
+        id BIGSERIAL PRIMARY KEY,
+        timestamp BIGINT NOT NULL DEFAULT -1,
+        recent BIGINT NOT NULL DEFAULT -1,
+        identifier VARCHAR NOT NULL DEFAULT 'master',
+        share_count INT NOT NULL DEFAULT 0,
+        share_writes INT NOT NULL DEFAULT 0,
+        transaction_count INT NOT NULL DEFAULT 0,
+        CONSTRAINT local_history_unique UNIQUE (recent, identifier));
+      CREATE INDEX local_history_identifier ON "${ pool }".local_history(identifier);
+      CREATE INDEX local_history_recent ON "${ pool }".local_history(recent, identifier);`;
+    _this.executor([command], () => callback());
+  };
+
   // Build Schema Promises for Deployment
   /* istanbul ignore next */
   this.handlePromises = function(pool, checker, deployer) {
@@ -650,6 +677,7 @@ const Schema = function (logger, executor, configMain) {
         .then(() => _this.handlePromises(pool, _this.selectHistoricalRounds, _this.createHistoricalRounds))
         .then(() => _this.handlePromises(pool, _this.selectHistoricalTransactions, _this.createHistoricalTransactions))
         .then(() => _this.handlePromises(pool, _this.selectHistoricalWorkers, _this.createHistoricalWorkers))
+        .then(() => _this.handlePromises(pool, _this.selectLocalHistory, _this.createLocalHistory))
         .then(() => resolve());
     });
   };
