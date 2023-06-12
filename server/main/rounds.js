@@ -969,13 +969,11 @@ const Rounds = function (logger, client, config, configMain) {
     _this.worker.executor(transaction, (results) => {
       results = results[1].rows.map((share) => share.uuid);
       const shares = lookups[1].rows.filter((share) => results.includes((share || {}).uuid));
-      const segments = _this.processSegments(shares, counts);
-
-      // Save Local Share and Transaction Count History
       const counts = {
         shares: lookups[2].rows[0].share_count || 0,
         transactions: lookups[3].rows[0].transaction_count || 0,
       };
+      const segments = _this.processSegments(shares, counts);
 
       // Determine Number of Shares Being Processed
       const capacity = Math.round(shares.length / _this.config.settings.batch.limit * 1000) / 10;
