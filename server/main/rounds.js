@@ -908,7 +908,7 @@ const Rounds = function (logger, client, config, configMain) {
     case 'primary':
       _this.master.executor(transaction, (lookups) => {
         _this.handleUpdates(lookups, segment, () => {
-          if (segment[0].blockvalid) _this.handleBlock(lookups, 'primary', segment, () => {
+          if (segment[0].blockvalid) _this.handleBlock(lookups, segment, 'primary', () => {
             _this.handleCleanup(segment, () => callback());
           });
           else _this.handleCleanup(segment, () => callback());
@@ -920,7 +920,7 @@ const Rounds = function (logger, client, config, configMain) {
     case 'auxiliary':
       _this.master.executor(transaction, (lookups) => {
         _this.handleUpdates(lookups, segment, () => {
-          if (segment[0].blockvalid) _this.handleBlock(lookups, 'auxiliary', segment, () => {
+          if (segment[0].blockvalid) _this.handleBlock(lookups, segment, 'auxiliary', () => {
             _this.handleCleanup(segment, () => callback());
           });
           else _this.handleCleanup(segment, () => callback());
