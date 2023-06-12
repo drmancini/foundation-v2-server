@@ -24,7 +24,8 @@ const Rounds = function (logger, client, config, configMain) {
   this.master = {
     executor: _this.client.master.commands.executor,
     current: _this.client.master.commands.current,
-    historical: _this.client.master.commands.historical};
+    historical: _this.client.master.commands.historical,
+    local: _this.client.master.commands.local};
   this.worker = {
     executor: _this.client.worker.commands.executor,
     local: _this.client.worker.commands.local };
@@ -384,7 +385,7 @@ const Rounds = function (logger, client, config, configMain) {
       work: current,
     };
   };
-  
+
   // Handle Hashrate Updates
   this.handleHashrate = function(shares, blockType) {
 
@@ -410,6 +411,24 @@ const Rounds = function (logger, client, config, configMain) {
     return updates;
   };
 
+  // Handle Batch Parser Updates
+  this.handleHistoryShares = function(counts) {
+
+    // Determine Time Properties
+    const timestamp = Date.now();
+    const interval = _this.config.settings.interval.recent;
+    const recent = Math.ceil(timestamp / interval) * interval;
+
+    // Return Batch Parser Updates
+    return {
+      timestamp: timestamp,
+      recent: recent,
+      identifier: _this.configMain.identifier,
+      share_count: counts.shares,
+      transaction_count: counts.transactions,
+    };
+  };
+  
   // Handle Metadata Updates
   this.handleMetadata = function(shares, blockType) {
 
@@ -792,7 +811,7 @@ const Rounds = function (logger, client, config, configMain) {
       const timestamp = Date.now();
       const interval = _this.config.settings.interval.recent;
       const recent = Math.ceil(timestamp / interval) * interval;
-      transaction.push(_this.worker.local.history.insertLocalHistoryWrites(_this.pool, timestamp, recent, sharesWritten));
+      transaction.push(_this.master.local.history.insertLocalHistoryWrites(_this.pool, timestamp, recent, sharesWritten));
     }
 
     // Insert Work into Database
@@ -843,7 +862,7 @@ const Rounds = function (logger, client, config, configMain) {
   };
 
   // Handle Segment Batches
-  this.handleSegments = function(segment, callback) {
+  this.handleSegments = function(segment, counts, callback) {
 
     // Initialize Designators
     const addrPrimaryMiners = [];
@@ -865,6 +884,9 @@ const Rounds = function (logger, client, config, configMain) {
       if (!(addrAuxiliaryWorkers.includes(auxiliaryWorker))) addrAuxiliaryWorkers.push(auxiliaryWorker);
     });
 
+    // Handle Batch Processor History Updates
+    const historySharesUpdates = _this.handleHistoryShares(counts);
+
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
@@ -876,6 +898,7 @@ const Rounds = function (logger, client, config, configMain) {
       _this.master.current.rounds.selectCurrentRoundsBatchAddresses(_this.pool, addrAuxiliaryWorkers, 'auxiliary'),
       _this.master.current.users.selectCurrentUsersBatchAddresses(_this.pool, addrPrimaryMiners, 'primary'),
       _this.master.current.users.selectCurrentUsersBatchAddresses(_this.pool, addrAuxiliaryMiners, 'auxiliary'),
+      _this.master.local.history.insertLocalHistoryCounts(_this.pool, [ historySharesUpdates ]),
       'COMMIT;'];
 
     // Establish Separate Behavior
@@ -941,23 +964,18 @@ const Rounds = function (logger, client, config, configMain) {
       transaction.push(_this.worker.local.transactions.insertLocalTransactionsMain(_this.pool, checks));
     }
 
-    // Save Local Share and Transaction Count History
-    const timestamp = Date.now();
-    const interval = _this.config.settings.interval.recent;
-    const parameters = {
-      timestamp: timestamp,
-      recent: Math.ceil(timestamp / interval) * interval,
-      share_count: lookups[2].rows[0].share_count,
-      transaction_count:lookups[3].rows[0].transaction_count,
-    };
-    transaction.push(_this.worker.local.history.insertLocalHistoryCounts(_this.pool, [parameters]));
-
     // Determine Specific Shares for Each Thread
     transaction.push('COMMIT;');
     _this.worker.executor(transaction, (results) => {
       results = results[1].rows.map((share) => share.uuid);
       const shares = lookups[1].rows.filter((share) => results.includes((share || {}).uuid));
-      const segments = _this.processSegments(shares);
+      const segments = _this.processSegments(shares, counts);
+
+      // Save Local Share and Transaction Count History
+      const counts = {
+        shares: lookups[2].rows[0].share_count || 0,
+        transactions: lookups[3].rows[0].transaction_count || 0,
+      };
 
       // Determine Number of Shares Being Processed
       const capacity = Math.round(shares.length / _this.config.settings.batch.limit * 1000) / 10;
@@ -967,7 +985,7 @@ const Rounds = function (logger, client, config, configMain) {
       // Segments Exist to Validate
       if (segments.length >= 1) {
         async.series(segments.map((segment) => {
-          return (cb) => _this.handleSegments(segment, cb);
+          return (cb) => _this.handleSegments(segment, counts, cb);
         }), (error) => {
           const updates = [(error) ?
             _this.text.databaseCommandsText2(JSON.stringify(error)) :

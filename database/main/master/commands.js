@@ -24,6 +24,9 @@ const HistoricalRounds = require('./historical/rounds');
 const HistoricalTransactions = require('./historical/transactions');
 const HistoricalWorkers = require('./historical/workers');
 
+// Local Table Commands
+const LocalHistory = require('./local/history');
+
 ////////////////////////////////////////////////////////////////////////////////
 
 // Main Command Function
@@ -39,6 +42,7 @@ const Commands = function (logger, client, configMain) {
   // Database Table Structure
   this.current = {};
   this.historical = {};
+  this.local = {};
   this.retries = 0;
 
   // Execute Commands
@@ -66,16 +70,6 @@ const Commands = function (logger, client, configMain) {
   // Build Out Schema Generation
   this.schema = new Schema(_this.logger, _this.executor, _this.configMain);
 
-  // Initialize Historical Commands
-  this.historical.blocks = new HistoricalBlocks(_this.logger, _this.configMain);
-  this.historical.metadata = new HistoricalMetadata(_this.logger, _this.configMain);
-  this.historical.miners = new HistoricalMiners(_this.logger, _this.configMain);
-  this.historical.network = new HistoricalNetwork(_this.logger, _this.configMain);
-  this.historical.payments = new HistoricalPayments(_this.logger, _this.configMain);
-  this.historical.rounds = new HistoricalRounds(_this.logger, _this.configMain);
-  this.historical.transactions = new HistoricalTransactions(_this.logger, _this.configMain);
-  this.historical.workers = new HistoricalWorkers(_this.logger, _this.configMain);
-
   // Initialize Current Commands
   this.current.balances = new CurrentBalances(_this.logger, _this.configMain);
   this.current.blocks = new CurrentBlocks(_this.logger, _this.configMain);
@@ -88,6 +82,19 @@ const Commands = function (logger, client, configMain) {
   this.current.transactions = new CurrentTransactions(_this.logger, _this.configMain);
   this.current.users = new CurrentUsers(_this.logger, _this.configMain);
   this.current.workers = new CurrentWorkers(_this.logger, _this.configMain);
+
+  // Initialize Historical Commands
+  this.historical.blocks = new HistoricalBlocks(_this.logger, _this.configMain);
+  this.historical.metadata = new HistoricalMetadata(_this.logger, _this.configMain);
+  this.historical.miners = new HistoricalMiners(_this.logger, _this.configMain);
+  this.historical.network = new HistoricalNetwork(_this.logger, _this.configMain);
+  this.historical.payments = new HistoricalPayments(_this.logger, _this.configMain);
+  this.historical.rounds = new HistoricalRounds(_this.logger, _this.configMain);
+  this.historical.transactions = new HistoricalTransactions(_this.logger, _this.configMain);
+  this.historical.workers = new HistoricalWorkers(_this.logger, _this.configMain);
+
+  // Initialize Local Commands
+  this.local.history = new LocalHistory(_this.logger, _this.configMain);
 };
 
 module.exports = Commands;

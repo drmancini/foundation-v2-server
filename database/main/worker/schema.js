@@ -26,30 +26,6 @@ const Schema = function (logger, executor, configMain) {
     _this.executor([command], () => callback());
   };
 
-  // Check if Local History Table Exists in Database
-  this.selectLocalHistory = function(pool, callback) {
-    const command = `
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables
-        WHERE table_schema = '${ pool }'
-        AND table_name = 'local_history');`;
-    _this.executor([command], (results) => callback(results.rows[0].exists));
-  };
-
-  // Deploy Local History Table to Database
-  this.createLocalHistory = function(pool, callback) {
-    const command = `
-      CREATE TABLE "${ pool }".local_history(
-        id BIGSERIAL PRIMARY KEY,
-        timestamp BIGINT NOT NULL DEFAULT -1,
-        recent BIGINT NOT NULL DEFAULT -1,
-        share_count INT NOT NULL DEFAULT 0,
-        share_writes INT NOT NULL DEFAULT 0,
-        transaction_count INT NOT NULL DEFAULT 0,
-        CONSTRAINT local_history_unique UNIQUE (recent));`;
-    _this.executor([command], () => callback());
-  };
-
   // Check if Local Shares Table Exists in Database
   this.selectLocalShares = function(pool, callback) {
     const command = `
@@ -127,7 +103,6 @@ const Schema = function (logger, executor, configMain) {
   this.handleDeployment = function(pool) {
     return new Promise((resolve) => {
       _this.handlePromises(pool, _this.selectSchema, _this.createSchema)
-        .then(() => _this.handlePromises(pool, _this.selectLocalHistory, _this.createLocalHistory))
         .then(() => _this.handlePromises(pool, _this.selectLocalShares, _this.createLocalShares))
         .then(() => _this.handlePromises(pool, _this.selectLocalTransactions, _this.createLocalTransactions))
         .then(() => resolve());

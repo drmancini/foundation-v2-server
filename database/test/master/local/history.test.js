@@ -1,4 +1,4 @@
-const LocalHistory = require('../../../main/worker/local/history');
+const LocalHistory = require('../../../main/master/local/history');
 const Logger = require('../../../../server/main/logger');
 const configMain = require('../../../../configs/main/example.js');
 const logger = new Logger(configMain);
