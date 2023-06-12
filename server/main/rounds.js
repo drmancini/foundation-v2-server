@@ -786,6 +786,15 @@ const Rounds = function (logger, client, config, configMain) {
       }
     }
 
+    // Handle Share Processor History
+    const sharesWritten = shares.length;
+    if (sharesWritten > 0) {
+      const timestamp = Date.now();
+      const interval = _this.config.settings.interval.recent;
+      const recent = Math.ceil(timestamp / interval) * interval;
+      transaction.push(_this.worker.local.history.insertLocalHistoryWrites(_this.pool, timestamp, recent, sharesWritten));
+    }
+
     // Insert Work into Database
     transaction.push('COMMIT;');
     _this.master.executor(transaction, () => callback());
@@ -932,6 +941,17 @@ const Rounds = function (logger, client, config, configMain) {
       transaction.push(_this.worker.local.transactions.insertLocalTransactionsMain(_this.pool, checks));
     }
 
+    // Save Local Share and Transaction Count History
+    const timestamp = Date.now();
+    const interval = _this.config.settings.interval.recent;
+    const parameters = {
+      timestamp: timestamp,
+      recent: Math.ceil(timestamp / interval) * interval,
+      share_count: lookups[2].rows[0].share_count,
+      transaction_count:lookups[3].rows[0].transaction_count,
+    };
+    transaction.push(_this.worker.local.history.insertLocalHistoryCounts(_this.pool, [parameters]));
+
     // Determine Specific Shares for Each Thread
     transaction.push('COMMIT;');
     _this.worker.executor(transaction, (results) => {
@@ -956,7 +976,7 @@ const Rounds = function (logger, client, config, configMain) {
           callback();
         });
 
-      // No Blocks Exist to Validate
+      // No Segments Exist to Validate
       } else {
         const updates = [_this.text.databaseUpdatesText7()];
         _this.logger.debug('Rounds', _this.config.name, updates);
@@ -982,6 +1002,8 @@ const Rounds = function (logger, client, config, configMain) {
     const transaction = [
       'BEGIN;',
       _this.worker.local.shares.selectLocalSharesMain(_this.pool, parameters),
+      _this.worker.local.shares.selectLocalSharesCount(_this.pool),
+      _this.worker.local.transactions.selectLocalTransactionsCount(_this.pool),
       _this.worker.local.transactions.deleteLocalTransactionsInactive(_this.pool, updateWindow),
       'COMMIT;'];
 

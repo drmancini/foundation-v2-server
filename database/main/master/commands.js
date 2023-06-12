@@ -2,6 +2,7 @@ const Schema = require('./schema');
 const Text = require('../../../locales/index');
 
 // Current Table Commands
+const CurrentBalances = require('./current/balances');
 const CurrentBlocks = require('./current/blocks');
 const CurrentHashrate = require('./current/hashrate');
 const CurrentMetadata = require('./current/metadata');
@@ -76,6 +77,7 @@ const Commands = function (logger, client, configMain) {
   this.historical.workers = new HistoricalWorkers(_this.logger, _this.configMain);
 
   // Initialize Current Commands
+  this.current.balances = new CurrentBalances(_this.logger, _this.configMain);
   this.current.blocks = new CurrentBlocks(_this.logger, _this.configMain);
   this.current.hashrate = new CurrentHashrate(_this.logger, _this.configMain);
   this.current.metadata = new CurrentMetadata(_this.logger, _this.configMain);

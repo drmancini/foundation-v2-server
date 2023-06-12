@@ -1900,8 +1900,17 @@ describe('Test rounds functionality', () => {
         stale = "Pool-Bitcoin".historical_workers.stale + EXCLUDED.stale,
         valid = "Pool-Bitcoin".historical_workers.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_workers.work + EXCLUDED.work;`;
+    const expectedHistory = `
+      INSERT INTO "Pool-Bitcoin".local_history (
+        timestamp, recent,
+        share_writes)
+      VALUES (1634742080841, 1634742600000, 1)
+      ON CONFLICT ON CONSTRAINT local_history_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        share_writes = "Pool-Bitcoin".local_history.share_writes + EXCLUDED.share_writes;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(11);
+      expect(transaction.length).toBe(12);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedMetadata);
       expect(transaction[3]).toBe(expectedHistoricalMetadata);
@@ -1911,6 +1920,7 @@ describe('Test rounds functionality', () => {
       expect(transaction[7]).toBe(expectedUsers);
       expect(transaction[8]).toBe(expectedWorkers);
       expect(transaction[9]).toBe(expectedHistoricalWorkers);
+      expect(transaction[10]).toBe(expectedHistory);
       done();
     });
     rounds.handleUpdates(lookups, [share], () => {});
@@ -2124,8 +2134,17 @@ describe('Test rounds functionality', () => {
         stale = "Pool-Bitcoin".historical_workers.stale + EXCLUDED.stale,
         valid = "Pool-Bitcoin".historical_workers.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_workers.work + EXCLUDED.work;`;
+    const expectedHistory = `
+      INSERT INTO "Pool-Bitcoin".local_history (
+        timestamp, recent,
+        share_writes)
+      VALUES (1634742080841, 1634742600000, 1)
+      ON CONFLICT ON CONSTRAINT local_history_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        share_writes = "Pool-Bitcoin".local_history.share_writes + EXCLUDED.share_writes;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(10);
+      expect(transaction.length).toBe(11);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedMetadata);
       expect(transaction[3]).toBe(expectedHistoricalMetadata);
@@ -2134,6 +2153,7 @@ describe('Test rounds functionality', () => {
       expect(transaction[6]).toBe(expectedUsers);
       expect(transaction[7]).toBe(expectedWorkers);
       expect(transaction[8]).toBe(expectedHistoricalWorkers);
+      expect(transaction[9]).toBe(expectedHistory);
       done();
     });
     rounds.handleUpdates(lookups, [share], () => {});
@@ -2543,8 +2563,17 @@ describe('Test rounds functionality', () => {
         stale = "Pool-Bitcoin".historical_workers.stale + EXCLUDED.stale,
         valid = "Pool-Bitcoin".historical_workers.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_workers.work + EXCLUDED.work;`;
+    const expectedHistory = `
+      INSERT INTO "Pool-Bitcoin".local_history (
+        timestamp, recent,
+        share_writes)
+      VALUES (1634742080841, 1634742600000, 1)
+      ON CONFLICT ON CONSTRAINT local_history_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        share_writes = "Pool-Bitcoin".local_history.share_writes + EXCLUDED.share_writes;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(20);
+      expect(transaction.length).toBe(21);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedAuxHashrate);
       expect(transaction[3]).toBe(expectedMetadata);
@@ -2563,6 +2592,7 @@ describe('Test rounds functionality', () => {
       expect(transaction[16]).toBe(expectedAuxWorkers);
       expect(transaction[17]).toBe(expectedHistoricalWorkers);
       expect(transaction[18]).toBe(expectedAuxHistoricalWorkers);
+      expect(transaction[19]).toBe(expectedHistory);
       done();
     });
     rounds.handleUpdates(lookups, [share], () => {});

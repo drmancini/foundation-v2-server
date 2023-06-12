@@ -3,7 +3,7 @@ const Text = require('../../../../locales/index');
 ////////////////////////////////////////////////////////////////////////////////
 
 // Main Schema Function
-const LocalShares = function (logger, configMain) {
+const LocalHistory = function (logger, configMain) {
 
   const _this = this;
   this.logger = logger;
@@ -11,10 +11,9 @@ const LocalShares = function (logger, configMain) {
   this.text = Text[configMain.language];
 
   // Handle Local Parameters
-  this.numbers = ['timestamp', 'submitted', 'blockdiff', 'clientdiff', 'headerdiff', 'height', 'reward', 'sharediff'];
-  this.strings = ['error', 'uuid', 'miner', 'worker', 'ip', 'port', 'hash', 'hex', 'identifier', 'transaction', 'type'];
-  this.parameters = ['error', 'uuid', 'timestamp', 'submitted', 'miner', 'worker', 'ip', 'port', 'blockdiff',
-    'clientdiff', 'hash', 'hex', 'headerdiff', 'height', 'identifier', 'reward', 'sharediff', 'transaction', 'type'];
+  this.numbers = ['timestamp', 'recent', 'share_count', 'share_write', 'transaction_count'];
+  this.strings = [''];
+  this.parameters = ['timestamp', 'recent', 'share_count', 'share_write', 'transaction_count'];
 
   // Handle String Parameters
   this.handleStrings = function(parameters, parameter) {
@@ -51,9 +50,9 @@ const LocalShares = function (logger, configMain) {
     return output;
   };
 
-  // Select Local Shares Using Parameters
-  this.selectLocalSharesMain = function(pool, parameters) {
-    let output = `SELECT * FROM "${ pool }".local_shares`;
+  // Select Local History Using Parameters
+  this.selectLocalHistoryMain = function(pool, parameters) {
+    let output = `SELECT * FROM "${ pool }".local_history`;
     const filtered = Object.keys(parameters).filter((key) => _this.parameters.includes(key));
     filtered.forEach((parameter, idx) => {
       if (idx === 0) output += ' WHERE ';
@@ -65,63 +64,54 @@ const LocalShares = function (logger, configMain) {
     return output + ';';
   };
 
-  // Select Count all Rows
-  this.selectLocalSharesCount = function(pool) {
-    return `SELECT CAST(COUNT(*) AS INT) AS share_count FROM "${ pool }".local_shares;`;
-  };
 
-  // Build Shares Values String
-  this.buildLocalSharesMain = function(updates) {
+  // Build History Values String
+  this.buildLocalHistoryCounts = function(updates) {
     let values = '';
-    updates.forEach((share, idx) => {
+    updates.forEach((transaction, idx) => {
       values += `(
-        '${ share.error }',
-        '${ share.uuid }',
-        ${ share.timestamp },
-        ${ share.submitted },
-        '${ share.ip }',
-        '${ share.port }',
-        '${ share.addrprimary }',
-        '${ share.addrauxiliary }',
-        ${ share.blockdiffprimary },
-        ${ share.blockdiffauxiliary },
-        ${ share.blockvalid },
-        '${ share.blocktype }',
-        ${ share.clientdiff },
-        '${ share.hash }',
-        ${ share.height },
-        '${ share.identifier }',
-        ${ share.reward },
-        ${ share.sharediff },
-        ${ share.sharevalid },
-        '${ share.transaction }')`;
+        ${ transaction.timestamp },
+        ${ transaction.recent },
+        ${ transaction.share_count },
+        ${ transaction.transaction_count })`;
       if (idx < updates.length - 1) values += ', ';
     });
     return values;
   };
 
-  // Insert Rows Using Shares Data
-  this.insertLocalSharesMain = function(pool, updates) {
+  // Insert Counts Using History Data
+  this.insertLocalHistoryCounts = function(pool, updates) {
     return `
-      INSERT INTO "${ pool }".local_shares (
-        error, uuid, timestamp,
-        submitted, ip, port, addrprimary,
-        addrauxiliary, blockdiffprimary,
-        blockdiffauxiliary, blockvalid,
-        blocktype, clientdiff, hash, height,
-        identifier, reward, sharediff,
-        sharevalid, transaction)
-      VALUES ${ _this.buildLocalSharesMain(updates) }
-      ON CONFLICT ON CONSTRAINT local_shares_unique
-      DO NOTHING;`;
+      INSERT INTO "${ pool }".local_history (
+        timestamp, recent,
+        share_count, transaction_count)
+      VALUES ${ _this.buildLocalHistoryCounts(updates) }
+      ON CONFLICT ON CONSTRAINT local_history_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        share_count = EXCLUDED.share_count,
+        transaction_count = EXCLUDED.transaction_count;`;
   };
 
-  // Delete Rows From Shares
-  this.deleteLocalSharesMain = function(pool, uuids) {
+  // Insert Writes Using History Data
+  this.insertLocalHistoryWrites = function(pool, timestamp, recent, shares) {
     return `
-      DELETE FROM "${ pool }".local_shares
-      WHERE uuid IN (${ uuids.join(', ') });`;
+      INSERT INTO "${ pool }".local_history (
+        timestamp, recent,
+        share_writes)
+      VALUES (${ timestamp }, ${ recent }, ${ shares})
+      ON CONFLICT ON CONSTRAINT local_history_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        share_writes = "${ pool }".local_history.share_writes + EXCLUDED.share_writes;`;
+  };
+
+  // Delete Rows Beyond Cutoff
+  this.deleteLocalHistoryInactive = function(pool, timestamp) {
+    return `
+      DELETE FROM "${ pool }".local_history
+      WHERE timestamp < ${ timestamp };`;
   };
 };
 
-module.exports = LocalShares;
+module.exports = LocalHistory;
