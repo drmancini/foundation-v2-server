@@ -72,15 +72,11 @@ const HistoricalRounds = function (logger, configMain) {
       values += `(
         ${ round.timestamp },
         '${ round.miner }',
-        '${ round.worker }',
-        '${ round.identifier }',
-        ${ round.invalid },
+        ${ round.reward },
         '${ round.round }',
+        ${ round.share },
         ${ round.solo },
-        ${ round.stale },
-        ${ round.times },
         '${ round.type }',
-        ${ round.valid },
         ${ round.work })`;
       if (idx < updates.length - 1) values += ', ';
     });
@@ -91,13 +87,13 @@ const HistoricalRounds = function (logger, configMain) {
   this.insertHistoricalRoundsMain = function(pool, updates) {
     return `
       INSERT INTO "${ pool }".historical_rounds (
-        timestamp, miner, worker,
-        identifier, invalid, round,
-        solo, stale, times, type,
-        valid, work)
+        timestamp, miner, reward,
+        round, share, solo, type,
+        work)
       VALUES ${ _this.buildHistoricalRoundsMain(updates) }
-      ON CONFLICT DO NOTHING;`;
+      ON CONFLICT ON CONSTRAINT historical_rounds_unique
+      DO NOTHING;`;
   };
 };
-
 module.exports = HistoricalRounds;
+

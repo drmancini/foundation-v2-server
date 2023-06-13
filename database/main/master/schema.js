@@ -535,25 +535,17 @@ const Schema = function (logger, executor, configMain) {
       CREATE TABLE "${ pool }".historical_rounds(
         id BIGSERIAL PRIMARY KEY,
         timestamp BIGINT NOT NULL DEFAULT -1,
-        submitted BIGINT NOT NULL DEFAULT -1,
         miner VARCHAR NOT NULL DEFAULT 'unknown',
-        worker VARCHAR NOT NULL DEFAULT 'unknown',
-        identifier VARCHAR NOT NULL DEFAULT 'master',
-        invalid INT NOT NULL DEFAULT 0,
+        reward FLOAT NOT NULL DEFAULT 0,
         round VARCHAR NOT NULL DEFAULT 'unknown',
+        share FLOAT NOT NULL DEFAULT 0,
         solo BOOLEAN NOT NULL DEFAULT false,
-        stale INT NOT NULL DEFAULT 0,
-        times FLOAT NOT NULL DEFAULT 0,
         type VARCHAR NOT NULL DEFAULT 'primary',
-        valid INT NOT NULL DEFAULT 0,
         work FLOAT NOT NULL DEFAULT 0,
-        CONSTRAINT historical_rounds_unique UNIQUE (worker, solo, round, type));
+        CONSTRAINT historical_rounds_unique UNIQUE (miner, solo, round, type));
       CREATE INDEX historical_rounds_miner ON "${ pool }".historical_rounds(miner, type);
-      CREATE INDEX historical_rounds_worker ON "${ pool }".historical_rounds(worker, type);
-      CREATE INDEX historical_rounds_identifier ON "${ pool }".historical_rounds(identifier, type);
       CREATE INDEX historical_rounds_round ON "${ pool }".historical_rounds(solo, round, type);
-      CREATE INDEX historical_rounds_historical ON "${ pool }".historical_rounds(worker, solo, type);
-      CREATE INDEX historical_rounds_combined ON "${ pool }".historical_rounds(worker, solo, round, type);`;
+      CREATE INDEX historical_rounds_timestamp ON "${ pool }".historical_rounds(timestamp, solo, type);`;
     _this.executor([command], () => callback());
   };
 

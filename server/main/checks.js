@@ -184,63 +184,63 @@ const Checks = function (logger, client, config, configMain) {
     const immatureBlocks = blocks.filter((block) => block.category === 'immature');
     const generateBlocks = blocks.filter((block) => block.category === 'generate');
 
-    // Handle Orphan Block Delete Updates OK
+    // Handle Orphan Block Delete Updates
     const orphanBlocksDelete = orphanBlocks.map((block) => `'${ block.round }'`);
     if (orphanBlocksDelete.length >= 1) {
       transaction.push(_this.master.current.blocks.deleteCurrentBlocksMain(
         _this.pool, orphanBlocksDelete));
     }
 
-    // Handle Immature Block Updates OK
+    // Handle Immature Block Updates
     const immatureBlocksUpdates = _this.handleCurrentBlocks(immatureBlocks);
     if (immatureBlocksUpdates.length >= 1) {
       transaction.push(_this.master.current.blocks.insertCurrentBlocksMain(
         _this.pool, immatureBlocksUpdates));
     }
 
-    // Handle Generate Block Updates OK
+    // Handle Generate Block Updates
     const generateBlocksUpdates = _this.handleCurrentBlocks(generateBlocks);
     if (generateBlocksUpdates.length >= 1) {
       transaction.push(_this.master.current.blocks.insertCurrentBlocksMain(
         _this.pool, generateBlocksUpdates));
     }
 
-    // Handle Balances Updates OK
+    // Handle Balances Updates
     const balanceUpdates = _this.handleCurrentBalances(payments, blockType);
     if (balanceUpdates.length >= 1) {
       transaction.push(_this.master.current.balances.insertCurrentBalancesUpdates(
         _this.pool, balanceUpdates));
     }
 
-    // Handle Orphan Round Delete Updates ???what's this???
+    // Handle Orphan Round Delete Updates
     const orphanRoundsDelete = orphanBlocks.map((block) => `'${ block.round }'`);
     if (orphanRoundsDelete.length >= 1) {
       transaction.push(_this.master.current.rounds.deleteCurrentRoundsMain(
         _this.pool, orphanRoundsDelete));
     }
 
-    // Handle Orphan Round Updates ???what's this???
+    // Handle Orphan Round Updates
     const orphanRoundsUpdates = _this.handleCurrentOrphans(orphanRounds);
     if (orphanRoundsUpdates.length >= 1) {
       transaction.push(_this.master.current.rounds.insertCurrentRoundsMain(
         _this.pool, orphanRoundsUpdates));
     }
 
-    // Handle Historical Orphan Block Updates OK
+    // Handle Historical Orphan Block Updates
     const orphanBlocksUpdates = _this.handleCurrentBlocks(orphanBlocks);
     if (orphanBlocksUpdates.length >= 1) {
       transaction.push(_this.master.historical.blocks.insertHistoricalBlocksMain(
         _this.pool, orphanBlocksUpdates));
     }
 
-    // Handle Historical Generate Round Updates NEW
+    // Handle Historical Generate Round Updates
     const historicalRoundsUpdates = _this.handleHistoricalRounds(blocks, rewards, rounds, blockType);
     if (historicalRoundsUpdates.length >= 1) {
       transaction.push(_this.master.historical.rounds.insertHistoricalRoundsMain(
         _this.pool, historicalRoundsUpdates));
     }
 
-    // Handle Transaction Delete Updates OK
+    // Handle Transaction Delete Updates
     const transactionsDelete = blocks.map((block) => `'${ block.round }'`);
     if (transactionsDelete.length >= 1) {
       transaction.push(_this.master.current.transactions.deleteCurrentTransactionsMain(
