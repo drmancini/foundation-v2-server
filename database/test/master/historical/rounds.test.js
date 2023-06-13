@@ -107,38 +107,30 @@ describe('Test database rounds functionality', () => {
     const updates = {
       timestamp: 1,
       miner: 'miner1',
-      worker: 'worker1',
+      reward: 1,
       round: 'round1',
-      identifier: 'master',
-      invalid: 0,
+      share: 0.1,
       solo: true,
-      stale: 0,
-      times: 100,
       type: 'primary',
-      valid: 1,
       work: 8
     };
     const response = rounds.insertHistoricalRoundsMain('Pool-Main', [updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_rounds (
-        timestamp, miner, worker,
-        identifier, invalid, round,
-        solo, stale, times, type,
-        valid, work)
+        timestamp, miner, reward,
+        round, share, solo, type,
+        work)
       VALUES (
         1,
         'miner1',
-        'worker1',
-        'master',
-        0,
-        'round1',
-        true,
-        0,
-        100,
-        'primary',
         1,
+        'round1',
+        0.1,
+        true,
+        'primary',
         8)
-      ON CONFLICT DO NOTHING;`;
+      ON CONFLICT ON CONSTRAINT historical_rounds_unique
+      DO NOTHING;`;
     expect(response).toBe(expected);
   });
 
@@ -147,50 +139,38 @@ describe('Test database rounds functionality', () => {
     const updates = {
       timestamp: 1,
       miner: 'miner1',
-      worker: 'worker1',
+      reward: 1,
       round: 'round1',
-      identifier: 'master',
-      invalid: 0,
+      share: 0.1,
       solo: true,
-      stale: 0,
-      times: 100,
       type: 'primary',
-      valid: 1,
       work: 8
     };
     const response = rounds.insertHistoricalRoundsMain('Pool-Main', [updates, updates]);
     const expected = `
       INSERT INTO "Pool-Main".historical_rounds (
-        timestamp, miner, worker,
-        identifier, invalid, round,
-        solo, stale, times, type,
-        valid, work)
+        timestamp, miner, reward,
+        round, share, solo, type,
+        work)
       VALUES (
         1,
         'miner1',
-        'worker1',
-        'master',
-        0,
-        'round1',
-        true,
-        0,
-        100,
-        'primary',
         1,
+        'round1',
+        0.1,
+        true,
+        'primary',
         8), (
         1,
         'miner1',
-        'worker1',
-        'master',
-        0,
-        'round1',
-        true,
-        0,
-        100,
-        'primary',
         1,
+        'round1',
+        0.1,
+        true,
+        'primary',
         8)
-      ON CONFLICT DO NOTHING;`;
+      ON CONFLICT ON CONSTRAINT historical_rounds_unique
+      DO NOTHING;`;
     expect(response).toBe(expected);
   });
 });
