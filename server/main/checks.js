@@ -56,12 +56,12 @@ const Checks = function (logger, client, config, configMain) {
   this.handleCurrentBalances = function(balances, blockType) {
 
     // Return Miners Updates
-    return Object.keys(balances).map(element => {
+    return Object.keys(balances).map((miner) => {
       return {
         timestamp: Date.now(),
-        miner: element,
-        generate: balances[element].generate,
-        immature: balances[element].immature,
+        miner: miner,
+        generate: balances[miner].generate,
+        immature: balances[miner].immature,
         type: blockType,
       };
     });

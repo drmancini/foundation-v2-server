@@ -1035,7 +1035,6 @@ describe('Test rounds functionality', () => {
 
   test('Test rounds miners updates [1]', () => {
     MockDate.set(1634742080841);
-    configCopy.ports[0].type = 'solo';
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
@@ -1053,6 +1052,7 @@ describe('Test rounds functionality', () => {
 
   test('Test rounds miners updates [2]', () => {
     MockDate.set(1634742080841);
+    configCopy.ports[0].type = 'solo';
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
@@ -1068,7 +1068,7 @@ describe('Test rounds functionality', () => {
       timestamp: 1634742080841,
       miner: '',
       effort: 0,
-      solo: false,
+      solo: true,
       type: 'primary',
     };
     expect(rounds.handleMiners([share], 'primary')).toStrictEqual([expected]);
@@ -1076,6 +1076,32 @@ describe('Test rounds functionality', () => {
 
   test('Test rounds miners updates [3]', () => {
     MockDate.set(1634742080841);
+    configCopy.ports[0].type = 'solo';
+    const client = mockClient(configMainCopy, { rows: [] });
+    const logger = new Logger(configMainCopy);
+    const rounds = new Rounds(logger, client, configCopy, configMainCopy);
+    const share = {
+      error: 'job not found',
+      port: 3002,
+      addrauxiliary: 'primary',
+      blockdiffprimary: 1,
+      blockdiffauxiliary: 1,
+      clientdiff: 1,
+      sharevalid: false,
+    };
+    const expected = {
+      timestamp: 1634742080841,
+      miner: '',
+      effort: 0,
+      solo: true,
+      type: 'primary',
+    };
+    expect(rounds.handleMiners([share], 'primary')).toStrictEqual([expected]);
+  });
+
+  test('Test rounds miners updates [4]', () => {
+    MockDate.set(1634742080841);
+    configCopy.ports[0].type = 'solo';
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
@@ -1093,32 +1119,7 @@ describe('Test rounds functionality', () => {
       timestamp: 1634742080841,
       miner: 'primary',
       effort: 0,
-      solo: false,
-      type: 'primary',
-    };
-    expect(rounds.handleMiners([share, share], 'primary')).toStrictEqual([expected]);
-  });
-
-  test('Test rounds miners updates [4]', () => {
-    MockDate.set(1634742080841);
-    const client = mockClient(configMainCopy, { rows: [] });
-    const logger = new Logger(configMainCopy);
-    const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const share = {
-      error: 'job not found',
-      port: 3002,
-      addrprimary: 'primary',
-      addrauxiliary: 'primary',
-      blockdiffprimary: 1,
-      blockdiffauxiliary: 1,
-      clientdiff: 1,
-      sharevalid: true,
-    };
-    const expected = {
-      timestamp: 1634742080841,
-      miner: 'primary',
-      effort: 0,
-      solo: false,
+      solo: true,
       type: 'primary',
     };
     expect(rounds.handleMiners([share, share], 'primary')).toStrictEqual([expected]);
@@ -1790,20 +1791,6 @@ describe('Test rounds functionality', () => {
         stale = "Pool-Bitcoin".historical_metadata.stale + EXCLUDED.stale,
         valid = "Pool-Bitcoin".historical_metadata.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_metadata.work + EXCLUDED.work;`;
-    const expectedMiners = `
-      INSERT INTO "Pool-Bitcoin".current_miners (
-        timestamp, miner, effort,
-        solo, type)
-      VALUES (
-        1634742080841,
-        'primary',
-        100,
-        false,
-        'primary')
-      ON CONFLICT ON CONSTRAINT current_miners_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        effort = "Pool-Bitcoin".current_miners.effort + EXCLUDED.effort;`;
     const expectedHistoricalMiners = `
       INSERT INTO "Pool-Bitcoin".historical_miners (
         timestamp, recent, miner,
@@ -1929,17 +1916,16 @@ describe('Test rounds functionality', () => {
         timestamp = EXCLUDED.timestamp,
         share_writes = "Pool-Bitcoin".local_history.share_writes + EXCLUDED.share_writes;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(12);
+      expect(transaction.length).toBe(11);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedMetadata);
       expect(transaction[3]).toBe(expectedHistoricalMetadata);
-      expect(transaction[4]).toBe(expectedMiners);
-      expect(transaction[5]).toBe(expectedHistoricalMiners);
-      expect(transaction[6]).toBe(expectedRounds);
-      expect(transaction[7]).toBe(expectedUsers);
-      expect(transaction[8]).toBe(expectedWorkers);
-      expect(transaction[9]).toBe(expectedHistoricalWorkers);
-      expect(transaction[10]).toBe(expectedHistory);
+      expect(transaction[4]).toBe(expectedHistoricalMiners);
+      expect(transaction[5]).toBe(expectedRounds);
+      expect(transaction[6]).toBe(expectedUsers);
+      expect(transaction[7]).toBe(expectedWorkers);
+      expect(transaction[8]).toBe(expectedHistoricalWorkers);
+      expect(transaction[9]).toBe(expectedHistory);
       done();
     });
     rounds.handleUpdates(lookups, [share], () => {});
@@ -2006,11 +1992,11 @@ describe('Test rounds functionality', () => {
         solo, type, work)
       VALUES (
         1634742080841,
-        100,
+        0,
         'master',
         true,
         'primary',
-        1)
+        0)
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
@@ -2038,6 +2024,20 @@ describe('Test rounds functionality', () => {
         stale = "Pool-Bitcoin".historical_metadata.stale + EXCLUDED.stale,
         valid = "Pool-Bitcoin".historical_metadata.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_metadata.work + EXCLUDED.work;`;
+    const expectedMiners = `
+      INSERT INTO "Pool-Bitcoin".current_miners (
+        timestamp, miner, effort,
+        solo, type)
+      VALUES (
+        1634742080841,
+        'primary',
+        100,
+        true,
+        'primary')
+      ON CONFLICT ON CONSTRAINT current_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        effort = "Pool-Bitcoin".current_miners.effort + EXCLUDED.effort;`;
     const expectedHistoricalMiners = `
       INSERT INTO "Pool-Bitcoin".historical_miners (
         timestamp, recent, miner,
@@ -2163,16 +2163,17 @@ describe('Test rounds functionality', () => {
         timestamp = EXCLUDED.timestamp,
         share_writes = "Pool-Bitcoin".local_history.share_writes + EXCLUDED.share_writes;`;
     client.on('transaction', (transaction) => {
-      expect(transaction.length).toBe(11);
+      expect(transaction.length).toBe(12);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedMetadata);
       expect(transaction[3]).toBe(expectedHistoricalMetadata);
-      expect(transaction[4]).toBe(expectedHistoricalMiners);
-      expect(transaction[5]).toBe(expectedRounds);
-      expect(transaction[6]).toBe(expectedUsers);
-      expect(transaction[7]).toBe(expectedWorkers);
-      expect(transaction[8]).toBe(expectedHistoricalWorkers);
-      expect(transaction[9]).toBe(expectedHistory);
+      expect(transaction[4]).toBe(expectedMiners);
+      expect(transaction[5]).toBe(expectedHistoricalMiners);
+      expect(transaction[6]).toBe(expectedRounds);
+      expect(transaction[7]).toBe(expectedUsers);
+      expect(transaction[8]).toBe(expectedWorkers);
+      expect(transaction[9]).toBe(expectedHistoricalWorkers);
+      expect(transaction[10]).toBe(expectedHistory);
       done();
     });
     rounds.handleUpdates(lookups, [share], () => {});
@@ -2324,34 +2325,6 @@ describe('Test rounds functionality', () => {
         stale = "Pool-Bitcoin".historical_metadata.stale + EXCLUDED.stale,
         valid = "Pool-Bitcoin".historical_metadata.valid + EXCLUDED.valid,
         work = "Pool-Bitcoin".historical_metadata.work + EXCLUDED.work;`;
-    const expectedMiners = `
-      INSERT INTO "Pool-Bitcoin".current_miners (
-        timestamp, miner, effort,
-        solo, type)
-      VALUES (
-        1634742080841,
-        'primary',
-        100,
-        false,
-        'primary')
-      ON CONFLICT ON CONSTRAINT current_miners_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        effort = "Pool-Bitcoin".current_miners.effort + EXCLUDED.effort;`;
-    const expectedAuxMiners = `
-      INSERT INTO "Pool-Bitcoin".current_miners (
-        timestamp, miner, effort,
-        solo, type)
-      VALUES (
-        1634742080841,
-        '',
-        100,
-        false,
-        'auxiliary')
-      ON CONFLICT ON CONSTRAINT current_miners_unique
-      DO UPDATE SET
-        timestamp = EXCLUDED.timestamp,
-        effort = "Pool-Bitcoin".current_miners.effort + EXCLUDED.effort;`;
     const expectedHistoricalMiners = `
       INSERT INTO "Pool-Bitcoin".historical_miners (
         timestamp, recent, miner,
@@ -2592,6 +2565,444 @@ describe('Test rounds functionality', () => {
         timestamp = EXCLUDED.timestamp,
         share_writes = "Pool-Bitcoin".local_history.share_writes + EXCLUDED.share_writes;`;
     client.on('transaction', (transaction) => {
+      expect(transaction.length).toBe(19);
+      expect(transaction[1]).toBe(expectedHashrate);
+      expect(transaction[2]).toBe(expectedAuxHashrate);
+      expect(transaction[3]).toBe(expectedMetadata);
+      expect(transaction[4]).toBe(expectedAuxMetadata);
+      expect(transaction[5]).toBe(expectedHistoricalMetadata);
+      expect(transaction[6]).toBe(expectedAuxHistoricalMetadata);
+      expect(transaction[7]).toBe(expectedHistoricalMiners);
+      expect(transaction[8]).toBe(expectedAuxHistoricalMiners);
+      expect(transaction[9]).toBe(expectedRounds);
+      expect(transaction[10]).toBe(expectedAuxRounds);
+      expect(transaction[11]).toBe(expectedUsers);
+      expect(transaction[12]).toBe(expectedAuxUsers);
+      expect(transaction[13]).toBe(expectedWorkers);
+      expect(transaction[14]).toBe(expectedAuxWorkers);
+      expect(transaction[15]).toBe(expectedHistoricalWorkers);
+      expect(transaction[16]).toBe(expectedAuxHistoricalWorkers);
+      expect(transaction[17]).toBe(expectedHistory);
+      done();
+    });
+    rounds.handleUpdates(lookups, [share], () => {});
+  });
+  
+  test('Test rounds main updates [4]', (done) => {
+    MockDate.set(1634742080841);
+    configCopy.ports[0].type = 'solo';
+    configCopy.auxiliary = { enabled: true, payments: { defaultPayment: 0.01 } };
+    const client = mockClient(configMainCopy, { rows: [] });
+    const logger = new Logger(configMainCopy);
+    const rounds = new Rounds(logger, client, configCopy, configMainCopy);
+    const lookups = [
+      null,
+      { rows: [{ work: 1 }]},
+      { rows: [{ work: 1 }]},
+      { rows: [{ miner: 'primary', work: 1 }]},
+      { rows: [{ miner: 'primary', work: 1 }]},
+      { rows: [{ miner: 'primary', worker: 'primary', work: 1 }]},
+      { rows: [{ miner: 'primary', worker: 'primary', work: 1 }]},
+      { rows: []},
+      { rows: []},
+      null,
+    ];
+    const share = {
+      error: '',
+      uuid: '123456789',
+      timestamp: 1634742080841,
+      submitted: 1,
+      ip: '0.0.0.0',
+      port: 3002,
+      addrprimary: 'primary',
+      addrauxiliary: null,
+      blockdiffprimary: 1,
+      blockdiffauxiliary: 1,
+      blockvalid: true,
+      blocktype: 'share',
+      clientdiff: 1,
+      hash: 'hash1',
+      height: 1,
+      identifier: '',
+      reward: 1,
+      sharediff: 1,
+      sharevalid: true,
+      transaction: 'transaction1'
+    };
+    const expectedHashrate = `
+      INSERT INTO "Pool-Bitcoin".current_hashrate (
+        timestamp, miner, worker,
+        identifier, ip_hash, share,
+        solo, type, work)
+      VALUES (
+        1634742080841,
+        'primary',
+        'primary',
+        'master',
+        'e562f69ec36e625116376f376d991e41613e9bf3',
+        'valid',
+        true,
+        'primary',
+        1);`;
+    const expectedAuxHashrate = `
+      INSERT INTO "Pool-Bitcoin".current_hashrate (
+        timestamp, miner, worker,
+        identifier, ip_hash, share,
+        solo, type, work)
+      VALUES (
+        1634742080841,
+        '',
+        'null',
+        'master',
+        'e562f69ec36e625116376f376d991e41613e9bf3',
+        'valid',
+        true,
+        'auxiliary',
+        1);`;
+    const expectedMetadata = `
+      INSERT INTO "Pool-Bitcoin".current_metadata (
+        timestamp, effort, identifier,
+        solo, type, work)
+      VALUES (
+        1634742080841,
+        0,
+        'master',
+        true,
+        'primary',
+        0)
+      ON CONFLICT ON CONSTRAINT current_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        effort = "Pool-Bitcoin".current_metadata.effort + EXCLUDED.effort,
+        work = "Pool-Bitcoin".current_metadata.work + EXCLUDED.work;`;
+    const expectedAuxMetadata = `
+      INSERT INTO "Pool-Bitcoin".current_metadata (
+        timestamp, effort, identifier,
+        solo, type, work)
+      VALUES (
+        1634742080841,
+        0,
+        'master',
+        true,
+        'auxiliary',
+        0)
+      ON CONFLICT ON CONSTRAINT current_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        effort = "Pool-Bitcoin".current_metadata.effort + EXCLUDED.effort,
+        work = "Pool-Bitcoin".current_metadata.work + EXCLUDED.work;`;
+    const expectedHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent,
+        identifier, invalid, solo,
+        stale, type, valid, work)
+      VALUES (
+        1634742080841,
+        600000,
+        'master',
+        0,
+        true,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        invalid = "Pool-Bitcoin".historical_metadata.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".historical_metadata.stale + EXCLUDED.stale,
+        valid = "Pool-Bitcoin".historical_metadata.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".historical_metadata.work + EXCLUDED.work;`;
+    const expectedAuxHistoricalMetadata = `
+      INSERT INTO "Pool-Bitcoin".historical_metadata (
+        timestamp, recent,
+        identifier, invalid, solo,
+        stale, type, valid, work)
+      VALUES (
+        1634742080841,
+        600000,
+        'master',
+        0,
+        true,
+        0,
+        'auxiliary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_metadata_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        invalid = "Pool-Bitcoin".historical_metadata.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".historical_metadata.stale + EXCLUDED.stale,
+        valid = "Pool-Bitcoin".historical_metadata.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".historical_metadata.work + EXCLUDED.work;`;
+    const expectedMiners = `
+      INSERT INTO "Pool-Bitcoin".current_miners (
+        timestamp, miner, effort,
+        solo, type)
+      VALUES (
+        1634742080841,
+        'primary',
+        100,
+        true,
+        'primary')
+      ON CONFLICT ON CONSTRAINT current_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        effort = "Pool-Bitcoin".current_miners.effort + EXCLUDED.effort;`;
+    const expectedAuxMiners = `
+      INSERT INTO "Pool-Bitcoin".current_miners (
+        timestamp, miner, effort,
+        solo, type)
+      VALUES (
+        1634742080841,
+        '',
+        100,
+        true,
+        'auxiliary')
+      ON CONFLICT ON CONSTRAINT current_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        effort = "Pool-Bitcoin".current_miners.effort + EXCLUDED.effort;`;
+    const expectedHistoricalMiners = `
+      INSERT INTO "Pool-Bitcoin".historical_miners (
+        timestamp, recent, miner,
+        invalid, solo, stale,
+        type, valid, work)
+      VALUES (
+        1634742080841,
+        600000,
+        'primary',
+        0,
+        true,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        invalid = "Pool-Bitcoin".historical_miners.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".historical_miners.stale + EXCLUDED.stale,
+        valid = "Pool-Bitcoin".historical_miners.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".historical_miners.work + EXCLUDED.work;`;
+    const expectedAuxHistoricalMiners = `
+      INSERT INTO "Pool-Bitcoin".historical_miners (
+        timestamp, recent, miner,
+        invalid, solo, stale,
+        type, valid, work)
+      VALUES (
+        1634742080841,
+        600000,
+        '',
+        0,
+        true,
+        0,
+        'auxiliary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_miners_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        invalid = "Pool-Bitcoin".historical_miners.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".historical_miners.stale + EXCLUDED.stale,
+        valid = "Pool-Bitcoin".historical_miners.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".historical_miners.work + EXCLUDED.work;`;
+    const expectedRounds = `
+      INSERT INTO "Pool-Bitcoin".current_rounds (
+        timestamp, submitted, recent,
+        miner, worker, identifier, invalid,
+        ip_hash, round, solo, stale, times,
+        type, valid, work)
+      VALUES (
+        1634742080841,
+        1,
+        0,
+        'primary',
+        'primary',
+        'master',
+        0,
+        'e562f69ec36e625116376f376d991e41613e9bf3',
+        'current',
+        true,
+        0,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT current_rounds_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        submitted = EXCLUDED.submitted,
+        invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
+        times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
+        valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
+    const expectedAuxRounds = `
+      INSERT INTO "Pool-Bitcoin".current_rounds (
+        timestamp, submitted, recent,
+        miner, worker, identifier, invalid,
+        ip_hash, round, solo, stale, times,
+        type, valid, work)
+      VALUES (
+        1634742080841,
+        1,
+        0,
+        '',
+        'null',
+        'master',
+        0,
+        'e562f69ec36e625116376f376d991e41613e9bf3',
+        'current',
+        true,
+        0,
+        0,
+        'auxiliary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT current_rounds_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        submitted = EXCLUDED.submitted,
+        invalid = "Pool-Bitcoin".current_rounds.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".current_rounds.stale + EXCLUDED.stale,
+        times = GREATEST("Pool-Bitcoin".current_rounds.times, EXCLUDED.times),
+        valid = "Pool-Bitcoin".current_rounds.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".current_rounds.work + EXCLUDED.work;`;
+    const expectedUsers = `
+      INSERT INTO "Pool-Bitcoin".current_users (
+        timestamp, miner, joined,
+        payout_limit, type)
+      VALUES (
+        1634742080841,
+        'primary',
+        1,
+        0.01,
+        'primary')
+      ON CONFLICT ON CONSTRAINT current_users_unique
+      DO NOTHING;`;
+    const expectedAuxUsers = `
+      INSERT INTO "Pool-Bitcoin".current_users (
+        timestamp, miner, joined,
+        payout_limit, type)
+      VALUES (
+        1634742080841,
+        '',
+        1,
+        0.01,
+        'auxiliary')
+      ON CONFLICT ON CONSTRAINT current_users_unique
+      DO NOTHING;`;
+    const expectedWorkers = `
+      INSERT INTO "Pool-Bitcoin".current_workers (
+        timestamp, miner, worker,
+        identifier, ip_hash,
+        last_octet, last_share,
+        offline_tag, solo, type)
+      VALUES (
+        1634742080841,
+        'primary',
+        'primary',
+        'master',
+        'e562f69ec36e625116376f376d991e41613e9bf3',
+        0,
+        1,
+        false,
+        true,
+        'primary')
+      ON CONFLICT ON CONSTRAINT current_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        identifier = EXCLUDED.identifier,
+        last_share = EXCLUDED.last_share,
+        offline_tag = EXCLUDED.offline_tag;`;
+    const expectedAuxWorkers = `
+      INSERT INTO "Pool-Bitcoin".current_workers (
+        timestamp, miner, worker,
+        identifier, ip_hash,
+        last_octet, last_share,
+        offline_tag, solo, type)
+      VALUES (
+        1634742080841,
+        '',
+        'null',
+        'master',
+        'e562f69ec36e625116376f376d991e41613e9bf3',
+        0,
+        1,
+        false,
+        true,
+        'auxiliary')
+      ON CONFLICT ON CONSTRAINT current_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        identifier = EXCLUDED.identifier,
+        last_share = EXCLUDED.last_share,
+        offline_tag = EXCLUDED.offline_tag;`;
+    const expectedHistoricalWorkers = `
+      INSERT INTO "Pool-Bitcoin".historical_workers (
+        timestamp, recent, miner,
+        worker, identifier, invalid,
+        ip_hash, solo, stale, type,
+        valid, work)
+      VALUES (
+        1634742080841,
+        600000,
+        'primary',
+        'primary',
+        'master',
+        0,
+        'e562f69ec36e625116376f376d991e41613e9bf3',
+        true,
+        0,
+        'primary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        identifier = EXCLUDED.identifier,
+        invalid = "Pool-Bitcoin".historical_workers.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".historical_workers.stale + EXCLUDED.stale,
+        valid = "Pool-Bitcoin".historical_workers.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".historical_workers.work + EXCLUDED.work;`;
+    const expectedAuxHistoricalWorkers = `
+      INSERT INTO "Pool-Bitcoin".historical_workers (
+        timestamp, recent, miner,
+        worker, identifier, invalid,
+        ip_hash, solo, stale, type,
+        valid, work)
+      VALUES (
+        1634742080841,
+        600000,
+        '',
+        'null',
+        'master',
+        0,
+        'e562f69ec36e625116376f376d991e41613e9bf3',
+        true,
+        0,
+        'auxiliary',
+        1,
+        1)
+      ON CONFLICT ON CONSTRAINT historical_workers_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        identifier = EXCLUDED.identifier,
+        invalid = "Pool-Bitcoin".historical_workers.invalid + EXCLUDED.invalid,
+        stale = "Pool-Bitcoin".historical_workers.stale + EXCLUDED.stale,
+        valid = "Pool-Bitcoin".historical_workers.valid + EXCLUDED.valid,
+        work = "Pool-Bitcoin".historical_workers.work + EXCLUDED.work;`;
+    const expectedHistory = `
+      INSERT INTO "Pool-Bitcoin".local_history (
+        timestamp, recent,
+        share_writes)
+      VALUES (1634742080841, 1634742600000, 1)
+      ON CONFLICT ON CONSTRAINT local_history_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        share_writes = "Pool-Bitcoin".local_history.share_writes + EXCLUDED.share_writes;`;
+    client.on('transaction', (transaction) => {
       expect(transaction.length).toBe(21);
       expect(transaction[1]).toBe(expectedHashrate);
       expect(transaction[2]).toBe(expectedAuxHashrate);
@@ -2617,7 +3028,7 @@ describe('Test rounds functionality', () => {
     rounds.handleUpdates(lookups, [share], () => {});
   });
 
-  test('Test rounds main updates [4]', (done) => {
+  test('Test rounds main updates [5]', (done) => {
     MockDate.set(1634742080841);
     configCopy.ports[0].type = 'solo';
     const client = mockClient(configMainCopy, { rows: [] });
