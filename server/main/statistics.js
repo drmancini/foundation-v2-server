@@ -40,28 +40,28 @@ const Statistics = function (logger, client, config, configMain, template) {
     const section = _this.config.settings.window.hashrate;
 
     // Process Worker Counts
-    workers.forEach(element => {
-      const unique = `${element.identifier}_${element.solo}`;
+    workers.forEach((worker) => {
+      const unique = `${worker.identifier}_${worker.solo}`;
       metadata[unique] = {
         timestamp: timestamp,
         recent: recent,
-        identifier: element.identifier,
-        solo: element.solo,
+        identifier: worker.identifier,
+        solo: worker.solo,
         type: blockType,
-        workers: element.workers,
+        workers: worker.workers,
       }
     });
 
     // Process Miner Counts
-    miners.forEach(element => {
-      const unique = `${element.identifier}_${element.solo}`;
-      metadata[unique].miners = element.miners;
+    miners.forEach((miner) => {
+      const unique = `${miner.identifier}_${miner.solo}`;
+      metadata[unique].miners = miner.miners;
     });
 
     // Process Hashrate
-    work.forEach(element => {
-      const unique = `${element.identifier}_${element.solo}`;
-      const hashrate = multiplier * element.work * 1000 / section;
+    work.forEach((worker) => {
+      const unique = `${worker.identifier}_${worker.solo}`;
+      const hashrate = multiplier * worker.work * 1000 / section;
       metadata[unique].hashrate = hashrate;
     });
 
@@ -76,21 +76,21 @@ const Statistics = function (logger, client, config, configMain, template) {
     const timestamp = Date.now();
     
     // Count Share Types
-    history.forEach(element => {
-      const unique = `${element.identifier}_${element.solo}`;
+    history.forEach((snapshot) => {
+      const unique = `${snapshot.identifier}_${snapshot.solo}`;
       if (unique in metadata) {
-        metadata[unique].stale += element.stale;
-        metadata[unique].invalid += element.invalid;
-        metadata[unique].valid += element.valid;
+        metadata[unique].stale += snapshot.stale;
+        metadata[unique].invalid += snapshot.invalid;
+        metadata[unique].valid += snapshot.valid;
       } else {
         metadata[unique] = {
           timestamp: timestamp,
-          identifier: element.identifier,
-          invalid: element.invalid,
-          solo: element.solo,
-          stale: element.stale,
+          identifier: snapshot.identifier,
+          invalid: snapshot.invalid,
+          solo: snapshot.solo,
+          stale: snapshot.stale,
           type: blockType,
-          valid: element.valid,
+          valid: snapshot.valid,
         };
       }
     });
@@ -107,7 +107,7 @@ const Statistics = function (logger, client, config, configMain, template) {
   };
 
   // Handle Miners Hashrate Updates
-  this.handleMinerHashrate = function(minerWorkSums, blockType) {
+  this.handleMinerHashrate = function(currentMiners, minerWorkSums, blockType) {
 
     const miners = {};
 
@@ -120,18 +120,35 @@ const Statistics = function (logger, client, config, configMain, template) {
     const section = _this.config.settings.window.hashrate;
 
     // Process Individual Miners
-    minerWorkSums.forEach(element => {
-      const unique = `${element.miner}_${element.solo}`;
-      const hashrate = multiplier * element.work * 1000 / section;
+    minerWorkSums.forEach((miner) => {
+      const unique = `${miner.miner}_${miner.solo}`;
+      const hashrate = multiplier * miner.work * 1000 / section;
       miners[unique] = {
         timestamp: timestamp,
         recent: recent,
-        miner: element.miner,
+        miner: miner.miner,
         hashrate: hashrate,
-        solo: element.solo,
+        solo: miner.solo,
         type: blockType,
       }
     });
+
+    // Reset Inactive Miners Hashrate
+    if (currentMiners.length > 0) {
+      currentMiners.forEach((miner) => {
+        const unique = `${miner.miner}_${miner.solo}`;
+        if (!(unique in miners)) {
+          miners[unique] = {
+            timestamp: timestamp,
+            recent: recent,
+            miner: miner.miner,
+            hashrate: 0,
+            solo: miner.solo,
+            type: blockType,
+          };
+        }
+      });
+    }
 
     // Return Miners Updates
     return Object.values(miners)
@@ -148,23 +165,23 @@ const Statistics = function (logger, client, config, configMain, template) {
     const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;    
 
     // Process Individual Miners
-    historicalMiners.forEach(element => {
-      const unique = `${element.miner}_${element.solo}`;
-      const hashrate_12h = multiplier * element.sum_work_12h * 1000 / 43200000;
-      const hashrate_24h = multiplier * element.sum_work_24h * 1000 / 86400000;
-      const total = element.invalid + element.stale + element.valid;
-      const efficiency = Math.round(((element.valid / total) || 0) * 10000) / 100;
+    historicalMiners.forEach((miner) => {
+      const unique = `${miner.miner}_${miner.solo}`;
+      const hashrate_12h = multiplier * miner.sum_work_12h * 1000 / 43200000;
+      const hashrate_24h = multiplier * miner.sum_work_24h * 1000 / 86400000;
+      const total = miner.invalid + miner.stale + miner.valid;
+      const efficiency = Math.round(((miner.valid / total) || 0) * 10000) / 100;
 
       miners[unique] = {
         timestamp: timestamp,
-        miner: element.miner,
+        miner: miner.miner,
         efficiency: efficiency,
         hashrate_12h: hashrate_12h,
         hashrate_24h: hashrate_24h,
-        invalid: element.invalid,
-        solo: element.solo,
-        stale: element.stale,
-        valid: element.valid,
+        invalid: miner.invalid,
+        solo: miner.solo,
+        stale: miner.stale,
+        valid: miner.valid,
         type: blockType,
       };
     });
@@ -173,7 +190,7 @@ const Statistics = function (logger, client, config, configMain, template) {
   };
 
   // Handle Workers Hashrate Updates
-  this.handleWorkerHashrate = function(workerWorkSums, blockType) {
+  this.handleWorkerHashrate = function(currentWorkers, workerWorkSums, blockType) {
 
     const workers = {};
 
@@ -186,20 +203,39 @@ const Statistics = function (logger, client, config, configMain, template) {
     const section = _this.config.settings.window.hashrate;
 
     // Process Individual Workers
-    workerWorkSums.forEach(element => {
-      const unique = `${element.worker}_${element.ip_hash}_${element.solo}`;
-      const hashrate = multiplier * element.work * 1000 / section;
+    workerWorkSums.forEach((worker) => {
+      const unique = `${worker.worker}_${worker.ip_hash}_${worker.solo}`;
+      const hashrate = multiplier * worker.work * 1000 / section;
       workers[unique] = {
         timestamp: timestamp,
         recent: recent,
-        miner: element.worker.split('.')[0],
-        worker: element.worker,
+        miner: worker.worker.split('.')[0],
+        worker: worker.worker,
         hashrate: hashrate,
-        ip_hash: element.ip_hash,
-        solo: element.solo,
+        ip_hash: worker.ip_hash,
+        solo: worker.solo,
         type: blockType,
       }
     });
+
+    // Reset Inactive Worker Hashrate
+    if (currentWorkers.length > 0) {
+      currentWorkers.forEach((worker) => {
+        const unique = `${worker.worker}_${worker.ip_hash}_${worker.solo}`;
+        if (!(unique in workers)) {
+          workers[unique] = {
+            timestamp: timestamp,
+            recent: recent,
+            miner: worker.miner,
+            worker: worker.worker,
+            hashrate: 0,
+            ip_hash: worker.ip_hash,
+            solo: worker.solo,
+            type: blockType,
+          };
+        }
+      });
+    }
 
     // Return Workers Updates
     return Object.values(workers)
@@ -216,25 +252,25 @@ const Statistics = function (logger, client, config, configMain, template) {
     const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
 
     // Process Individual Workers
-    historicalWorkers.forEach(element => {
-      const unique = `${element.worker}_${element.ip_hash}_${element.solo}`;
-      const hashrate_12h = multiplier * element.sum_work_12h * 1000 / 43200000;
-      const hashrate_24h = multiplier * element.sum_work_24h * 1000 / 86400000;
-      const total = element.invalid + element.stale + element.valid;
-      const efficiency = Math.round(((element.valid / total) || 0) * 10000) / 100;
+    historicalWorkers.forEach((worker) => {
+      const unique = `${worker.worker}_${worker.ip_hash}_${worker.solo}`;
+      const hashrate_12h = multiplier * worker.sum_work_12h * 1000 / 43200000;
+      const hashrate_24h = multiplier * worker.sum_work_24h * 1000 / 86400000;
+      const total = worker.invalid + worker.stale + worker.valid;
+      const efficiency = Math.round(((worker.valid / total) || 0) * 10000) / 100;
 
       workers[unique] = {
         timestamp: timestamp,
-        miner: element.worker.split('.')[0],
-        worker: element.worker,
+        miner: worker.worker.split('.')[0],
+        worker: worker.worker,
         efficiency: efficiency,
         hashrate_12h: hashrate_12h,
         hashrate_24h: hashrate_24h,
-        invalid: element.invalid,
-        ip_hash: element.ip_hash,
-        solo: element.solo,
-        stale: element.stale,
-        valid: element.valid,
+        invalid: worker.invalid,
+        ip_hash: worker.ip_hash,
+        solo: worker.solo,
+        stale: worker.stale,
+        valid: worker.valid,
         type: blockType,
       };
     });
@@ -252,8 +288,10 @@ const Statistics = function (logger, client, config, configMain, template) {
     const workerWorkSums = lookups[5].rows;
     const identifierWorkSums = lookups[6].rows;
     const historicalMetadata = lookups[7].rows;
-    const historicalMinersShares = lookups[11].rows;
-    const historicalWorkersShares = lookups[12].rows;
+    const currentMiners = lookups[9].rows;
+    const currentWorkers = lookups[12].rows;
+    const historicalMinersShares = lookups[13].rows;
+    const historicalWorkersShares = lookups[14].rows;
 
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
@@ -277,7 +315,7 @@ const Statistics = function (logger, client, config, configMain, template) {
 
     // Handle Current and Historical Miner Hashrate Updates
     if (minerWorkSums.length > 0) {
-      const minerHashrateUpdates = _this.handleMinerHashrate(minerWorkSums, blockType);
+      const minerHashrateUpdates = _this.handleMinerHashrate(currentMiners, minerWorkSums, blockType);
       transaction.push(_this.master.current.miners.insertCurrentMinersHashrate(
         _this.pool, minerHashrateUpdates));
       transaction.push(_this.master.historical.miners.insertHistoricalMinersHashrate(
@@ -293,7 +331,7 @@ const Statistics = function (logger, client, config, configMain, template) {
     
     // Handle Current and Historical Worker Hashrate Updates
     if (workerWorkSums.length > 0) {
-      const workerHashrateUpdates = _this.handleWorkerHashrate(workerWorkSums, blockType);
+      const workerHashrateUpdates = _this.handleWorkerHashrate(currentWorkers, workerWorkSums, blockType);
       transaction.push(_this.master.current.workers.insertCurrentWorkersHashrate(
         _this.pool, workerHashrateUpdates));
       transaction.push(_this.master.historical.workers.insertHistoricalWorkersHashrate(
@@ -340,8 +378,10 @@ const Statistics = function (logger, client, config, configMain, template) {
       _this.master.current.hashrate.sumCurrentHashrateType(_this.pool, hashrateWindow, blockType),
       _this.master.historical.metadata.selectHistoricalMetadataMain(_this.pool, { recent: 'ge' + oneDayRecent, type: blockType }),
       _this.master.current.miners.deleteCurrentMinersInactive(_this.pool, inactiveWindow),
+      _this.master.current.miners.selectCurrentMinersMain(_this.pool, { hashrate: 'gt0', type: blockType }),
       _this.master.current.transactions.deleteCurrentTransactionsInactive(_this.pool, updateWindow),
       _this.master.current.workers.deleteCurrentWorkersInactive(_this.pool, inactiveWindow),
+      _this.master.current.workers.selectCurrentWorkersMain(_this.pool, { hashrate: 'gt0', type: blockType }),
       _this.master.historical.miners.selectHistoricalMinersAverages(_this.pool, halfDayWindow, oneDayWindow, blockType),
       _this.master.historical.workers.selectHistoricalWorkersAverages(_this.pool, halfDayWindow, oneDayWindow, blockType),
       'COMMIT;'];

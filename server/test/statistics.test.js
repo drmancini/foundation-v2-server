@@ -155,16 +155,24 @@ describe('Test statistics functionality', () => {
     const logger = new Logger(configMainCopy);
     const template = { algorithms: { sha256d: { multiplier: 1 }}};
     const statistics = new Statistics(logger, client, configCopy, configMainCopy, template);
-    const minerWorkSums = [{ miner: 'primary', solo: false, work: 1 }];
-    const expected = {
+    const currentMiners = [{ miner: 'primary1', solo: false, hashrate: 1 }];
+    const minerWorkSums = [{ miner: 'primary2', solo: false, work: 1 }];
+    const expected = [{
       timestamp: 1634742080841,
       recent: 1634742600000,
-      miner: 'primary',
+      miner: 'primary2',
       hashrate: 14316557.653333334,
       solo: false,
       type: 'primary',
-    };
-    expect(statistics.handleMinerHashrate(minerWorkSums, 'primary')).toStrictEqual([expected]);
+    }, {
+      timestamp: 1634742080841,
+      recent: 1634742600000,
+      miner: 'primary1',
+      hashrate: 0,
+      solo: false,
+      type: 'primary',
+    }];
+    expect(statistics.handleMinerHashrate(currentMiners, minerWorkSums, 'primary')).toStrictEqual(expected);
   });
 
   test('Test statistics database updates [8]', () => {
@@ -173,8 +181,7 @@ describe('Test statistics functionality', () => {
     const logger = new Logger(configMainCopy);
     const template = { algorithms: { sha256d: { multiplier: 1 }}};
     const statistics = new Statistics(logger, client, configCopy, configMainCopy, template);
-    const minerWorkSums = [];
-    expect(statistics.handleMinerHashrate(minerWorkSums, 'primary')).toStrictEqual([]);
+    expect(statistics.handleMinerHashrate([], [], 'primary')).toStrictEqual([]);
   });
 
   test('Test statistics database updates [9]', () => {
@@ -253,23 +260,45 @@ describe('Test statistics functionality', () => {
     const logger = new Logger(configMainCopy);
     const template = { algorithms: { sha256d: { multiplier: 1 }}};
     const statistics = new Statistics(logger, client, configCopy, configMainCopy, template);
+    const currentWorkers = [{
+      worker: 'primary1',
+      miner: 'primary1',
+      ip_hash: 'hash',
+      solo: false,
+      hashrate: 1,
+    }, {
+      worker: 'primary2',
+      miner: 'primary2',
+      ip_hash: 'hash',
+      solo: false,
+      hashrate: 1,
+    }];
     const workerWorkSums = [{
-      worker: 'primary',
+      worker: 'primary2',
       ip_hash: 'hash',
       solo: false,
       work: 1,
     }];
-    const expected = {
+    const expected = [{
       timestamp: 1634742080841,
       recent: 1634742600000,
-      miner: 'primary',
-      worker: 'primary',
+      miner: 'primary2',
+      worker: 'primary2',
       hashrate: 14316557.653333334,
       ip_hash: 'hash',
       solo: false,
       type: 'primary',
-    };
-    expect(statistics.handleWorkerHashrate(workerWorkSums, 'primary')).toStrictEqual([expected]);
+    }, {
+      timestamp: 1634742080841,
+      recent: 1634742600000,
+      miner: 'primary1',
+      worker: 'primary1',
+      hashrate: 0,
+      ip_hash: 'hash',
+      solo: false,
+      type: 'primary',
+    }];
+    expect(statistics.handleWorkerHashrate(currentWorkers, workerWorkSums, 'primary')).toStrictEqual(expected);
   });
 
   test('Test statistics database updates [13]', () => {
@@ -278,8 +307,7 @@ describe('Test statistics functionality', () => {
     const logger = new Logger(configMainCopy);
     const template = { algorithms: { sha256d: { multiplier: 1 }}};
     const statistics = new Statistics(logger, client, configCopy, configMainCopy, template);
-    const minerWorkSums = [];
-    expect(statistics.handleWorkerHashrate(minerWorkSums, 'primary')).toStrictEqual([]);
+    expect(statistics.handleWorkerHashrate([], [], 'primary')).toStrictEqual([]);
   });
 
   test('Test statistics database updates [14]', () => {
@@ -391,8 +419,10 @@ describe('Test statistics functionality', () => {
         { identifier: 'master2', solo: false, work: 1 }] },
       { rows: [{ identifier: 'master1', invalid: 0, solo: false, stale: 0, valid: 1 }] },
       null,
+      { rows: [{ miner: 'miner1', solo: false, hashrate: 1 }] },
       null,
       null,
+      { rows: [{ miner: 'worker1', worker: 'worker1', ip_hash: 'hash1', solo: false, hashrate: 1 }] },
       { rows: [{
         miner: 'miner1',
         invalid: 0,
@@ -743,8 +773,10 @@ describe('Test statistics functionality', () => {
       { rows: [] },
       { rows: [] },
       null,
+      { rows: [] },
       null,
       null,
+      { rows: [] },
       { rows: [] },
       { rows: [] },
       null];
@@ -781,8 +813,10 @@ describe('Test statistics functionality', () => {
         { identifier: 'master2', solo: false, work: 1 }] },
       { rows: [{ identifier: 'master1', invalid: 0, solo: false, stale: 0, valid: 1 }] },
       null,
+      { rows: [{ miner: 'miner1', solo: false, hashrate: 1 }] },
       null,
       null,
+      { rows: [{ miner: 'worker1', worker: 'worker1', ip_hash: 'hash1', solo: false, hashrate: 1 }] },
       { rows: [{
         miner: 'miner1',
         invalid: 0,
@@ -839,8 +873,10 @@ describe('Test statistics functionality', () => {
       { rows: [] },
       { rows: [] },
       null,
+      { rows: [] },
       null,
       null,
+      { rows: [] },
       { rows: [] },
       { rows: [] },
       null];

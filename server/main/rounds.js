@@ -220,11 +220,11 @@ const Rounds = function (logger, client, config, configMain) {
     // Return Metadata Updates
     return {
       timestamp: Date.now(),
-      effort: effort,
+      effort: minerType ? 0 : effort,
       identifier: identifier,
       solo: minerType,
       type: blockType,
-      work: current,
+      work: minerType ? 0 : current,
     };
   };
 
@@ -391,19 +391,19 @@ const Rounds = function (logger, client, config, configMain) {
 
     // Handle Individual Shares
     const updates = [];
-    shares.forEach(element => {
+    shares.forEach((share) => {
 
       // Determine Hashrate Properties
-      const minerType = utils.checkSoloMining(_this.config, element);
+      const minerType = utils.checkSoloMining(_this.config, share);
 
       // Determine Share Type
       let shareType = 'valid';
-      if (element.error && element.error === 'job not found') shareType = 'stale';
-      else if (!element.sharevalid || element.error) shareType = 'invalid';
+      if (share.error && share.error === 'job not found') shareType = 'stale';
+      else if (!share.sharevalid || share.error) shareType = 'invalid';
 
       // Check If Share is Still Valid
-      if (Date.now() - _this.config.settings.window.hashrate <= element.timestamp) {
-        updates.push(_this.handleCurrentHashrate(element, shareType, minerType, blockType));
+      if (Date.now() - _this.config.settings.window.hashrate <= share.timestamp) {
+        updates.push(_this.handleCurrentHashrate(share, shareType, minerType, blockType));
       }
     });
 
@@ -435,22 +435,22 @@ const Rounds = function (logger, client, config, configMain) {
     const metadata = {};
 
     // Handle Individual Shares
-    shares.forEach(element => {
+    shares.forEach((share) => {
 
       // Determine Metadata Properties
-      const minerType = utils.checkSoloMining(_this.config, element);
+      const minerType = utils.checkSoloMining(_this.config, share);
 
       // Determine Share Type
       let shareType = 'valid';
-      if (element.error && element.error === 'job not found') shareType = 'stale';
-      else if (!element.sharevalid || element.error) shareType = 'invalid';
+      if (share.error && share.error === 'job not found') shareType = 'stale';
+      else if (!share.sharevalid || share.error) shareType = 'invalid';
 
       // Determine Metadata States
-      const unique = `${ element.identifier }_${ element.solo }`;
+      const unique = `${ share.identifier }_${ share.solo }`;
       const current = metadata[unique] || {};
       
       // Determine Updates for Current Metadata
-      metadata[unique] = _this.handleCurrentMetadata(current, element, shareType, minerType, blockType);
+      metadata[unique] = _this.handleCurrentMetadata(current, share, shareType, minerType, blockType);
     });
 
     // Return Metadata Updates
@@ -463,23 +463,23 @@ const Rounds = function (logger, client, config, configMain) {
     let metadata = {};
     
     // Handle Individual Shares
-    shares.forEach(element => {
+    shares.forEach((share) => {
       
       // Determine Metadata Properties
-      const minerType = utils.checkSoloMining(_this.config, element);
-      const identifier = element.identifier || 'master';
+      const minerType = utils.checkSoloMining(_this.config, share);
+      const identifier = share.identifier || 'master';
 
       // Determine Share Type
       let shareType = 'valid';
-      if (element.error && element.error === 'job not found') shareType = 'stale';
-      else if (!element.sharevalid || element.error) shareType = 'invalid';
+      if (share.error && share.error === 'job not found') shareType = 'stale';
+      else if (!share.sharevalid || share.error) shareType = 'invalid';
 
       // Determine Metadata States
-      const unique = `${ identifier }_${ element.solo }`;
+      const unique = `${ identifier }_${ share.solo }`;
       const current = metadata[unique] || {};
       
       // Determine Updates for Historical Metadata
-      metadata[unique] = _this.handleHistoricalMetadata(current, element, shareType, minerType, blockType);
+      metadata[unique] = _this.handleHistoricalMetadata(current, share, shareType, minerType, blockType);
     });
 
     // Return Metadata Updates
@@ -492,25 +492,25 @@ const Rounds = function (logger, client, config, configMain) {
     const miners = {};
 
     // Handle Individual Shares
-    shares.forEach(element => {
+    shares.forEach(share => {
 
       // Determine Miner Properties
-      const worker = blockType === 'primary' ? element.addrprimary : element.addrauxiliary;
+      const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
       const miner = (worker || '').split('.')[0];
-      const minerType = utils.checkSoloMining(_this.config, element);
+      const minerType = utils.checkSoloMining(_this.config, share);
 
       // Determine Share Type
       let shareType = 'valid';
-      if (element.error && element.error === 'job not found') shareType = 'stale';
-      else if (!element.sharevalid || element.error) shareType = 'invalid';
+      if (share.error && share.error === 'job not found') shareType = 'stale';
+      else if (!share.sharevalid || share.error) shareType = 'invalid';
 
       // Determine Miner States
       const unique = `${ miner }_${ minerType }`;
       const current = miners[unique] || {};
 
       // Determine Effort Updates for Solo Miners
-      if (!minerType)
-        miners[unique] = _this.handleCurrentMiners(current, element, shareType, minerType, blockType);
+      if (minerType)
+        miners[unique] = _this.handleCurrentMiners(current, share, shareType, minerType, blockType);
     });
 
     // Return Miner Updates
@@ -523,24 +523,24 @@ const Rounds = function (logger, client, config, configMain) {
     const miners = {};
 
     // Handle Individual Shares
-    shares.forEach(element => {
+    shares.forEach((share) => {
 
       // Determine Miner Properties
-      const worker = blockType === 'primary' ? element.addrprimary : element.addrauxiliary;
+      const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
       const miner = (worker || '').split('.')[0];
-      const minerType = utils.checkSoloMining(_this.config, element);
+      const minerType = utils.checkSoloMining(_this.config, share);
 
       // Determine Share Type
       let shareType = 'valid';
-      if (element.error && element.error === 'job not found') shareType = 'stale';
-      else if (!element.sharevalid || element.error) shareType = 'invalid';      
+      if (share.error && share.error === 'job not found') shareType = 'stale';
+      else if (!share.sharevalid || share.error) shareType = 'invalid';      
       
       // Determine Miner States
       const unique = `${ miner }_${ minerType }`;
       const current = miners[unique] || {};
 
       // Determine Updates for Miner
-      miners[unique] = _this.handleHistoricalMiners(current, element, shareType, minerType, blockType);
+      miners[unique] = _this.handleHistoricalMiners(current, share, shareType, minerType, blockType);
     });
 
     // Return Worker Updates
@@ -553,22 +553,22 @@ const Rounds = function (logger, client, config, configMain) {
     const updates = {};
 
     // Handle Individual Shares
-    shares.forEach(element => {
+    shares.forEach((share) => {
 
       // Determine Current Round Properties
-      const submitTime = element.submitted || Date.now();
+      const submitTime = share.submitted || Date.now();
       const interval = _this.config.settings.interval.recent;
-      const minerType = utils.checkSoloMining(_this.config, element);
+      const minerType = utils.checkSoloMining(_this.config, share);
       const recent = minerType ? 0 : Math.ceil(submitTime / interval) * interval;
 
       // Determine Share Type
       let shareType = 'valid';
-      if (element.error && element.error === 'job not found') shareType = 'stale';
-      else if (!element.sharevalid || element.error) shareType = 'invalid';
+      if (share.error && share.error === 'job not found') shareType = 'stale';
+      else if (!share.sharevalid || share.error) shareType = 'invalid';
 
       // Determine Share Properties
-      const worker = blockType === 'primary' ? element.addrprimary : element.addrauxiliary;
-      const ipHash = _this.handleIpHash(element);
+      const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
+      const ipHash = _this.handleIpHash(share);
 
       // Determine Share States
       const initial = rounds[`${ worker }_${ ipHash }_${ minerType }`] || {};
@@ -576,7 +576,7 @@ const Rounds = function (logger, client, config, configMain) {
       const current = updates[unique] || {};
 
       // Determine Updates for Shares
-      updates[unique] = _this.handleCurrentRounds(initial, current, element, ipHash, shareType, minerType, blockType);
+      updates[unique] = _this.handleCurrentRounds(initial, current, share, ipHash, shareType, minerType, blockType);
     });
 
     // Return Shares Updates
@@ -589,11 +589,11 @@ const Rounds = function (logger, client, config, configMain) {
     const updates = [];
 
     // Handle Individual Shares
-    shares.forEach(element => {
+    shares.forEach((share) => {
 
       // Determine User Properties
       const timestamp = Date.now();
-      const worker = blockType === 'primary' ? element.addrprimary : element.addrauxiliary;
+      const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
       const miner = (worker || '').split('.')[0];
       const payoutLimit = _this.config[blockType].payments.defaultPayment;
       const usersFound = users.filter(user => user == miner).length;
@@ -602,7 +602,7 @@ const Rounds = function (logger, client, config, configMain) {
         updates.push({
           timestamp: timestamp,
           miner: miner,
-          joined: element.submitted || timestamp,
+          joined: share.submitted || timestamp,
           payout_limit: payoutLimit,
           type: blockType,
         });
@@ -619,22 +619,22 @@ const Rounds = function (logger, client, config, configMain) {
     const workers = {};
 
     // Handle Individual Shares
-    shares.forEach(element => {
+    shares.forEach((share) => {
 
       // Determine Worker Properties
-      const ipHash = _this.handleIpHash(element);
-      const lastOctet = _this.handleLastOctet(element);
+      const ipHash = _this.handleIpHash(share);
+      const lastOctet = _this.handleLastOctet(share);
 
       // Get Share Properties
       const timestamp = Date.now();
-      const identifier = element.identifier || 'master';
-      const minerType = utils.checkSoloMining(_this.config, element);
-      const worker = blockType === 'primary' ? element.addrprimary : element.addrauxiliary;
+      const identifier = share.identifier || 'master';
+      const minerType = utils.checkSoloMining(_this.config, share);
+      const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
       
       // Determine Worker States
       const unique = `${ worker }_${ ipHash }_${ minerType }`;
       const current = workers[unique] || {};
-      const lastShare = Math.max((Number(current.last_share) || 0), Number(element.submitted || timestamp));
+      const lastShare = Math.max((Number(current.last_share) || 0), Number(share.submitted || timestamp));
 
       const currentWorker = {
         timestamp: timestamp,
@@ -662,24 +662,24 @@ const Rounds = function (logger, client, config, configMain) {
     const workers = {};
 
     // Handle Individual Shares
-    shares.forEach(element => {
+    shares.forEach((share) => {
 
       // Determine Worker Properties
-      const worker = blockType === 'primary' ? element.addrprimary : element.addrauxiliary;
-      const minerType = utils.checkSoloMining(_this.config, element);
-      const ipHash = _this.handleIpHash(element);
+      const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
+      const minerType = utils.checkSoloMining(_this.config, share);
+      const ipHash = _this.handleIpHash(share);
 
       // Determine Share Type
       let shareType = 'valid';
-      if (element.error && element.error === 'job not found') shareType = 'stale';
-      else if (!element.sharevalid || element.error) shareType = 'invalid';
+      if (share.error && share.error === 'job not found') shareType = 'stale';
+      else if (!share.sharevalid || share.error) shareType = 'invalid';
 
       // Determine Worker States
       const unique = `${ worker }_${ ipHash }_${ minerType }`;
       const current = workers[unique] || {};
 
       // Determine Updates for Worker
-      workers[unique] = _this.handleHistoricalWorkers(current, element, ipHash, shareType, minerType, blockType);
+      workers[unique] = _this.handleHistoricalWorkers(current, share, ipHash, shareType, minerType, blockType);
     });
 
     // Return Worker Updates
@@ -690,7 +690,7 @@ const Rounds = function (logger, client, config, configMain) {
   this.handleCleanup = function(segment, callback) {
 
     // Build Combined Transaction
-    const segmentDelete = segment.map(element => `'${ element.uuid }'`);
+    const segmentDelete = segment.map(segment => `'${ segment.uuid }'`);
     const transaction = [
       'BEGIN;',
       _this.worker.local.shares.deleteLocalSharesMain(_this.pool, segmentDelete),
