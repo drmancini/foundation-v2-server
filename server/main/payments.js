@@ -461,14 +461,16 @@ const Payments = function (logger, client, config, configMain) {
     _this.logger.debug('Payments', _this.config.name, starting);
 
     // Calculate Checks Features
-    const roundsWindow = Date.now() - _this.config.settings.window.rounds;
+    const sharedRoundsWindow = Date.now() - _this.config.settings.window.sharedRounds;
+    const soloRoundsWindow = Date.now() - _this.config.settings.window.soloRounds;
 
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
       _this.master.current.blocks.selectCurrentBlocksMain(_this.pool, { category: 'generate', type: blockType }),
       _this.master.current.balances.selectCurrentBalancesMain(_this.pool, { balance: 'gt0', type: blockType }),
-      _this.master.current.rounds.deleteCurrentRoundsInactive(_this.pool, roundsWindow), // duplicate call in checks ... only delete shared rounds, not solo!!!
+      _this.master.current.rounds.deleteCurrentRoundsInactive(_this.pool, false, sharedRoundsWindow),
+      _this.master.current.rounds.deleteCurrentRoundsInactive(_this.pool, true, soloRoundsWindow),
       'COMMIT;'];
 
     // Establish Separate Behavior

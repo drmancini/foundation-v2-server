@@ -254,7 +254,7 @@ const Rounds = function (logger, client, config, configMain) {
     // Determine Current Round Properties
     const timestamp = Date.now()
     const submitted = share.submitted || timestamp;
-    const interval = _this.config.settings.interval.historical;
+    const interval = _this.config.settings.interval.recent;
     const recent = minerType ? 0 : Math.ceil(submitted / interval) * interval;
 
     // Calculate Features of Rounds [1]
@@ -416,7 +416,7 @@ const Rounds = function (logger, client, config, configMain) {
 
     // Determine Time Properties
     const timestamp = Date.now();
-    const interval = _this.config.settings.interval.recent;
+    const interval = _this.config.settings.interval.historical;
     const recent = Math.ceil(timestamp / interval) * interval;
 
     // Return Batch Parser Updates
@@ -809,7 +809,7 @@ const Rounds = function (logger, client, config, configMain) {
     const sharesWritten = shares.length;
     if (sharesWritten > 0) {
       const timestamp = Date.now();
-      const interval = _this.config.settings.interval.recent;
+      const interval = _this.config.settings.interval.historical;
       const recent = Math.ceil(timestamp / interval) * interval;
       transaction.push(_this.master.local.history.insertLocalHistoryWrites(_this.pool, timestamp, recent, sharesWritten));
     }

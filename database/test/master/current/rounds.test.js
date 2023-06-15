@@ -290,10 +290,11 @@ describe('Test database rounds functionality', () => {
 
   test('Test rounds command handling [15]', () => {
     const rounds = new CurrentRounds(logger, configMainCopy);
-    const response = rounds.deleteCurrentRoundsInactive('Pool-Main', 1);
+    const response = rounds.deleteCurrentRoundsInactive('Pool-Main', false, 1);
     const expected = `
       DELETE FROM "Pool-Main".current_rounds
-      WHERE round = 'current' AND submitted < 1;`;
+      WHERE round = 'current' AND solo = false
+      AND submitted < 1;`;
     expect(response).toBe(expected);
   });
 
