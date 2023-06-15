@@ -158,10 +158,11 @@ const CurrentRounds = function (logger, configMain) {
   };
 
   // Delete Rows From Current Round
-  this.deleteCurrentRoundsInactive = function(pool, submitted) {
+  this.deleteCurrentRoundsInactive = function(pool, solo, submitted) {
     return `
       DELETE FROM "${ pool }".current_rounds
-      WHERE round = 'current' AND submitted < ${ submitted };`;
+      WHERE round = 'current' AND solo = ${ solo }
+      AND submitted < ${ submitted };`;
   };
 
   // Delete Rows From Current Round

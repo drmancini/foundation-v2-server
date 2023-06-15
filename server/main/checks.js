@@ -412,13 +412,15 @@ const Checks = function (logger, client, config, configMain) {
     _this.logger.debug('Checks', _this.config.name, starting);
 
     // Calculate Checks Features
-    const roundsWindow = Date.now() - _this.config.settings.window.rounds;
+    const sharedRoundsWindow = Date.now() - _this.config.settings.window.sharedRounds;
+    const soloRoundsWindow = Date.now() - _this.config.settings.window.soloRounds;
 
     // Build Combined Transaction
     const transaction = [
       'BEGIN;',
       _this.master.current.blocks.selectCurrentBlocksMain(_this.pool, { type: blockType }),
-      _this.master.current.rounds.deleteCurrentRoundsInactive(_this.pool, roundsWindow),
+      _this.master.current.rounds.deleteCurrentRoundsInactive(_this.pool, false, sharedRoundsWindow),
+      _this.master.current.rounds.deleteCurrentRoundsInactive(_this.pool, true, soloRoundsWindow),
       'COMMIT;'];
 
     // Establish Separate Behavior

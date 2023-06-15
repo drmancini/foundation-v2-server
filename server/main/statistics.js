@@ -33,7 +33,7 @@ const Statistics = function (logger, client, config, configMain, template) {
 
     // Calculate Features of Metadata
     const timestamp = Date.now();
-    const interval = _this.config.settings.interval.recent;
+    const interval = _this.config.settings.interval.historical;
     const recent = Math.ceil(timestamp / interval) * interval;
     const algorithm = _this.config.primary.coin.algorithm;
     const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
@@ -113,7 +113,7 @@ const Statistics = function (logger, client, config, configMain, template) {
 
     // Calculate Features of Miners
     const timestamp = Date.now();
-    const interval = _this.config.settings.interval.recent;
+    const interval = _this.config.settings.interval.historical;
     const recent = Math.ceil(timestamp / interval) * interval;
     const algorithm = _this.config.primary.coin.algorithm;
     const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
@@ -196,7 +196,7 @@ const Statistics = function (logger, client, config, configMain, template) {
 
     // Calculate Features of Workers
     const timestamp = Date.now();
-    const interval = _this.config.settings.interval.recent;
+    const interval = _this.config.settings.interval.historical;
     const recent = Math.ceil(timestamp / interval) * interval;
     const algorithm = _this.config.primary.coin.algorithm;
     const multiplier = Math.pow(2, 32) / _this.template.algorithms[algorithm].multiplier;
