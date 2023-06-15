@@ -951,10 +951,17 @@ const Rounds = function (logger, client, config, configMain) {
     // Build Combined Transaction
     const transaction = ['BEGIN;'];
 
+    // Process Part of the Batch Per Fork
+    const forks = utils.countProcessForks(_this.configMain);
+    const batchSize = lookups[1].rowCount / forks;
+    const batchStart = _this.forkId * batchSize;
+    const batchEnd = _this.forkId + 1 === forks ? lookups[1].rowcount - 1 : batchStart + batchSize;
+    const batch = lookups[1].rows.slice(batchStart, batchEnd);
+    
     // Build Checks for Each Block
     const checks = [];
-    if (lookups[1].rows[0]) {
-      lookups[1].rows.forEach((share) => {
+    if (batch[0]) {
+      batch.forEach((share) => {
         checks.push({ timestamp: Date.now(), uuid: share.uuid, type: share.blocktype });
       });
     }
@@ -968,7 +975,7 @@ const Rounds = function (logger, client, config, configMain) {
     transaction.push('COMMIT;');
     _this.worker.executor(transaction, (results) => {
       results = results[1].rows.map((share) => share.uuid);
-      const shares = lookups[1].rows.filter((share) => results.includes((share || {}).uuid));
+      const shares = batch.filter((share) => results.includes((share || {}).uuid));
       const counts = {
         shares: lookups[2].rows[0].share_count || 0,
         transactions: lookups[3].rows[0].transaction_count || 0,
