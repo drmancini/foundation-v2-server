@@ -648,229 +648,229 @@ describe('Test payments functionality', () => {
     payments.handlePrimary(blocks, {}, () => done());
   });
 
-  // test('Test payments primary updates [2]', (done) => {
-  //   const initialMiner = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     identifier: 'master',
-  //     invalid: 0,
-  //     round: 'round1',
-  //     solo: false,
-  //     stale: 0,
-  //     times: 100,
-  //     type: 'primary',
-  //     valid: 100,
-  //     work: 100,
-  //   };
-  //   const lookups = [
-  //     null,
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
-  //     null];
-  //   const client = mockClient(configMainCopy, lookups);
-  //   const logger = new Logger(configMainCopy);
-  //   const payments = new Payments(logger, client, configCopy, configMainCopy);
-  //   const initialBlock = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     category: 'pending',
-  //     confirmations: -1,
-  //     difficulty: 150,
-  //     hash: 'hash',
-  //     height: 1,
-  //     identifier: 'master',
-  //     luck: 66.67,
-  //     reward: 0,
-  //     round: 'round',
-  //     solo: false,
-  //     transaction: 'transaction1',
-  //     type: 'primary',
-  //   };
-  //   const blocks = [
-  //     { ...initialBlock, category: 'immature', round: 'round1' },
-  //     { ...initialBlock, category: 'generate', round: 'round2' }];
-  //   const amounts = { 'miner1': 100, 'miner2': 10, 'miner3': 150 };
-  //   const current = {
-  //     'miner1': { miner: 'miner1', generate: 10, immature: 10 },
-  //     'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
-  //     'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
-  //   payments.stratum = { stratum: {
-  //     handlePrimaryRounds: (blocks, callback) => callback(true, blocks),
-  //     handlePrimaryWorkers: (blocks, rounds, sending, callback) => callback(current),
-  //     handlePrimaryBalances: (current, callback) => callback(null),
-  //     handlePrimaryPayments: (current, callback) => callback(null, amounts, {}, 'transaction1'),
-  //   }};
-  //   let currentIdx = 0;
-  //   const expectedPayments = `
-  //     DELETE FROM "Pool-Bitcoin".current_payments
-  //     WHERE round IN ('round1', 'round2');`;
-  //   const expectedTransactions = `
-  //     DELETE FROM "Pool-Bitcoin".current_transactions
-  //     WHERE round IN ('round1', 'round2');`;
-  //   client.on('transaction', (transaction) => {
-  //     if (currentIdx === 1) {
-  //       expect(transaction.length).toBe(4);
-  //       expect(transaction[1]).toBe(expectedPayments);
-  //       expect(transaction[2]).toBe(expectedTransactions);
-  //     } else currentIdx += 1;
-  //   });
-  //   payments.handlePrimary(blocks, {}, () => done());
-  // });
+  test('Test payments primary updates [2]', (done) => {
+    const initialMiner = {
+      timestamp: 1,
+      miner: 'miner1',
+      worker: 'miner1',
+      identifier: 'master',
+      invalid: 0,
+      round: 'round1',
+      solo: false,
+      stale: 0,
+      times: 100,
+      type: 'primary',
+      valid: 100,
+      work: 100,
+    };
+    const lookups = [
+      null,
+      { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
+        { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
+        { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
+      { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
+        { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
+        { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
+      null];
+    const client = mockClient(configMainCopy, lookups);
+    const logger = new Logger(configMainCopy);
+    const payments = new Payments(logger, client, configCopy, configMainCopy);
+    const initialBlock = {
+      timestamp: 1,
+      miner: 'miner1',
+      worker: 'miner1',
+      category: 'pending',
+      confirmations: -1,
+      difficulty: 150,
+      hash: 'hash',
+      height: 1,
+      identifier: 'master',
+      luck: 66.67,
+      reward: 0,
+      round: 'round',
+      solo: false,
+      transaction: 'transaction1',
+      type: 'primary',
+    };
+    const blocks = [
+      { ...initialBlock, category: 'immature', round: 'round1' },
+      { ...initialBlock, category: 'generate', round: 'round2' }];
+    const amounts = { 'miner1': 100, 'miner2': 10, 'miner3': 150 };
+    const current = {
+      'miner1': { miner: 'miner1', generate: 10, immature: 10 },
+      'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
+      'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
+    payments.stratum = { stratum: {
+      handlePrimaryRounds: (blocks, callback) => callback(true, blocks),
+      handlePrimaryWorkers: (blocks, rounds, sending, callback) => callback(current),
+      handlePrimaryBalances: (current, callback) => callback(null),
+      handlePrimaryPayments: (current, {}, callback) => callback(null, amounts, {}, 'transaction1'),
+    }};
+    let currentIdx = 0;
+    const expectedPayments = `
+      DELETE FROM "Pool-Bitcoin".current_payments
+      WHERE round IN ('round1', 'round2');`;
+    const expectedTransactions = `
+      DELETE FROM "Pool-Bitcoin".current_transactions
+      WHERE round IN ('round1', 'round2');`;
+    client.on('transaction', (transaction) => {
+      if (currentIdx === 1) {
+        expect(transaction.length).toBe(4);
+        expect(transaction[1]).toBe(expectedPayments);
+        expect(transaction[2]).toBe(expectedTransactions);
+      } else currentIdx += 1;
+    });
+    payments.handlePrimary(blocks, {}, () => done());
+  });
 
-  // test('Test payments primary updates [3]', (done) => {
-  //   const initialMiner = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     identifier: 'master',
-  //     invalid: 0,
-  //     round: 'round1',
-  //     solo: false,
-  //     stale: 0,
-  //     times: 100,
-  //     type: 'primary',
-  //     valid: 100,
-  //     work: 100,
-  //   };
-  //   const lookups = [
-  //     null,
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
-  //     null];
-  //   const client = mockClient(configMainCopy, lookups);
-  //   const logger = new Logger(configMainCopy);
-  //   const payments = new Payments(logger, client, configCopy, configMainCopy);
-  //   const initialBlock = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     category: 'pending',
-  //     confirmations: -1,
-  //     difficulty: 150,
-  //     hash: 'hash',
-  //     height: 1,
-  //     identifier: 'master',
-  //     luck: 66.67,
-  //     reward: 0,
-  //     round: 'round',
-  //     solo: false,
-  //     transaction: 'transaction1',
-  //     type: 'primary',
-  //   };
-  //   const blocks = [
-  //     { ...initialBlock, category: 'immature', round: 'round1' },
-  //     { ...initialBlock, category: 'generate', round: 'round2' }];
-  //   const amounts = { 'miner1': 100, 'miner2': 10, 'miner3': 150 };
-  //   const current = {
-  //     'miner1': { miner: 'miner1', generate: 10, immature: 10 },
-  //     'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
-  //     'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
-  //   payments.stratum = { stratum: {
-  //     handlePrimaryRounds: (blocks, callback) => callback(null, blocks),
-  //     handlePrimaryWorkers: (blocks, rounds, sending, callback) => callback(current),
-  //     handlePrimaryBalances: (current, callback) => callback(true),
-  //     handlePrimaryPayments: (current, callback) => callback(null, amounts, {}, 'transaction1'),
-  //   }};
-  //   let currentIdx = 0;
-  //   const expectedPayments = `
-  //     DELETE FROM "Pool-Bitcoin".current_payments
-  //     WHERE round IN ('round1', 'round2');`;
-  //   const expectedTransactions = `
-  //     DELETE FROM "Pool-Bitcoin".current_transactions
-  //     WHERE round IN ('round1', 'round2');`;
-  //   client.on('transaction', (transaction) => {
-  //     if (currentIdx === 1) {
-  //       expect(transaction.length).toBe(4);
-  //       expect(transaction[1]).toBe(expectedPayments);
-  //       expect(transaction[2]).toBe(expectedTransactions);
-  //     } else currentIdx += 1;
-  //   });
-  //   payments.handlePrimary(blocks, {}, () => done());
-  // });
+  test('Test payments primary updates [3]', (done) => {
+    const initialMiner = {
+      timestamp: 1,
+      miner: 'miner1',
+      worker: 'miner1',
+      identifier: 'master',
+      invalid: 0,
+      round: 'round1',
+      solo: false,
+      stale: 0,
+      times: 100,
+      type: 'primary',
+      valid: 100,
+      work: 100,
+    };
+    const lookups = [
+      null,
+      { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
+        { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
+        { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
+      { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
+        { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
+        { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
+      null];
+    const client = mockClient(configMainCopy, lookups);
+    const logger = new Logger(configMainCopy);
+    const payments = new Payments(logger, client, configCopy, configMainCopy);
+    const initialBlock = {
+      timestamp: 1,
+      miner: 'miner1',
+      worker: 'miner1',
+      category: 'pending',
+      confirmations: -1,
+      difficulty: 150,
+      hash: 'hash',
+      height: 1,
+      identifier: 'master',
+      luck: 66.67,
+      reward: 0,
+      round: 'round',
+      solo: false,
+      transaction: 'transaction1',
+      type: 'primary',
+    };
+    const blocks = [
+      { ...initialBlock, category: 'immature', round: 'round1' },
+      { ...initialBlock, category: 'generate', round: 'round2' }];
+    const amounts = { 'miner1': 100, 'miner2': 10, 'miner3': 150 };
+    const current = {
+      'miner1': { miner: 'miner1', generate: 10, immature: 10 },
+      'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
+      'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
+    payments.stratum = { stratum: {
+      handlePrimaryRounds: (blocks, callback) => callback(null, blocks),
+      handlePrimaryWorkers: (blocks, rounds, sending, callback) => callback(current),
+      handlePrimaryBalances: (current, callback) => callback(true),
+      handlePrimaryPayments: (current, {}, callback) => callback(null, amounts, {}, 'transaction1'),
+    }};
+    let currentIdx = 0;
+    const expectedPayments = `
+      DELETE FROM "Pool-Bitcoin".current_payments
+      WHERE round IN ('round1', 'round2');`;
+    const expectedTransactions = `
+      DELETE FROM "Pool-Bitcoin".current_transactions
+      WHERE round IN ('round1', 'round2');`;
+    client.on('transaction', (transaction) => {
+      if (currentIdx === 1) {
+        expect(transaction.length).toBe(4);
+        expect(transaction[1]).toBe(expectedPayments);
+        expect(transaction[2]).toBe(expectedTransactions);
+      } else currentIdx += 1;
+    });
+    payments.handlePrimary(blocks, {}, () => done());
+  });
 
-  // test('Test payments primary updates [4]', (done) => {
-  //   const initialMiner = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     identifier: 'master',
-  //     invalid: 0,
-  //     round: 'round1',
-  //     solo: false,
-  //     stale: 0,
-  //     times: 100,
-  //     type: 'primary',
-  //     valid: 100,
-  //     work: 100,
-  //   };
-  //   const lookups = [
-  //     null,
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
-  //     null];
-  //   const client = mockClient(configMainCopy, lookups);
-  //   const logger = new Logger(configMainCopy);
-  //   const payments = new Payments(logger, client, configCopy, configMainCopy);
-  //   const initialBlock = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     category: 'pending',
-  //     confirmations: -1,
-  //     difficulty: 150,
-  //     hash: 'hash',
-  //     height: 1,
-  //     identifier: 'master',
-  //     luck: 66.67,
-  //     reward: 0,
-  //     round: 'round',
-  //     solo: false,
-  //     transaction: 'transaction1',
-  //     type: 'primary',
-  //   };
-  //   const blocks = [
-  //     { ...initialBlock, category: 'immature', round: 'round1' },
-  //     { ...initialBlock, category: 'generate', round: 'round2' }];
-  //   const current = {
-  //     'miner1': { miner: 'miner1', generate: 10, immature: 10 },
-  //     'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
-  //     'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
-  //   payments.stratum = { stratum: {
-  //     handlePrimaryRounds: (blocks, callback) => callback(null, blocks),
-  //     handlePrimaryWorkers: (blocks, rounds, sending, callback) => callback(current),
-  //     handlePrimaryBalances: (current, callback) => callback(null),
-  //     handlePrimaryPayments: (current, callback) => callback(true, {}, {}, null),
-  //   }};
-  //   let currentIdx = 0;
-  //   const expectedPayments = `
-  //     DELETE FROM "Pool-Bitcoin".current_payments
-  //     WHERE round IN ('round1', 'round2');`;
-  //   const expectedTransactions = `
-  //     DELETE FROM "Pool-Bitcoin".current_transactions
-  //     WHERE round IN ('round1', 'round2');`;
-  //   client.on('transaction', (transaction) => {
-  //     if (currentIdx === 1) {
-  //       expect(transaction.length).toBe(4);
-  //       expect(transaction[1]).toBe(expectedPayments);
-  //       expect(transaction[2]).toBe(expectedTransactions);
-  //     } else currentIdx += 1;
-  //   });
-  //   payments.handlePrimary(blocks, {}, () => done());
-  // });
+  test('Test payments primary updates [4]', (done) => {
+    const initialMiner = {
+      timestamp: 1,
+      miner: 'miner1',
+      worker: 'miner1',
+      identifier: 'master',
+      invalid: 0,
+      round: 'round1',
+      solo: false,
+      stale: 0,
+      times: 100,
+      type: 'primary',
+      valid: 100,
+      work: 100,
+    };
+    const lookups = [
+      null,
+      { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
+        { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
+        { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
+      { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
+        { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
+        { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
+      null];
+    const client = mockClient(configMainCopy, lookups);
+    const logger = new Logger(configMainCopy);
+    const payments = new Payments(logger, client, configCopy, configMainCopy);
+    const initialBlock = {
+      timestamp: 1,
+      miner: 'miner1',
+      worker: 'miner1',
+      category: 'pending',
+      confirmations: -1,
+      difficulty: 150,
+      hash: 'hash',
+      height: 1,
+      identifier: 'master',
+      luck: 66.67,
+      reward: 0,
+      round: 'round',
+      solo: false,
+      transaction: 'transaction1',
+      type: 'primary',
+    };
+    const blocks = [
+      { ...initialBlock, category: 'immature', round: 'round1' },
+      { ...initialBlock, category: 'generate', round: 'round2' }];
+    const current = {
+      'miner1': { miner: 'miner1', generate: 10, immature: 10 },
+      'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
+      'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
+    payments.stratum = { stratum: {
+      handlePrimaryRounds: (blocks, callback) => callback(null, blocks),
+      handlePrimaryWorkers: (blocks, rounds, sending, callback) => callback(current),
+      handlePrimaryBalances: (current, callback) => callback(null),
+      handlePrimaryPayments: (current, {}, callback) => callback(true, {}, {}, 'transaction1'),
+    }};
+    let currentIdx = 0;
+    const expectedPayments = `
+      DELETE FROM "Pool-Bitcoin".current_payments
+      WHERE round IN ('round1', 'round2');`;
+    const expectedTransactions = `
+      DELETE FROM "Pool-Bitcoin".current_transactions
+      WHERE round IN ('round1', 'round2');`;
+    client.on('transaction', (transaction) => {
+      if (currentIdx === 1) {
+        expect(transaction.length).toBe(4);
+        expect(transaction[1]).toBe(expectedPayments);
+        expect(transaction[2]).toBe(expectedTransactions);
+      } else currentIdx += 1;
+    });
+    payments.handlePrimary(blocks, {}, () => done());
+  });
 
   test('Test payments auxiliary updates [1]', (done) => {
     const initialMiner = {
@@ -1058,496 +1058,229 @@ describe('Test payments functionality', () => {
     payments.handleAuxiliary(blocks, {}, () => done());
   });
 
-  // test('Test payments auxiliary updates [1]', (done) => {
-  //   const initialMiner = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     identifier: 'master',
-  //     invalid: 0,
-  //     round: 'round1',
-  //     solo: false,
-  //     stale: 0,
-  //     times: 100,
-  //     type: 'auxiliary',
-  //     valid: 100,
-  //     work: 100,
-  //   };
-  //   const lookups = [
-  //     null,
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
-  //     null];
-  //   const client = mockClient(configMainCopy, lookups);
-  //   const logger = new Logger(configMainCopy);
-  //   const payments = new Payments(logger, client, configCopy, configMainCopy);
-  //   const initialBlock = {
-  //     timestamp: 1,
-  //     submitted: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     category: 'pending',
-  //     confirmations: -1,
-  //     difficulty: 150,
-  //     hash: 'hash',
-  //     height: 1,
-  //     identifier: 'master',
-  //     luck: 66.67,
-  //     reward: 0,
-  //     round: 'round',
-  //     solo: false,
-  //     transaction: 'transaction1',
-  //     type: 'auxiliary',
-  //   };
-  //   const blocks = [
-  //     { ...initialBlock, category: 'immature', round: 'round1' },
-  //     { ...initialBlock, category: 'generate', round: 'round2' }];
-  //   const amounts = { 'miner1': 100, 'miner2': 10, 'miner3': 150 };
-  //   const current = {
-  //     'miner1': { miner: 'miner1', generate: 10, immature: 10 },
-  //     'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
-  //     'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
-  //   payments.stratum = { stratum: {
-  //     handleAuxiliaryRounds: (blocks, callback) => callback(null, blocks),
-  //     handleAuxiliaryWorkers: (blocks, rounds, sending, callback) => callback(current),
-  //     handleAuxiliaryBalances: (current, callback) => callback(null),
-  //     handleAuxiliaryPayments: (current, callback) => callback(null, amounts, {}, 'transaction1'),
-  //   }};
-  //   let currentIdx = 0;
-  //   const expectedGenerateBlocksDeletes = `
-  //     DELETE FROM "Pool-Bitcoin".current_blocks
-  //     WHERE round IN ('round1', 'round2');`;
-  //   const expectedResetMiners = `
-  //     UPDATE "Pool-Bitcoin".current_miners
-  //     SET generate = 0 WHERE type = 'auxiliary';`;
-  //   const expectedMiners = `
-  //     INSERT INTO "Pool-Bitcoin".current_miners (
-  //       timestamp, miner, balance,
-  //       paid, type)
-  //     VALUES (
-  //       1634742080841,
-  //       'miner1',
-  //       0,
-  //       100,
-  //       'auxiliary'), (
-  //       1634742080841,
-  //       'miner2',
-  //       0,
-  //       10,
-  //       'auxiliary'), (
-  //       1634742080841,
-  //       'miner3',
-  //       0,
-  //       150,
-  //       'auxiliary')
-  //     ON CONFLICT ON CONSTRAINT current_miners_unique
-  //     DO UPDATE SET
-  //       timestamp = EXCLUDED.timestamp,
-  //       balance = EXCLUDED.balance,
-  //       paid = "Pool-Bitcoin".current_miners.paid + EXCLUDED.paid;`;
-  //   const expectedGenerateRoundsDeletes = `
-  //     DELETE FROM "Pool-Bitcoin".current_rounds
-  //     WHERE round IN ('round1', 'round2');`;
-  //   const expectedGenerateBlocksUpdates = `
-  //     INSERT INTO "Pool-Bitcoin".historical_blocks (
-  //       timestamp, submitted, miner,
-  //       worker, category, confirmations,
-  //       difficulty, hash, height,
-  //       identifier, luck, reward,
-  //       round, solo, transaction,
-  //       type)
-  //     VALUES (
-  //       1634742080841,
-  //       1,
-  //       'miner1',
-  //       'miner1',
-  //       'immature',
-  //       -1,
-  //       150,
-  //       'hash',
-  //       1,
-  //       'master',
-  //       66.67,
-  //       0,
-  //       'round1',
-  //       false,
-  //       'transaction1',
-  //       'auxiliary'), (
-  //       1634742080841,
-  //       1,
-  //       'miner1',
-  //       'miner1',
-  //       'generate',
-  //       -1,
-  //       150,
-  //       'hash',
-  //       1,
-  //       'master',
-  //       66.67,
-  //       0,
-  //       'round2',
-  //       false,
-  //       'transaction1',
-  //       'auxiliary')
-  //     ON CONFLICT DO NOTHING;`;
-  //   const expectedPayments = `
-  //     INSERT INTO "Pool-Bitcoin".historical_payments (
-  //       timestamp, miner, amount,
-  //       transaction, type)
-  //     VALUES (
-  //       1634742080841,
-  //       'miner1',
-  //       100,
-  //       'transaction1',
-  //       'auxiliary'), (
-  //       1634742080841,
-  //       'miner2',
-  //       10,
-  //       'transaction1',
-  //       'auxiliary'), (
-  //       1634742080841,
-  //       'miner3',
-  //       150,
-  //       'transaction1',
-  //       'auxiliary')
-  //     ON CONFLICT DO NOTHING;`;
-  //   const expectedGenerateRoundsUpdates = `
-  //     INSERT INTO "Pool-Bitcoin".historical_rounds (
-  //       timestamp, miner, worker,
-  //       identifier, invalid, round,
-  //       solo, stale, times, type,
-  //       valid, work)
-  //     VALUES (
-  //       1634742080841,
-  //       'miner1',
-  //       'miner1',
-  //       'master',
-  //       0,
-  //       'round1',
-  //       false,
-  //       0,
-  //       100,
-  //       'auxiliary',
-  //       100,
-  //       100), (
-  //       1634742080841,
-  //       'miner2',
-  //       'miner2',
-  //       'master',
-  //       0,
-  //       'round1',
-  //       false,
-  //       0,
-  //       100,
-  //       'auxiliary',
-  //       100,
-  //       100), (
-  //       1634742080841,
-  //       'miner3',
-  //       'miner2',
-  //       'master',
-  //       0,
-  //       'round1',
-  //       false,
-  //       0,
-  //       100,
-  //       'auxiliary',
-  //       100,
-  //       100), (
-  //       1634742080841,
-  //       'miner1',
-  //       'miner1',
-  //       'master',
-  //       0,
-  //       'round2',
-  //       false,
-  //       0,
-  //       100,
-  //       'auxiliary',
-  //       100,
-  //       100), (
-  //       1634742080841,
-  //       'miner2',
-  //       'miner2',
-  //       'master',
-  //       0,
-  //       'round2',
-  //       false,
-  //       0,
-  //       100,
-  //       'auxiliary',
-  //       100,
-  //       100), (
-  //       1634742080841,
-  //       'miner3',
-  //       'miner2',
-  //       'master',
-  //       0,
-  //       'round2',
-  //       false,
-  //       0,
-  //       100,
-  //       'auxiliary',
-  //       100,
-  //       100)
-  //     ON CONFLICT DO NOTHING;`;
-  //   const expectedTransactions = `
-  //     INSERT INTO "Pool-Bitcoin".historical_transactions (
-  //       timestamp, amount,
-  //       transaction, type)
-  //     VALUES (
-  //       1634742080841,
-  //       260,
-  //       'transaction1',
-  //       'auxiliary')
-  //     ON CONFLICT DO NOTHING;`;
-  //   const expectedTransactionsDelete = `
-  //     DELETE FROM "Pool-Bitcoin".current_transactions
-  //     WHERE round IN ('round1', 'round2');`;
-  //   client.on('transaction', (transaction) => {
-  //     if (currentIdx === 1) {
-  //       expect(transaction.length).toBe(11);
-  //       expect(transaction[1]).toBe(expectedGenerateBlocksDeletes);
-  //       expect(transaction[2]).toBe(expectedResetMiners);
-  //       expect(transaction[3]).toBe(expectedMiners);
-  //       expect(transaction[4]).toBe(expectedGenerateRoundsDeletes);
-  //       expect(transaction[5]).toBe(expectedGenerateBlocksUpdates);
-  //       expect(transaction[6]).toBe(expectedPayments);
-  //       expect(transaction[7]).toBe(expectedGenerateRoundsUpdates);
-  //       expect(transaction[8]).toBe(expectedTransactions);
-  //       expect(transaction[9]).toBe(expectedTransactionsDelete);
-  //     } else currentIdx += 1;
-  //   });
-  //   payments.handleAuxiliary(blocks, {}, () => done());
-  // });
+  test('Test payments auxiliary updates [2]', (done) => {
+    const initialMiner = {
+      timestamp: 1,
+      miner: 'miner1',
+      worker: 'miner1',
+      identifier: 'master',
+      invalid: 0,
+      round: 'round1',
+      solo: false,
+      stale: 0,
+      times: 100,
+      type: 'auxiliary',
+      valid: 100,
+      work: 100,
+    };
+    const lookups = [
+      null,
+      { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
+        { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
+        { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
+      { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
+        { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
+        { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
+      null];
+    const client = mockClient(configMainCopy, lookups);
+    const logger = new Logger(configMainCopy);
+    const payments = new Payments(logger, client, configCopy, configMainCopy);
+    const initialBlock = {
+      timestamp: 1,
+      miner: 'miner1',
+      worker: 'miner1',
+      category: 'pending',
+      confirmations: -1,
+      difficulty: 150,
+      hash: 'hash',
+      height: 1,
+      identifier: 'master',
+      luck: 66.67,
+      reward: 0,
+      round: 'round',
+      solo: false,
+      transaction: 'transaction1',
+      type: 'auxiliary',
+    };
+    const blocks = [
+      { ...initialBlock, category: 'immature', round: 'round1' },
+      { ...initialBlock, category: 'generate', round: 'round2' }];
+    const amounts = { 'miner1': 100, 'miner2': 10, 'miner3': 150 };
+    const current = {
+      'miner1': { miner: 'miner1', generate: 10, immature: 10 },
+      'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
+      'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
+    payments.stratum = { stratum: {
+      handleAuxiliaryRounds: (blocks, callback) => callback(true, blocks),
+      handleAuxiliaryWorkers: (blocks, rounds, sending, callback) => callback(current),
+      handleAuxiliaryBalances: (current, callback) => callback(null),
+      handleAuxiliaryPayments: (current, {}, callback) => callback(null, amounts, {}, 'transaction1'),
+    }};
+    let currentIdx = 0;
+    const expectedPayments = `
+      DELETE FROM "Pool-Bitcoin".current_payments
+      WHERE round IN ('round1', 'round2');`;
+    const expectedTransactions = `
+      DELETE FROM "Pool-Bitcoin".current_transactions
+      WHERE round IN ('round1', 'round2');`;
+    client.on('transaction', (transaction) => {
+      if (currentIdx === 1) {
+        expect(transaction.length).toBe(4);
+        expect(transaction[1]).toBe(expectedPayments);
+        expect(transaction[2]).toBe(expectedTransactions);
+      } else currentIdx += 1;
+    });
+    payments.handleAuxiliary(blocks, {}, () => done());
+  });
 
-  // test('Test payments auxiliary updates [2]', (done) => {
-  //   const initialMiner = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     identifier: 'master',
-  //     invalid: 0,
-  //     round: 'round1',
-  //     solo: false,
-  //     stale: 0,
-  //     times: 100,
-  //     type: 'auxiliary',
-  //     valid: 100,
-  //     work: 100,
-  //   };
-  //   const lookups = [
-  //     null,
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
-  //     null];
-  //   const client = mockClient(configMainCopy, lookups);
-  //   const logger = new Logger(configMainCopy);
-  //   const payments = new Payments(logger, client, configCopy, configMainCopy);
-  //   const initialBlock = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     category: 'pending',
-  //     confirmations: -1,
-  //     difficulty: 150,
-  //     hash: 'hash',
-  //     height: 1,
-  //     identifier: 'master',
-  //     luck: 66.67,
-  //     reward: 0,
-  //     round: 'round',
-  //     solo: false,
-  //     transaction: 'transaction1',
-  //     type: 'auxiliary',
-  //   };
-  //   const blocks = [
-  //     { ...initialBlock, category: 'immature', round: 'round1' },
-  //     { ...initialBlock, category: 'generate', round: 'round2' }];
-  //   const amounts = { 'miner1': 100, 'miner2': 10, 'miner3': 150 };
-  //   const current = {
-  //     'miner1': { miner: 'miner1', generate: 10, immature: 10 },
-  //     'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
-  //     'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
-  //   payments.stratum = { stratum: {
-  //     handleAuxiliaryRounds: (blocks, callback) => callback(true, blocks),
-  //     handleAuxiliaryWorkers: (blocks, rounds, sending, callback) => callback(current),
-  //     handleAuxiliaryBalances: (current, callback) => callback(null),
-  //     handleAuxiliaryPayments: (current, callback) => callback(null, amounts, {}, 'transaction1'),
-  //   }};
-  //   let currentIdx = 0;
-  //   const expectedPayments = `
-  //     DELETE FROM "Pool-Bitcoin".current_payments
-  //     WHERE round IN ('round1', 'round2');`;
-  //   const expectedTransactions = `
-  //     DELETE FROM "Pool-Bitcoin".current_transactions
-  //     WHERE round IN ('round1', 'round2');`;
-  //   client.on('transaction', (transaction) => {
-  //     if (currentIdx === 1) {
-  //       expect(transaction.length).toBe(4);
-  //       expect(transaction[1]).toBe(expectedPayments);
-  //       expect(transaction[2]).toBe(expectedTransactions);
-  //     } else currentIdx += 1;
-  //   });
-  //   payments.handleAuxiliary(blocks, {}, () => done());
-  // });
+  test('Test payments auxiliary updates [3]', (done) => {
+    const initialMiner = {
+      timestamp: 1,
+      miner: 'miner1',
+      worker: 'miner1',
+      identifier: 'master',
+      invalid: 0,
+      round: 'round1',
+      solo: false,
+      stale: 0,
+      times: 100,
+      type: 'auxiliary',
+      valid: 100,
+      work: 100,
+    };
+    const lookups = [
+      null,
+      { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
+        { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
+        { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
+      { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
+        { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
+        { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
+      null];
+    const client = mockClient(configMainCopy, lookups);
+    const logger = new Logger(configMainCopy);
+    const payments = new Payments(logger, client, configCopy, configMainCopy);
+    const initialBlock = {
+      timestamp: 1,
+      miner: 'miner1',
+      worker: 'miner1',
+      category: 'pending',
+      confirmations: -1,
+      difficulty: 150,
+      hash: 'hash',
+      height: 1,
+      identifier: 'master',
+      luck: 66.67,
+      reward: 0,
+      round: 'round',
+      solo: false,
+      transaction: 'transaction1',
+      type: 'auxiliary',
+    };
+    const blocks = [
+      { ...initialBlock, category: 'immature', round: 'round1' },
+      { ...initialBlock, category: 'generate', round: 'round2' }];
+    const amounts = { 'miner1': 100, 'miner2': 10, 'miner3': 150 };
+    const current = {
+      'miner1': { miner: 'miner1', generate: 10, immature: 10 },
+      'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
+      'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
+    payments.stratum = { stratum: {
+      handleAuxiliaryRounds: (blocks, callback) => callback(null, blocks),
+      handleAuxiliaryWorkers: (blocks, rounds, sending, callback) => callback(current),
+      handleAuxiliaryBalances: (current, callback) => callback(true),
+      handleAuxiliaryPayments: (current, {}, callback) => callback(null, amounts, {}, 'transaction1'),
+    }};
+    let currentIdx = 0;
+    const expectedPayments = `
+      DELETE FROM "Pool-Bitcoin".current_payments
+      WHERE round IN ('round1', 'round2');`;
+    const expectedTransactions = `
+      DELETE FROM "Pool-Bitcoin".current_transactions
+      WHERE round IN ('round1', 'round2');`;
+    client.on('transaction', (transaction) => {
+      if (currentIdx === 1) {
+        expect(transaction.length).toBe(4);
+        expect(transaction[1]).toBe(expectedPayments);
+        expect(transaction[2]).toBe(expectedTransactions);
+      } else currentIdx += 1;
+    });
+    payments.handleAuxiliary(blocks, {}, () => done());
+  });
 
-  // test('Test payments auxiliary updates [3]', (done) => {
-  //   const initialMiner = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     identifier: 'master',
-  //     invalid: 0,
-  //     round: 'round1',
-  //     solo: false,
-  //     stale: 0,
-  //     times: 100,
-  //     type: 'auxiliary',
-  //     valid: 100,
-  //     work: 100,
-  //   };
-  //   const lookups = [
-  //     null,
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
-  //     null];
-  //   const client = mockClient(configMainCopy, lookups);
-  //   const logger = new Logger(configMainCopy);
-  //   const payments = new Payments(logger, client, configCopy, configMainCopy);
-  //   const initialBlock = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     category: 'pending',
-  //     confirmations: -1,
-  //     difficulty: 150,
-  //     hash: 'hash',
-  //     height: 1,
-  //     identifier: 'master',
-  //     luck: 66.67,
-  //     reward: 0,
-  //     round: 'round',
-  //     solo: false,
-  //     transaction: 'transaction1',
-  //     type: 'auxiliary',
-  //   };
-  //   const blocks = [
-  //     { ...initialBlock, category: 'immature', round: 'round1' },
-  //     { ...initialBlock, category: 'generate', round: 'round2' }];
-  //   const amounts = { 'miner1': 100, 'miner2': 10, 'miner3': 150 };
-  //   const current = {
-  //     'miner1': { miner: 'miner1', generate: 10, immature: 10 },
-  //     'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
-  //     'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
-  //   payments.stratum = { stratum: {
-  //     handleAuxiliaryRounds: (blocks, callback) => callback(null, blocks),
-  //     handleAuxiliaryWorkers: (blocks, rounds, sending, callback) => callback(current),
-  //     handleAuxiliaryBalances: (current, callback) => callback(true),
-  //     handleAuxiliaryPayments: (current, callback) => callback(null, amounts, {}, 'transaction1'),
-  //   }};
-  //   let currentIdx = 0;
-  //   const expectedPayments = `
-  //     DELETE FROM "Pool-Bitcoin".current_payments
-  //     WHERE round IN ('round1', 'round2');`;
-  //   const expectedTransactions = `
-  //     DELETE FROM "Pool-Bitcoin".current_transactions
-  //     WHERE round IN ('round1', 'round2');`;
-  //   client.on('transaction', (transaction) => {
-  //     if (currentIdx === 1) {
-  //       expect(transaction.length).toBe(4);
-  //       expect(transaction[1]).toBe(expectedPayments);
-  //       expect(transaction[2]).toBe(expectedTransactions);
-  //     } else currentIdx += 1;
-  //   });
-  //   payments.handleAuxiliary(blocks, {}, () => done());
-  // });
-
-  // test('Test payments auxiliary updates [4]', (done) => {
-  //   const initialMiner = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     identifier: 'master',
-  //     invalid: 0,
-  //     round: 'round1',
-  //     solo: false,
-  //     stale: 0,
-  //     times: 100,
-  //     type: 'auxiliary',
-  //     valid: 100,
-  //     work: 100,
-  //   };
-  //   const lookups = [
-  //     null,
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
-  //     { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
-  //       { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
-  //     null];
-  //   const client = mockClient(configMainCopy, lookups);
-  //   const logger = new Logger(configMainCopy);
-  //   const payments = new Payments(logger, client, configCopy, configMainCopy);
-  //   const initialBlock = {
-  //     timestamp: 1,
-  //     miner: 'miner1',
-  //     worker: 'miner1',
-  //     category: 'pending',
-  //     confirmations: -1,
-  //     difficulty: 150,
-  //     hash: 'hash',
-  //     height: 1,
-  //     identifier: 'master',
-  //     luck: 66.67,
-  //     reward: 0,
-  //     round: 'round',
-  //     solo: false,
-  //     transaction: 'transaction1',
-  //     type: 'auxiliary',
-  //   };
-  //   const blocks = [
-  //     { ...initialBlock, category: 'immature', round: 'round1' },
-  //     { ...initialBlock, category: 'generate', round: 'round2' }];
-  //   const current = {
-  //     'miner1': { miner: 'miner1', generate: 10, immature: 10 },
-  //     'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
-  //     'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
-  //   payments.stratum = { stratum: {
-  //     handleAuxiliaryRounds: (blocks, callback) => callback(null, blocks),
-  //     handleAuxiliaryWorkers: (blocks, rounds, sending, callback) => callback(current),
-  //     handleAuxiliaryBalances: (current, callback) => callback(null),
-  //     handleAuxiliaryPayments: (current, callback) => callback(true, {}, {}, null),
-  //   }};
-  //   let currentIdx = 0;
-  //   const expectedPayments = `
-  //     DELETE FROM "Pool-Bitcoin".current_payments
-  //     WHERE round IN ('round1', 'round2');`;
-  //   const expectedTransactions = `
-  //     DELETE FROM "Pool-Bitcoin".current_transactions
-  //     WHERE round IN ('round1', 'round2');`;
-  //   client.on('transaction', (transaction) => {
-  //     if (currentIdx === 1) {
-  //       expect(transaction.length).toBe(4);
-  //       expect(transaction[1]).toBe(expectedPayments);
-  //       expect(transaction[2]).toBe(expectedTransactions);
-  //     } else currentIdx += 1;
-  //   });
-  //   payments.handleAuxiliary(blocks, {}, () => done());
-  // });
+  test('Test payments auxiliary updates [4]', (done) => {
+    const initialMiner = {
+      timestamp: 1,
+      miner: 'miner1',
+      worker: 'miner1',
+      identifier: 'master',
+      invalid: 0,
+      round: 'round1',
+      solo: false,
+      stale: 0,
+      times: 100,
+      type: 'auxiliary',
+      valid: 100,
+      work: 100,
+    };
+    const lookups = [
+      null,
+      { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round1' },
+        { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round1' },
+        { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round1' }]},
+      { rows: [{ ...initialMiner, miner: 'miner1', worker: 'miner1', round: 'round2' },
+        { ...initialMiner, miner: 'miner2', worker: 'miner2', round: 'round2' },
+        { ...initialMiner, miner: 'miner3', worker: 'miner2', round: 'round2' }]},
+      null];
+    const client = mockClient(configMainCopy, lookups);
+    const logger = new Logger(configMainCopy);
+    const payments = new Payments(logger, client, configCopy, configMainCopy);
+    const initialBlock = {
+      timestamp: 1,
+      miner: 'miner1',
+      worker: 'miner1',
+      category: 'pending',
+      confirmations: -1,
+      difficulty: 150,
+      hash: 'hash',
+      height: 1,
+      identifier: 'master',
+      luck: 66.67,
+      reward: 0,
+      round: 'round',
+      solo: false,
+      transaction: 'transaction1',
+      type: 'auxiliary',
+    };
+    const blocks = [
+      { ...initialBlock, category: 'immature', round: 'round1' },
+      { ...initialBlock, category: 'generate', round: 'round2' }];
+    const current = {
+      'miner1': { miner: 'miner1', generate: 10, immature: 10 },
+      'miner2': { miner: 'miner2', generate: 40, immature: 1000 },
+      'miner3': { miner: 'miner3', generate: 100, immature: 100 }};
+    payments.stratum = { stratum: {
+      handleAuxiliaryRounds: (blocks, callback) => callback(null, blocks),
+      handleAuxiliaryWorkers: (blocks, rounds, sending, callback) => callback(current),
+      handleAuxiliaryBalances: (current, callback) => callback(null),
+      handleAuxiliaryPayments: (current, {}, callback) => callback(true, {}, {}, 'transaction1'),
+    }};
+    let currentIdx = 0;
+    const expectedPayments = `
+      DELETE FROM "Pool-Bitcoin".current_payments
+      WHERE round IN ('round1', 'round2');`;
+    const expectedTransactions = `
+      DELETE FROM "Pool-Bitcoin".current_transactions
+      WHERE round IN ('round1', 'round2');`;
+    client.on('transaction', (transaction) => {
+      if (currentIdx === 1) {
+        expect(transaction.length).toBe(4);
+        expect(transaction[1]).toBe(expectedPayments);
+        expect(transaction[2]).toBe(expectedTransactions);
+      } else currentIdx += 1;
+    });
+    payments.handleAuxiliary(blocks, {}, () => done());
+  });
 
   test('Test payments rounds updates [1]', (done) => {
     MockDate.set(1634742080841);

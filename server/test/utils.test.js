@@ -92,6 +92,7 @@ describe('Test utility functionality', () => {
   test('Test implemented validateParameters', () => {
     expect(utils.validateParameters('test')).toBe('test');
     expect(utils.validateParameters('test test')).toBe('testtest');
+    expect(utils.validateParameters('_test.test-')).toBe('_test.test-');
     expect(utils.validateParameters('; DROP TABLE test')).toBe('DROPTABLEtest');
     expect(utils.validateParameters(';DROPTABLEtest')).toBe('DROPTABLEtest');
     expect(utils.validateParameters('parameter')).toBe('parameter');
