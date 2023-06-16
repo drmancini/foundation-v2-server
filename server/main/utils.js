@@ -106,12 +106,12 @@ exports.validateNumbers = function(parameter) {
 // Validate Parameters
 exports.validateParameters = function(parameter) {
   if (parameter.length >= 1) {
-    parameter = parameter.toString().replace(/[^a-zA-Z0-9.-]+/g, '');
+    parameter = parameter.toString().replace(/[^a-zA-Z0-9._-]+/g, '');
   }
   return parameter;
 };
 
 // Validate Strings
 exports.validateStrings = function(parameter) {
-  return /^[a-zA-Z0-9.-]+$/g.test(parameter);
+  return /^[a-zA-Z0-9._-]+$/g.test(parameter);
 };

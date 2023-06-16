@@ -954,7 +954,7 @@ const Rounds = function (logger, client, config, configMain) {
     // Process Part of the Batch Per Fork
     const forks = utils.countProcessForks(_this.configMain);
     const batchSize = lookups[1].rowCount / forks;
-    const batchStart = _this.forkId * batchSize;
+    const batchStart = Math.ceil(_this.forkId * batchSize);
     const batchEnd = _this.forkId + 1 === forks ? lookups[1].rowcount - 1 : batchStart + batchSize;
     const batch = lookups[1].rows.slice(batchStart, batchEnd);
     
