@@ -605,7 +605,7 @@ const Rounds = function (logger, client, config, configMain) {
         updates.push({
           timestamp: timestamp,
           miner: miner,
-          joined: share.submitted || timestamp,
+          joined: Number(share.submitted) || timestamp,
           payout_limit: payoutLimit,
           type: blockType,
         });
