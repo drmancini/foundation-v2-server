@@ -326,7 +326,7 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const updates = { work: 1 };
+    const updates = { effort: 100, work: 1 };
     const share = { clientdiff: 1, identifier: 'master', blockdiffprimary: 1, blockdiffauxiliary: 1 };
     const expected = {
       timestamp: 1634742080841,
@@ -344,7 +344,7 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
-    const updates = { work: 1 };
+    const updates = { effort: 100, work: 1 };
     const share = { clientdiff: 1, identifier: 'master', blockdiffprimary: 1, blockdiffauxiliary: 1 };
     const expected = {
       timestamp: 1634742080841,

@@ -215,8 +215,11 @@ const Rounds = function (logger, client, config, configMain) {
     
     // Calculate Effort Metadata
     const difficulty = blockType === 'primary' ? share.blockdiffprimary : share.blockdiffauxiliary;
-    const effort = parseFloat((current / difficulty * 100).toPrecision(5)) || 0;
-
+    let effort = updates.effort || 0;
+    if (shareType === 'valid') {
+      effort = parseFloat((current / difficulty * 100).toPrecision(5)) || 0;
+    }
+      
     // Return Metadata Updates
     return {
       timestamp: Date.now(),
