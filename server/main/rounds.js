@@ -528,6 +528,12 @@ const Rounds = function (logger, client, config, configMain) {
     // Handle Individual Shares
     shares.forEach((share) => {
 
+      // Determine Current Round Properties
+      const timestamp = Date.now();
+      const submitTime = share.submitted || timestamp;
+      const interval = _this.config.settings.interval.historical;
+      const recent = Math.ceil(submitTime / interval) * interval;
+
       // Determine Miner Properties
       const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
       const miner = (worker || '').split('.')[0];
@@ -539,7 +545,7 @@ const Rounds = function (logger, client, config, configMain) {
       else if (!share.sharevalid || share.error) shareType = 'invalid';      
       
       // Determine Miner States
-      const unique = `${ miner }_${ minerType }`;
+      const unique = `${ recent }_${ miner }_${ minerType }`;
       const current = miners[unique] || {};
 
       // Determine Updates for Miner
@@ -667,6 +673,12 @@ const Rounds = function (logger, client, config, configMain) {
     // Handle Individual Shares
     shares.forEach((share) => {
 
+      // Determine Current Round Properties
+      const timestamp = Date.now();
+      const submitTime = share.submitted || timestamp;
+      const interval = _this.config.settings.interval.historical;
+      const recent = Math.ceil(submitTime / interval) * interval;
+
       // Determine Worker Properties
       const worker = blockType === 'primary' ? share.addrprimary : share.addrauxiliary;
       const minerType = utils.checkSoloMining(_this.config, share);
@@ -678,7 +690,7 @@ const Rounds = function (logger, client, config, configMain) {
       else if (!share.sharevalid || share.error) shareType = 'invalid';
 
       // Determine Worker States
-      const unique = `${ worker }_${ ipHash }_${ minerType }`;
+      const unique = `${ recent }_${ worker }_${ ipHash }_${ minerType }`;
       const current = workers[unique] || {};
 
       // Determine Updates for Worker
@@ -956,13 +968,13 @@ const Rounds = function (logger, client, config, configMain) {
 
     // Process Part of the Batch Per Fork
     let batch = lookups[1].rows;
-    if (lookups[1].rowCount > _this.config.settings.batch.limit / 3) {
-      const forks = utils.countProcessForks(_this.configMain);
-      const batchSize = Math.round(lookups[1].rowCount / forks);
-      const batchStart = Math.round(_this.forkId * batchSize);
-      const batchEnd = _this.forkId + 1 === forks ? lookups[1].rowCount - 1 : batchStart + batchSize;
-      batch = lookups[1].rows.slice(batchStart, batchEnd);
-    }
+    // if (lookups[1].rowCount > _this.config.settings.batch.limit / 3) {
+    //   const forks = utils.countProcessForks(_this.configMain);
+    //   const batchSize = Math.round(lookups[1].rowCount / forks);
+    //   const batchStart = Math.round(_this.forkId * batchSize);
+    //   const batchEnd = _this.forkId + 1 === forks ? lookups[1].rowCount - 1 : batchStart + batchSize;
+    //   batch = lookups[1].rows.slice(batchStart, batchEnd);
+    // }
     
     // Build Checks for Each Block
     const checks = [];
