@@ -545,15 +545,24 @@ const Rounds = function (logger, client, config, configMain) {
       else if (!share.sharevalid || share.error) shareType = 'invalid';      
       
       // Determine Miner States
-      const unique = `${ recent }_${ miner }_${ minerType }`;
+      const unique = `${ miner }_${ minerType }_${ recent }`;
       const current = miners[unique] || {};
 
       // Determine Updates for Miner
       miners[unique] = _this.handleHistoricalMiners(current, share, shareType, minerType, blockType);
     });
 
+    // Order Miners by Key
+    const orderedMiners = Object.keys(miners).sort().reduce(
+      (obj, key) => { 
+        obj[key] = miners[key]; 
+        return obj;
+      }, 
+      {}
+    );
+    
     // Return Worker Updates
-    return Object.values(miners);
+    return Object.values(orderedMiners);
   };
 
   // Handle Share Updates
