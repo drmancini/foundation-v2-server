@@ -78,7 +78,10 @@ const Client = function (logger, configMain) {
 
     // Build Database Connection
     _this.master.client.connect((error) => {
-      if (error) _this.handleRetriesMaster(callback);
+      if (error) {
+        console.log(error);
+        _this.handleRetriesMaster(callback);
+      }
       else {
         if (_this.master.reconnecting) {
           const lines = [_this.text.databaseCommandsText4()];
@@ -124,7 +127,10 @@ const Client = function (logger, configMain) {
 
     // Build Database Connection
     _this.worker.client.connect((error) => {
-      if (error) _this.handleRetriesWorker(callback);
+      if (error){
+        console.log(error);
+        _this.handleRetriesWorker(callback);
+      }
       else {
         if (_this.worker.reconnecting) {
           const lines = [_this.text.databaseCommandsText5()];
