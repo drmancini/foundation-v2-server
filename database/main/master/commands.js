@@ -58,6 +58,7 @@ const Commands = function (logger, client, configMain) {
   // Handle Retries
   this.retry = function(commands, error, callback) {
     if (_this.retries < 3) {
+      console.log(error)
       const lines = [_this.text.databaseCommandsText3(_this.retries)];
       _this.logger.error('Database', 'Master', lines);
       setTimeout(() => {
