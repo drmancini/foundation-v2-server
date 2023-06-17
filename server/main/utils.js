@@ -19,7 +19,7 @@ exports.countProcessForks = function(configMain) {
   if (!configMain.clustering || !configMain.clustering.enabled) {
     return 1;
   } else if (configMain.clustering.forks === 'auto') {
-    return os.cpus().length <= 4 ? os.cpus().length : 4;
+    return os.cpus().length;
   } else if (!configMain.clustering.forks || isNaN(configMain.clustering.forks)) {
     return 1;
   }

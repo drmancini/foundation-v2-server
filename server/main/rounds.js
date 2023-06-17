@@ -955,11 +955,14 @@ const Rounds = function (logger, client, config, configMain) {
     const transaction = ['BEGIN;'];
 
     // Process Part of the Batch Per Fork
-    const forks = utils.countProcessForks(_this.configMain);
-    const batchSize = lookups[1].rowCount / forks;
-    const batchStart = Math.ceil(_this.forkId * batchSize);
-    const batchEnd = _this.forkId + 1 === forks ? lookups[1].rowcount - 1 : batchStart + batchSize;
-    const batch = lookups[1].rows.slice(batchStart, batchEnd);
+    let batch = lookups[1].rows;
+    if (lookups[1].rowCount > _this.config.settings.batch.limit / 3) {
+      const forks = utils.countProcessForks(_this.configMain);
+      const batchSize = Math.round(lookups[1].rowCount / forks);
+      const batchStart = Math.round(_this.forkId * batchSize);
+      const batchEnd = _this.forkId + 1 === forks ? lookups[1].rowCount - 1 : batchStart + batchSize;
+      batch = lookups[1].rows.slice(batchStart, batchEnd);
+    }
     
     // Build Checks for Each Block
     const checks = [];
@@ -983,10 +986,10 @@ const Rounds = function (logger, client, config, configMain) {
         shares: lookups[2].rows[0].share_count || 0,
         transactions: lookups[3].rows[0].transaction_count || 0,
       };
-      const segments = _this.processSegments(shares, counts);
+      const segments = _this.processSegments(shares);
 
       // Determine Number of Shares Being Processed
-      const capacity = Math.round(shares.length / _this.config.settings.batch.limit * 1000) / 10;
+      const capacity = Math.round(shares.length / counts.shares * 1000) / 10;
       const lines = [_this.text.roundsHandlingText1(capacity)];
       _this.logger.debug('Rounds', _this.config.name, lines);
 
