@@ -26,6 +26,7 @@ const HistoricalWorkers = require('./historical/workers');
 
 // Local Table Commands
 const LocalHistory = require('./local/history');
+const LocalShares = require('./local/shares');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -96,6 +97,7 @@ const Commands = function (logger, client, configMain) {
 
   // Initialize Local Commands
   this.local.history = new LocalHistory(_this.logger, _this.configMain);
+  this.local.shares = new LocalShares(_this.logger, _this.configMain);
 };
 
 module.exports = Commands;

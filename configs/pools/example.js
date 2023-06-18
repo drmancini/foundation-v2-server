@@ -104,6 +104,7 @@ config.settings.banning.purgeInterval = 300000; // ms
 // Batch Configuration
 config.settings.batch = {};
 config.settings.batch.enabled = true;
+config.settings.batch.processShares = true;
 config.settings.batch.limit = 200;
 
 // Timeout Configuration

@@ -725,6 +725,31 @@ const Rounds = function (logger, client, config, configMain) {
     _this.worker.executor(transaction, () => callback());
   };
 
+  // Handle Round Share Updates
+  this.handleShareUpdates = function(shares, callback) {
+
+    // Build Combined Transaction
+    const transaction = ['BEGIN;'];
+
+    // Handle Share Processor History
+    if (shares.length > 0) {
+      transaction.push(_this.master.local.shares.insertLocalSharesMain(_this.pool, shares));
+    }
+
+    // Handle Share Processor History
+    const sharesWritten = shares.length;
+    if (sharesWritten > 0) {
+      const timestamp = Date.now();
+      const interval = _this.config.settings.interval.historical;
+      const recent = Math.ceil(timestamp / interval) * interval;
+      transaction.push(_this.master.local.history.insertLocalHistoryWrites(_this.pool, timestamp, recent, sharesWritten));
+    }
+
+    // Insert Work into Database
+    transaction.push('COMMIT;');
+    _this.master.executor(transaction, () => callback());
+  };
+
   // Handle Round Updates
   this.handleUpdates = function(lookups, shares, callback) {
 
@@ -968,6 +993,25 @@ const Rounds = function (logger, client, config, configMain) {
     }
   };
 
+  // Handle Share Segment Batches
+  this.handleShareSegments = function(segment, counts, callback) {
+
+    // Handle Batch Processor History Updates
+    const historySharesUpdates = _this.handleHistoryShares(counts);
+
+    // Build Combined Transaction
+    const transaction = [
+      'BEGIN;',
+      _this.master.local.history.insertLocalHistoryCounts(_this.pool, [ historySharesUpdates ]),
+      'COMMIT;'];
+
+    _this.master.executor(transaction, () => {
+      _this.handleShareUpdates(segment, () => {
+        _this.handleCleanup(segment, () => callback());
+      });
+    });
+  }
+
   // Handle Share/Block Batches
   /* istanbul ignore next */
   this.handleBatches = function(lookups, callback) {
@@ -1017,7 +1061,9 @@ const Rounds = function (logger, client, config, configMain) {
       // Segments Exist to Validate
       if (segments.length >= 1) {
         async.series(segments.map((segment) => {
-          return (cb) => _this.handleSegments(segment, counts, cb);
+          if (_this.config.settings.batch.processShares) {
+            return (cb) => _this.handleSegments(segment, counts, cb);
+          } else return (cb) => _this.handleShareSegments(shares, counts, cb);
         }), (error) => {
           const updates = [(error) ?
             _this.text.databaseCommandsText2(JSON.stringify(error)) :
