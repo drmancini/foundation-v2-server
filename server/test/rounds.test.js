@@ -3053,6 +3053,83 @@ describe('Test rounds functionality', () => {
     rounds.handleUpdates(lookups, [], () => {});
   });
 
+  test('Test rounds main updates [1]', (done) => {
+    MockDate.set(1634742080841);
+    const client = mockClient(configMainCopy, { rows: [] });
+    const logger = new Logger(configMainCopy);
+    const rounds = new Rounds(logger, client, configCopy, configMainCopy);
+    const share = {
+      error: '',
+      uuid: '123456789',
+      timestamp: 1634742080841,
+      submitted: 1,
+      ip: '0.0.0.0',
+      port: 3002,
+      addrprimary: 'primary',
+      addrauxiliary: null,
+      blockdiffprimary: 1,
+      blockdiffauxiliary: 1,
+      blockvalid: true,
+      blocktype: 'share',
+      clientdiff: 1,
+      hash: 'hash1',
+      height: 1,
+      identifier: '',
+      reward: 1,
+      sharediff: 1,
+      sharevalid: true,
+      transaction: 'transaction1'
+    };
+    const expectedHashrate = `
+      INSERT INTO "Pool-Bitcoin".local_shares (
+        error, uuid, timestamp,
+        submitted, ip, port, addrprimary,
+        addrauxiliary, blockdiffprimary,
+        blockdiffauxiliary, blockvalid,
+        blocktype, clientdiff, hash, height,
+        identifier, reward, sharediff,
+        sharevalid, transaction)
+      VALUES (
+        '',
+        '123456789',
+        1634742080841,
+        1,
+        '0.0.0.0',
+        '3002',
+        'primary',
+        'null',
+        1,
+        1,
+        true,
+        'share',
+        1,
+        'hash1',
+        1,
+        '',
+        1,
+        1,
+        true,
+        'transaction1')
+      ON CONFLICT ON CONSTRAINT local_shares_unique
+      DO NOTHING;`;
+    const expectedHistory = `
+      INSERT INTO "Pool-Bitcoin".local_history (
+        timestamp, recent,
+        share_writes)
+      VALUES (1634742080841, 1634742600000, 1)
+      ON CONFLICT ON CONSTRAINT local_history_unique
+      DO UPDATE SET
+        timestamp = EXCLUDED.timestamp,
+        share_writes = "Pool-Bitcoin".local_history.share_writes + EXCLUDED.share_writes;`;
+    client.on('transaction', (transaction) => {
+      expect(transaction.length).toBe(4);
+      expect(transaction[1]).toBe(expectedHashrate);
+      expect(transaction[2]).toBe(expectedHistory);
+      done();
+    });
+    rounds.handleShareUpdates([share], () => {});
+  });
+
   test('Test rounds new block updates [1]', (done) => {
     MockDate.set(1634742080841);
     const client = mockClient(configMainCopy, { rows: [] });
