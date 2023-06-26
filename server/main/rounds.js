@@ -33,7 +33,7 @@ const Rounds = function (logger, client, config, configMain) {
   // Handle Effort Updates
   this.handleEffort = function(share, difficulty, work, shareType) {
     const total = shareType === 'valid' ? (work + (share.clientdiff || 0)) : work;
-    return parseFloat(((total / difficulty * 100) || 0).toPrecision(5));
+    return Math.round(((total / difficulty) || 0) * 1000000) / 10000;
   };
 
   // Handle IP Address Hash
