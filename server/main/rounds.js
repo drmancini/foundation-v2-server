@@ -207,23 +207,23 @@ const Rounds = function (logger, client, config, configMain) {
   };
 
   // Handle Metadata Updates
-  this.handleCurrentMetadata = function(updates, share, shareType, minerType, blockType) {
+  this.handleCurrentMetadata = function(metadata, updates, share, shareType, minerType, blockType) {
 
     // Calculate Features of Metadata
-    const current = (updates.work || 0) + (shareType === 'valid' ? share.clientdiff : 0);
-    const identifier = share.identifier || 'master';
-    
-    // Calculate Effort Metadata
+    const current = minerType ? 0 : 
+      ((updates.work || 0) + (shareType === 'valid' ? share.clientdiff : 0));
     const difficulty = blockType === 'primary' ? share.blockdiffprimary : share.blockdiffauxiliary;
-    let effort = updates.effort || 0;
-    if (shareType === 'valid') {
-      effort = parseFloat((current / difficulty * 100).toPrecision(5)) || 0;
-    }
-      
+    const identifier = share.identifier || 'master';
+    const metadataWork = metadata.filter((entry) => entry.identifier === identifier && entry.solo === minerType)[0].work;
+    const work = (metadataWork || 0) + (updates.work || 0);
+
+    // Calculate Effort Metadata
+    const effort = minerType ? 0 : _this.handleEffort(share, difficulty, work, shareType);
+
     // Return Metadata Updates
     return {
       timestamp: Date.now(),
-      effort: minerType ? 0 : effort,
+      effort: effort,
       identifier: identifier,
       solo: minerType,
       type: blockType,
@@ -433,9 +433,9 @@ const Rounds = function (logger, client, config, configMain) {
   };
   
   // Handle Metadata Updates
-  this.handleMetadata = function(shares, blockType) {
+  this.handleMetadata = function(metadata, shares, blockType) {
 
-    const metadata = {};
+    const updates = {};
 
     // Handle Individual Shares
     shares.forEach((share) => {
@@ -450,14 +450,14 @@ const Rounds = function (logger, client, config, configMain) {
 
       // Determine Metadata States
       const unique = `${ share.identifier }_${ share.solo }`;
-      const current = metadata[unique] || {};
+      const current = updates[unique] || {};
       
       // Determine Updates for Current Metadata
-      metadata[unique] = _this.handleCurrentMetadata(current, share, shareType, minerType, blockType);
+      updates[unique] = _this.handleCurrentMetadata(metadata, current, share, shareType, minerType, blockType);
     });
 
     // Return Metadata Updates
-    return Object.values(metadata);
+    return Object.values(updates);
   };
 
   // Handle Metadata History Updates
@@ -757,6 +757,7 @@ const Rounds = function (logger, client, config, configMain) {
     const transaction = ['BEGIN;'];
 
     // Handle Individual Lookups
+    const metadata = lookups[1].rows || [];
     const rounds = _this.handleWorkersLookups(lookups[5].rows);
     const auxRounds = _this.handleWorkersLookups(lookups[6].rows);
     const users = _this.handleUsersLookups(lookups[7].rows);
@@ -773,11 +774,11 @@ const Rounds = function (logger, client, config, configMain) {
     }
 
     // Handle Current Metadata Updates
-    const metadataUpdates = _this.handleMetadata(shares, 'primary');
+    const metadataUpdates = _this.handleMetadata(metadata, shares, 'primary');
     if (metadataUpdates.length >= 1) {
       transaction.push(_this.master.current.metadata.insertCurrentMetadataRounds(_this.pool, metadataUpdates));
       if (_this.config.auxiliary && _this.config.auxiliary.enabled) {
-        const auxMetadataUpdates = _this.handleMetadata(shares, 'auxiliary');
+        const auxMetadataUpdates = _this.handleMetadata(metadata, shares, 'auxiliary');
         transaction.push(_this.master.current.metadata.insertCurrentMetadataRounds(_this.pool, auxMetadataUpdates));
       }
     }
@@ -1048,13 +1049,13 @@ const Rounds = function (logger, client, config, configMain) {
       results = results[1].rows.map((share) => share.uuid);
       const shares = batch.filter((share) => results.includes((share || {}).uuid));
       const counts = {
-        shares: lookups[2].rows[0].share_count || 0,
-        transactions: lookups[3].rows[0].transaction_count || 0,
+        shares: lookups[2].rows[0].share_count,
+        transactions: lookups[3].rows[0].transaction_count,
       };
       const segments = _this.processSegments(shares);
 
       // Determine Number of Shares Being Processed
-      const capacity = Math.round(shares.length / counts.shares * 1000) / 10;
+      const capacity = Math.round(shares.length / counts.shares * 1000) / 10 || 0;
       const lines = [_this.text.roundsHandlingText1(capacity)];
       _this.logger.debug('Rounds', _this.config.name, lines);
 
