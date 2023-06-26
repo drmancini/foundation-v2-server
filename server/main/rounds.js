@@ -33,13 +33,7 @@ const Rounds = function (logger, client, config, configMain) {
   // Handle Effort Updates
   this.handleEffort = function(share, difficulty, work, shareType) {
     const total = shareType === 'valid' ? (work + (share.clientdiff || 0)) : work;
-    const effort = Math.round(((total / difficulty) || 0) * 1000000) / 10000;
-
-    if (effort < 0) {
-      console.log(share, difficulty, work, shareType)
-    }
-    return effort;
-    // return Math.round(((total / difficulty) || 0) * 1000000) / 10000;
+    return Math.round(((total / difficulty) || 0) * 1000000) / 10000;
   };
 
   // Handle IP Address Hash
@@ -444,8 +438,6 @@ const Rounds = function (logger, client, config, configMain) {
   this.handleMetadata = function(metadata, shares, blockType) {
 
     const updates = {};
-
-    let workTest = 0;
     
     // Handle Individual Shares
     shares.forEach((share) => {
@@ -458,9 +450,6 @@ const Rounds = function (logger, client, config, configMain) {
       if (share.error && share.error === 'job not found') shareType = 'stale';
       else if (!share.sharevalid || share.error) shareType = 'invalid';
 
-      const diff = shareType === 'valid' ? share.clientdiff : 0;
-      workTest += diff;
-
       // Determine Metadata States
       const unique = `${ share.identifier }_${ minerType }`;
       const current = updates[unique] || {};
@@ -470,8 +459,6 @@ const Rounds = function (logger, client, config, configMain) {
     });
 
     // Return Metadata Updates
-    console.log(workTest)
-    console.log(Object.values(updates));
     return Object.values(updates);
   };
 
