@@ -214,8 +214,8 @@ const Rounds = function (logger, client, config, configMain) {
       ((updates.work || 0) + (shareType === 'valid' ? share.clientdiff : 0));
     const difficulty = blockType === 'primary' ? share.blockdiffprimary : share.blockdiffauxiliary;
     const identifier = share.identifier || 'master';
-    const metadataWork = metadata.filter((entry) => entry.identifier === identifier && entry.solo === minerType)[0].work;
-    const work = (metadataWork || 0) + (updates.work || 0);
+    const filteredMetadata = metadata.filter((entry) => entry.identifier === identifier && entry.solo === minerType)[0] || {};
+    const work = (filteredMetadata.work || 0) + (updates.work || 0);
 
     // Calculate Effort Metadata
     const effort = minerType ? 0 : _this.handleEffort(share, difficulty, work, shareType);
