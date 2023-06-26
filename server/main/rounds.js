@@ -445,6 +445,19 @@ const Rounds = function (logger, client, config, configMain) {
 
     const updates = {};
 
+    let workTest = 0;
+
+    shares.forEach((share) => {
+      // Determine Share Type
+      let shareType = 'valid';
+      if (share.error && share.error === 'job not found') shareType = 'stale';
+      else if (!share.sharevalid || share.error) shareType = 'invalid';
+
+      const diff = shareType === 'valid' ? share.clientdiff : 0;
+      workTest += diff;
+    });
+
+    
     // Handle Individual Shares
     shares.forEach((share) => {
 
@@ -465,6 +478,7 @@ const Rounds = function (logger, client, config, configMain) {
     });
 
     // Return Metadata Updates
+    console.log(workTest)
     console.log(Object.values(updates));
     return Object.values(updates);
   };
