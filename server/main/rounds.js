@@ -221,9 +221,9 @@ const Rounds = function (logger, client, config, configMain) {
     const difficulty = blockType === 'primary' ? share.blockdiffprimary : share.blockdiffauxiliary;
     const identifier = share.identifier || 'master';
     const filteredMetadata = metadata.filter((entry) => entry.identifier === identifier && entry.solo === minerType)[0] || {};
-    const curerntEffort = filteredMetadata.reduce((a, b) => a.effort + b, 0);
+    const sharedEffort = metadata.filter((entry) => entry.solo === false).reduce((a, b) => a.effort + b, 0);
     const work = (filteredMetadata.work || 0) + (updates.work || 0);
-    const newEffort = shareType === 'valid' ? _this.handleEffort(share, difficulty, work, shareType) : curerntEffort;
+    const newEffort = shareType === 'valid' ? _this.handleEffort(share, difficulty, work, shareType) : sharedEffort;
 
     // Calculate Effort Metadata
     const effort = minerType ? 0 : newEffort;
