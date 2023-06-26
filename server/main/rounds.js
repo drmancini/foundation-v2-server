@@ -463,6 +463,7 @@ const Rounds = function (logger, client, config, configMain) {
     });
 
     // Return Metadata Updates
+    console.log(Object.values(updates));
     return Object.values(updates);
   };
 
