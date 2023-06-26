@@ -446,7 +446,6 @@ const Rounds = function (logger, client, config, configMain) {
     const updates = {};
 
     let workTest = 0;
-    let workTestShared = 0;
     
     // Handle Individual Shares
     shares.forEach((share) => {
@@ -460,12 +459,10 @@ const Rounds = function (logger, client, config, configMain) {
       else if (!share.sharevalid || share.error) shareType = 'invalid';
 
       const diff = shareType === 'valid' ? share.clientdiff : 0;
-      const diffShared = minerType ? 0 : diff;
       workTest += diff;
-      workTestShared += diff;
 
       // Determine Metadata States
-      const unique = `${ share.identifier }_${ share.solo }`;
+      const unique = `${ share.identifier }_${ minerType }`;
       const current = updates[unique] || {};
       
       // Determine Updates for Current Metadata
