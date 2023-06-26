@@ -152,7 +152,7 @@ const Rounds = function (logger, client, config, configMain) {
       hash: share.hash,
       height: share.height,
       identifier: identifier,
-      luck: luck,
+      luck: minerType ? (miner.effort || 0) + luck : luck,
       reward: 0,
       round: uuid.v4(),
       solo: minerType,
