@@ -162,7 +162,7 @@ const CurrentMetadata = function (logger, configMain) {
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = "${ pool }".current_metadata.effort + EXCLUDED.effort,
+        effort = EXCLUDED.effort,
         work = "${ pool }".current_metadata.work + EXCLUDED.work;`;
   };
 
