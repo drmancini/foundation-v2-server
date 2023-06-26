@@ -494,7 +494,7 @@ const Rounds = function (logger, client, config, configMain) {
       else if (!share.sharevalid || share.error) shareType = 'invalid';
 
       // Determine Metadata States
-      const unique = `${ identifier }_${ share.solo }`;
+      const unique = `${ identifier }_${ minerType }`;
       const current = metadata[unique] || {};
       
       // Determine Updates for Historical Metadata
