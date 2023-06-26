@@ -239,7 +239,7 @@ describe('Test database metadata functionality', () => {
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = "Pool-Main".current_metadata.effort + EXCLUDED.effort,
+        effort = EXCLUDED.effort,
         work = "Pool-Main".current_metadata.work + EXCLUDED.work;`;
     expect(response).toBe(expected);
   });
@@ -278,7 +278,7 @@ describe('Test database metadata functionality', () => {
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = "Pool-Main".current_metadata.effort + EXCLUDED.effort,
+        effort = EXCLUDED.effort,
         work = "Pool-Main".current_metadata.work + EXCLUDED.work;`;
     expect(response).toBe(expected);
   });

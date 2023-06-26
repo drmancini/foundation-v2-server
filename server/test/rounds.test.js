@@ -326,6 +326,7 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
+    const metadata = [{ identifier: 'master', solo: false, work: 0 }];
     const updates = { effort: 100, work: 1 };
     const share = { clientdiff: 1, identifier: 'master', blockdiffprimary: 1, blockdiffauxiliary: 1 };
     const expected = {
@@ -336,7 +337,7 @@ describe('Test rounds functionality', () => {
       type: 'primary',
       work: 2,
     };
-    expect(rounds.handleCurrentMetadata(updates, share, 'valid', false, 'primary')).toStrictEqual(expected);
+    expect(rounds.handleCurrentMetadata(metadata, updates, share, 'valid', false, 'primary')).toStrictEqual(expected);
   });
 
   test('Test rounds database updates [19]', () => {
@@ -344,17 +345,18 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
+    const metadata = [{ identifier: 'master', solo: false, work: 1 }];
     const updates = { effort: 100, work: 1 };
     const share = { clientdiff: 1, identifier: 'master', blockdiffprimary: 1, blockdiffauxiliary: 1 };
     const expected = {
       timestamp: 1634742080841,
-      effort: 100,
+      effort: 200,
       identifier: 'master',
       solo: false,
       type: 'primary',
       work: 1,
     };
-    expect(rounds.handleCurrentMetadata(updates, share, 'invalid', false, 'primary')).toStrictEqual(expected);
+    expect(rounds.handleCurrentMetadata(metadata, updates, share, 'invalid', false, 'primary')).toStrictEqual(expected);
   });
 
   test('Test rounds database updates [20]', () => {
@@ -838,6 +840,7 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
+    const metadata = [{ identifier: 'master', solo: false, work: 0 }];
     const share = {
       blockdiffprimary: 1,
       blockdiffauxiliary: 1,
@@ -853,7 +856,7 @@ describe('Test rounds functionality', () => {
       type: 'primary',
       work: 1,
     }];
-    expect(rounds.handleMetadata([share], 'primary')).toStrictEqual(expected);
+    expect(rounds.handleMetadata(metadata, [share], 'primary')).toStrictEqual(expected);
   });
 
   test('Test rounds metadata updates [2]', () => {
@@ -861,6 +864,7 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
+    const metadata = [{ identifier: 'master', solo: false, work: 0 }];
     const share = {
       blockdiffprimary: 1,
       blockdiffauxiliary: 1,
@@ -876,7 +880,7 @@ describe('Test rounds functionality', () => {
       type: 'primary',
       work: 0,
     }];
-    expect(rounds.handleMetadata([share], 'primary')).toStrictEqual(expected);
+    expect(rounds.handleMetadata(metadata, [share], 'primary')).toStrictEqual(expected);
   });
 
   test('Test rounds metadata updates [3]', () => {
@@ -884,6 +888,7 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
+    const metadata = [{ identifier: 'master', solo: false, work: 1 }];
     const share = {
       error: 'error1',
       blockdiffprimary: 1,
@@ -894,13 +899,13 @@ describe('Test rounds functionality', () => {
     };
     const expected = [{
       timestamp: 1634742080841,
-      effort: 0,
+      effort: 100,
       identifier: 'master',
       solo: false,
       type: 'primary',
       work: 0,
     }];
-    expect(rounds.handleMetadata([share], 'primary')).toStrictEqual(expected);
+    expect(rounds.handleMetadata(metadata, [share], 'primary')).toStrictEqual(expected);
   });
 
   test('Test rounds metadata updates [4]', () => {
@@ -908,6 +913,7 @@ describe('Test rounds functionality', () => {
     const client = mockClient(configMainCopy, { rows: [] });
     const logger = new Logger(configMainCopy);
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
+    const metadata = [{ identifier: 'master', solo: false, work: 1 }];
     const share = {
       error: 'job not found',
       blockdiffprimary: 1,
@@ -918,13 +924,13 @@ describe('Test rounds functionality', () => {
     };
     const expected = [{
       timestamp: 1634742080841,
-      effort: 0,
+      effort: 100,
       identifier: 'master',
       solo: false,
       type: 'primary',
       work: 0,
     }];
-    expect(rounds.handleMetadata([share], 'primary')).toStrictEqual(expected);
+    expect(rounds.handleMetadata(metadata, [share], 'primary')).toStrictEqual(expected);
   });
 
   test('Test rounds metadata history updates [1]', () => {
@@ -1706,8 +1712,8 @@ describe('Test rounds functionality', () => {
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
     const lookups = [
       null,
-      { rows: [{ work: 1 }]},
-      { rows: [{ work: 1 }]},
+      { rows: [{ identifier: 'master', solo: false, work: 1 }]},
+      { rows: [{ identifier: 'master', solo: false, work: 1 }]},
       { rows: [{ miner: 'primary', work: 1 }]},
       { rows: [{ miner: 'primary', work: 1 }]},
       { rows: [{ miner: 'primary', worker: 'primary', work: 1 }]},
@@ -1759,7 +1765,7 @@ describe('Test rounds functionality', () => {
         solo, type, work)
       VALUES (
         1634742080841,
-        100,
+        200,
         'master',
         false,
         'primary',
@@ -1767,7 +1773,7 @@ describe('Test rounds functionality', () => {
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = "Pool-Bitcoin".current_metadata.effort + EXCLUDED.effort,
+        effort = EXCLUDED.effort,
         work = "Pool-Bitcoin".current_metadata.work + EXCLUDED.work;`;
     const expectedHistoricalMetadata = `
       INSERT INTO "Pool-Bitcoin".historical_metadata (
@@ -1939,8 +1945,8 @@ describe('Test rounds functionality', () => {
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
     const lookups = [
       null,
-      { rows: [{ work: 1 }]},
-      { rows: [{ work: 1 }]},
+      { rows: [{ identifier: 'master', solo: true, work: 1 }]},
+      { rows: [{ identifier: 'master', solo: true, work: 1 }]},
       { rows: [{ miner: 'primary', work: 1 }]},
       { rows: [{ miner: 'primary', work: 1 }]},
       { rows: [{ miner: 'primary', worker: 'primary', work: 1 }]},
@@ -2000,7 +2006,7 @@ describe('Test rounds functionality', () => {
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = "Pool-Bitcoin".current_metadata.effort + EXCLUDED.effort,
+        effort = EXCLUDED.effort,
         work = "Pool-Bitcoin".current_metadata.work + EXCLUDED.work;`;
     const expectedHistoricalMetadata = `
       INSERT INTO "Pool-Bitcoin".historical_metadata (
@@ -2187,8 +2193,8 @@ describe('Test rounds functionality', () => {
     const rounds = new Rounds(logger, client, configCopy, configMainCopy);
     const lookups = [
       null,
-      { rows: [{ work: 1 }]},
-      { rows: [{ work: 1 }]},
+      { rows: [{ identifier: 'master', solo: false, work: 1 }]},
+      { rows: [{ identifier: 'master', solo: false, work: 1 }]},
       { rows: [{ miner: 'primary', work: 1 }]},
       { rows: [{ miner: 'primary', work: 1 }]},
       { rows: [{ miner: 'primary', worker: 'primary', work: 1 }]},
@@ -2255,7 +2261,7 @@ describe('Test rounds functionality', () => {
         solo, type, work)
       VALUES (
         1634742080841,
-        100,
+        200,
         'master',
         false,
         'primary',
@@ -2263,7 +2269,7 @@ describe('Test rounds functionality', () => {
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = "Pool-Bitcoin".current_metadata.effort + EXCLUDED.effort,
+        effort = EXCLUDED.effort,
         work = "Pool-Bitcoin".current_metadata.work + EXCLUDED.work;`;
     const expectedAuxMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
@@ -2271,7 +2277,7 @@ describe('Test rounds functionality', () => {
         solo, type, work)
       VALUES (
         1634742080841,
-        100,
+        200,
         'master',
         false,
         'auxiliary',
@@ -2279,7 +2285,7 @@ describe('Test rounds functionality', () => {
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = "Pool-Bitcoin".current_metadata.effort + EXCLUDED.effort,
+        effort = EXCLUDED.effort,
         work = "Pool-Bitcoin".current_metadata.work + EXCLUDED.work;`;
     const expectedHistoricalMetadata = `
       INSERT INTO "Pool-Bitcoin".historical_metadata (
@@ -2673,7 +2679,7 @@ describe('Test rounds functionality', () => {
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = "Pool-Bitcoin".current_metadata.effort + EXCLUDED.effort,
+        effort = EXCLUDED.effort,
         work = "Pool-Bitcoin".current_metadata.work + EXCLUDED.work;`;
     const expectedAuxMetadata = `
       INSERT INTO "Pool-Bitcoin".current_metadata (
@@ -2689,7 +2695,7 @@ describe('Test rounds functionality', () => {
       ON CONFLICT ON CONSTRAINT current_metadata_unique
       DO UPDATE SET
         timestamp = EXCLUDED.timestamp,
-        effort = "Pool-Bitcoin".current_metadata.effort + EXCLUDED.effort,
+        effort = EXCLUDED.effort,
         work = "Pool-Bitcoin".current_metadata.work + EXCLUDED.work;`;
     const expectedHistoricalMetadata = `
       INSERT INTO "Pool-Bitcoin".historical_metadata (
